@@ -27,7 +27,8 @@ public class ClientService : ServiceBase,IClientService
         }
         catch(InvocationException ex)
         {
-            Logger.LogError("Dapr Service Invocation Failed | Detail:"+ex.Message);
+            
+            Logger.LogError("Dapr Service Invocation Failed | Detail:"+ex.Message+" | Inner : "+ex.InnerException.Message);
         }
         catch (System.Exception ex)
         {
