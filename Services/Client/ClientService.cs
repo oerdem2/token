@@ -28,11 +28,11 @@ public class ClientService : ServiceBase,IClientService
         catch(InvocationException ex)
         {
             
-            Logger.LogError("Dapr Service Invocation Failed | Detail:"+ex.Message+" | Inner : "+ex.InnerException.Message);
+            Logger.LogError("Dapr Service Invocation Failed | Detail:"+ex.ToString());
         }
         catch (System.Exception ex)
         {
-            Logger.LogError("An Error Occured At Client Invocation | Detail:"+ex.Message);
+            Logger.LogError("An Error Occured At Client Invocation | Detail:"+ex.ToString());
         }
        
         

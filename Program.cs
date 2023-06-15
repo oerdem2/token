@@ -29,7 +29,7 @@ builder.Services.AddScoped<IAuthorizationService,AuthorizationService>();
 
 if(builder.Environment.IsDevelopment())
 {
-    builder.Services.AddScoped<IClientService,ClientServiceLocal>();
+    builder.Services.AddScoped<IClientService,ClientService>();
     builder.Services.AddScoped<IUserService,UserServiceLocal>();
 
     builder.Services.AddHttpClient("Client", httpClient =>
