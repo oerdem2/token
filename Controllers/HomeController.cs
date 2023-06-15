@@ -29,6 +29,7 @@ public class HomeController : Controller
     
     public  IActionResult CodeChallange(string code_verifier)
     {
+        Console.WriteLine("CodeChallange Called");
         var codeVerifierAsByte = System.Text.Encoding.ASCII.GetBytes(code_verifier);
 
         using var sha256 = SHA256.Create();
