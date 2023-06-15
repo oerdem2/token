@@ -1,0 +1,71 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "init-mocks",
+            "type": "shell",
+            "command": "docker run --name amorphie-token-mocks -d -v ${workspaceFolder}/tests/mocks/mocks.json:/data  -p 3000:3000 mockoon/cli:latest -d data -p 3000"
+        },
+        {
+            "label": "stop-mocks",
+            "type": "shell",
+            "command": "docker rm -f amorphie-token-mocks"
+        },
+        {
+            "label": "build-amorphie-token",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/amorphie.token.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build-amorphie-token-ui",
+            "dependsOn": "init-mocks",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/amorphie.token.ui/amorphie.token.ui.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "appId": "amorphie-token",
+            "appPort": 4900,
+            "httpPort": 49010,
+            "grpcPort": 49011,
+            "label": "dapr-debug-amorphie-token",
+            "type": "dapr",
+            "dependsOn": "build-amorphie-token",
+            "componentsPath": "Dapr/Components"
+        },
+        {
+            "appId": "amorphie-token",
+            "label": "daprd-down-amorphie-token",
+            "type": "daprd-down"
+        },
+        {
+            "appId": "amorphie-token-ui",
+            "appPort": 4901,
+            "httpPort": 49020,
+            "grpcPort": 49021,
+            "label": "dapr-debug-amorphie-token-ui",
+            "type": "dapr",
+            "dependsOn": "build-amorphie-token-ui",
+            "componentsPath": "Dapr/Components"
+        },
+        {
+            "appId": "amorphie-token-ui",
+            "label": "daprd-down-amorphie-token-ui",
+            "type": "daprd-down",
+            "dependsOn": "stop-mocks",
+        }
+    ]
+}

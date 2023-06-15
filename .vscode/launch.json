@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "amorphie-token",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "dapr-debug-amorphie-token",
+            "program": "${workspaceFolder}/bin/Debug/net7.0/amorphie.token.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4900",
+                "DAPR_HTTP_PORT": "49010",
+                "DAPR_GRPC_PORT": "49011",
+                "DAPR_SECRET_STORE_NAME" : "token-secretstore",
+                "DAPR_STATE_STORE_NAME" :  "token-cache"
+
+            },
+            "postDebugTask": "daprd-down-amorphie-token"
+        }
+    ]
+}
