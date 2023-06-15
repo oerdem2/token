@@ -8,7 +8,7 @@ namespace AuthServer.Services.Client;
 public class ClientService : ServiceBase,IClientService
 {
     private readonly DaprClient _daprClient;
-    public ClientService(DaprClient daprClient,IConfiguration configuration,ILogger logger):base(logger,configuration)
+    public ClientService(DaprClient daprClient,IConfiguration configuration,ILogger<ClientService> logger):base(logger,configuration)
     {
         _daprClient = daprClient;
     }

@@ -12,7 +12,7 @@ namespace AuthServer.Services.User;
 public class UserService : ServiceBase, IUserService
 {
     private readonly DaprClient _daprClient;
-    public UserService(DaprClient daprClient,ILogger logger,IConfiguration configuration):base(logger,configuration)
+    public UserService(DaprClient daprClient,ILogger<UserService> logger,IConfiguration configuration):base(logger,configuration)
     {
         _daprClient = daprClient;
     }
