@@ -18,7 +18,7 @@ public class ClientService : ServiceBase,IClientService
 
         try
         {
-            var client = await _daprClient.InvokeMethodAsync<ClientResponse>(HttpMethod.Get,Configuration["ClientServiceAppName"],"/client/"+clientId);
+            var client = await _daprClient.InvokeMethodAsync<dynamic>(HttpMethod.Get,Configuration["ClientServiceAppName"],"/client/"+clientId);
             if(client == null)
             {
                 throw new ServiceException((int)Errors.InvalidClient,"Client not found with provided ClientId");
@@ -27,7 +27,6 @@ public class ClientService : ServiceBase,IClientService
         }
         catch(InvocationException ex)
         {
-            
             Logger.LogError("Dapr Service Invocation Failed | Detail:"+ex.ToString());
         }
         catch (System.Exception ex)
