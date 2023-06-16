@@ -1,6 +1,7 @@
 using AuthServer.Enums;
 using AuthServer.Exceptions;
 using AuthServer.Models.Client;
+using AuthServer.Models.User;
 using Dapr.Client;
 
 namespace AuthServer.Services.Client;
@@ -18,7 +19,8 @@ public class ClientService : ServiceBase,IClientService
 
         try
         {
-            var client = await _daprClient.InvokeMethodAsync<dynamic>(HttpMethod.Get,Configuration["ClientServiceAppName"],"client/"+clientId);
+            var user = await _daprClient.InvokeMethodAsync<LoginRequest,LoginResponse>(Configuration["UserServiceAppName"],"user/login",new(){Reference="123",Password="123"});
+            var client = await _daprClient.InvokeMethodAsync<ClientResponse>(HttpMethod.Get,Configuration["ClientServiceAppName"],"client/"+clientId);
             if(client == null)
             {
                 throw new ServiceException((int)Errors.InvalidClient,"Client not found with provided ClientId");
