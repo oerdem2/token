@@ -15,18 +15,23 @@ using AuthServer.Services.Client;
 using Dapr.Client;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.Json.Serialization;
+using token.Services.Tag;
 
 namespace AuthServer.Services.Authorization;
 
 public class AuthorizationService : ServiceBase,IAuthorizationService
 {
     private readonly IClientService _clientService;
+    private readonly ITagService _tagService;
     private readonly DaprClient _daprClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    public AuthorizationService(ILogger<AuthorizationService> logger,IConfiguration configuration,IClientService clientService,DaprClient daprClient,IHttpContextAccessor httpContextAccessor)
+
+    public AuthorizationService(ILogger<AuthorizationService> logger,IConfiguration configuration,IClientService clientService,ITagService tagService,
+    DaprClient daprClient,IHttpContextAccessor httpContextAccessor)
     :base(logger,configuration)
     {
         _clientService = clientService;
+        _tagService = tagService;
         _daprClient = daprClient;
         _httpContextAccessor = httpContextAccessor;
     }
@@ -91,17 +96,14 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
                             var tagName = claimInfo[3];
                             var fieldName = claimInfo[4];
 
-                            var tagData = await _daprClient.InvokeMethodAsync<dynamic>(HttpMethod.Get,Configuration["TagExecutionServiceAppName"],$"/tag/{domain}/{entity}/{tagName}{queryStringForTag}");
+                            var tagData = await _tagService.GetTagInfo(domain,entity,tagName,queryStringForTag);
+
                             claims.Add(new Claim(identityClaim,tagData.fieldName));    
 
                         }
-                        catch(InvocationException ex)
+                        catch(Exception ex)
                         {
-                            Logger.LogError("Dapr Service Invocation Failed | Detail:"+ex.Message);
-                        }
-                        catch (System.Exception ex)
-                        {
-                            Logger.LogError("An Error Occured When Getting Tag Data | Detail:"+ex.Message);
+
                         }
                     }
                     else

@@ -9,6 +9,7 @@ using Dapr.Extensions.Configuration;
 using Jose;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
+using token.Services.Tag;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
@@ -31,6 +32,7 @@ if(builder.Environment.IsDevelopment())
 {
     builder.Services.AddScoped<IClientService,ClientServiceLocal>();
     builder.Services.AddScoped<IUserService,UserServiceLocal>();
+    builder.Services.AddScoped<ITagService,TagServiceLocal>();
 
     builder.Services.AddHttpClient("Client", httpClient =>
     {
@@ -40,11 +42,16 @@ if(builder.Environment.IsDevelopment())
     {
         httpClient.BaseAddress = new Uri(builder.Configuration["UserBaseAddress"]);
     });
-}
+    builder.Services.AddHttpClient("Tag", httpClient =>
+    {
+        httpClient.BaseAddress = new Uri(builder.Configuration["TagBaseAddress"]);
+    });
+}   
 else
 {
     builder.Services.AddScoped<IClientService,ClientService>();
     builder.Services.AddScoped<IUserService,UserServiceLocal>();
+    builder.Services.AddScoped<ITagService,TagServiceLocal>();
 
     builder.Services.AddHttpClient("Client", httpClient =>
     {
@@ -53,6 +60,10 @@ else
     builder.Services.AddHttpClient("User", httpClient =>
     {
         httpClient.BaseAddress = new Uri(builder.Configuration["UserBaseAddress"]);
+    });
+    builder.Services.AddHttpClient("Tag", httpClient =>
+    {
+        httpClient.BaseAddress = new Uri(builder.Configuration["TagBaseAddress"]);
     });
 }
 
