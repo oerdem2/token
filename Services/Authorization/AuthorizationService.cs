@@ -183,12 +183,12 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
 
     public async Task AssignUserToAuthorizationCode(LoginResponse user, string authorizationCode)
     {
-        var authorizationCodeInfo = await _daprClient.GetStateAsync<AuthorizationCode>("token-statestore",authorizationCode);
+        var authorizationCodeInfo = await _daprClient.GetStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"],authorizationCode);
 
         var newAuthorizationCodeInfo = authorizationCodeInfo.MapTo<AuthorizationCode>();
         newAuthorizationCodeInfo.Subject = user;
 
-        await _daprClient.SaveStateAsync<AuthorizationCode>("token-statestore",authorizationCode,newAuthorizationCodeInfo);
+        await _daprClient.SaveStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"],authorizationCode,newAuthorizationCodeInfo);
     }
 
     public async Task<AuthorizationResponse> Authorize(AuthorizationRequest request)
