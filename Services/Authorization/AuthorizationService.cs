@@ -250,7 +250,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         rand.GetBytes(bytes);
         var code = Base64UrlEncoder.Encode(bytes);
 
-        await _daprClient.SaveStateAsync<AuthorizationCode>("token-statestore",code,authorizationCode);
+        await _daprClient.SaveStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"],code,authorizationCode);
 
         return code;
     }
