@@ -49,7 +49,7 @@ if(builder.Environment.IsDevelopment())
 }   
 else
 {
-    builder.Services.AddScoped<IClientService,ClientService>();
+    builder.Services.AddScoped<IClientService,ClientServiceLocal>();
     builder.Services.AddScoped<IUserService,UserServiceLocal>();
     builder.Services.AddScoped<ITagService,TagServiceLocal>();
 
