@@ -49,22 +49,11 @@ if(builder.Environment.IsDevelopment())
 }   
 else
 {
-    builder.Services.AddScoped<IClientService,ClientServiceLocal>();
-    builder.Services.AddScoped<IUserService,UserServiceLocal>();
-    builder.Services.AddScoped<ITagService,TagServiceLocal>();
+    builder.Services.AddScoped<IClientService,ClientService>();
+    builder.Services.AddScoped<IUserService,UserService>();
+    builder.Services.AddScoped<ITagService,TagService>();
 
-    builder.Services.AddHttpClient("Client", httpClient =>
-    {
-        httpClient.BaseAddress = new Uri(builder.Configuration["ClientBaseAddress"]);
-    });
-    builder.Services.AddHttpClient("User", httpClient =>
-    {
-        httpClient.BaseAddress = new Uri(builder.Configuration["UserBaseAddress"]);
-    });
-    builder.Services.AddHttpClient("Tag", httpClient =>
-    {
-        httpClient.BaseAddress = new Uri(builder.Configuration["TagBaseAddress"]);
-    });
+    
 }
 
 
