@@ -44,7 +44,7 @@ public class ClientService : ServiceBase,IClientService
     {
         try
         {
-            var client = await _daprClient.InvokeMethodAsync<ValidateClientRequest,ClientResponse>(HttpMethod.Get,Configuration["ClientServiceAppName"],"/client/validate",
+            var client = await _daprClient.InvokeMethodAsync<ValidateClientRequest,ClientResponse>(Configuration["ClientServiceAppName"],"/client/validate",
             new()
             {
                 ClientId = clientId,
