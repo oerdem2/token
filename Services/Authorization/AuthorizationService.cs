@@ -103,7 +103,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
                         }
                         catch(Exception ex)
                         {
-
+                            Logger.LogError("Get Tag Info :" +ex.ToString());
                         }
                     }
                     else
