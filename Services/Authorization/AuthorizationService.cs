@@ -47,7 +47,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             throw new ServiceException((int)Errors.InvalidClient,"Client Not Found");
         }
 
-        var authorizationCodeInfo = await _daprClient.GetStateAsync<AuthorizationCode>("token-statestore",tokenRequest.code);
+        var authorizationCodeInfo = await _daprClient.GetStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"],tokenRequest.code);
 
         if(authorizationCodeInfo == null)
         {
