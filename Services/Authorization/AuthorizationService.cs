@@ -77,7 +77,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
                 new Claim("nonce", authorizationCodeInfo.Nonce)
             };
 
-            var identityInfo = client.tokens.FirstOrDefault(t => t.type == "identity");
+            var identityInfo = client.tokens.FirstOrDefault(t => t.type == 2);
             if(identityInfo != null)
             {
                 var user = authorizationCodeInfo.Subject;
@@ -142,7 +142,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             tokenClaims.Add(new Claim("scope", scope));
 
 
-        var accessInfo = client.tokens.FirstOrDefault(t => t.type == "access");
+        var accessInfo = client.tokens.FirstOrDefault(t => t.type == 0);
 
         int accessDuration = 0;
         try
