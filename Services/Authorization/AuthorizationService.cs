@@ -97,8 +97,8 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
                             var fieldName = claimInfo[4];
 
                             var tagData = await _tagService.GetTagInfo(domain,entity,tagName,queryStringForTag);
-
-                            claims.Add(new Claim(identityClaim,tagData.fieldName));    
+                            
+                            claims.Add(new Claim(identityClaim,tagData.GetType().GetProperty(fieldName).GetValue(tagData, null)));    
 
                         }
                         catch(Exception ex)
