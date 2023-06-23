@@ -16,7 +16,7 @@ public class TagServiceLocal : ITagService
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<dynamic> GetTagInfo(string domain, string entity, string tagName, string queryString)
+    public async Task<Dictionary<string,dynamic>> GetTagInfo(string domain, string entity, string tagName, string queryString)
     {
         var httpClient = _httpClientFactory.CreateClient("Tag");
         var httpResponseMessage = await httpClient.GetAsync(

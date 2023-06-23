@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using AuthServer.Services;
 using Dapr.Client;
@@ -14,11 +15,13 @@ public class TagService : ServiceBase,ITagService
     {
         _daprClient = daprClient;
     }
-    public async Task<dynamic> GetTagInfo(string domain, string entity, string tagName, string queryString)
+    public async Task<Dictionary<string,dynamic>> GetTagInfo(string domain, string entity, string tagName, string queryString)
     {
         try
         {
-            var tagData = await _daprClient.InvokeMethodAsync<dynamic>(HttpMethod.Get,Configuration["TagExecutionServiceAppName"],$"tag/{domain}/{entity}/{tagName}/execute/{queryString}");
+            var tagData = await _daprClient.InvokeMethodAsync<Dictionary<string,dynamic>>(HttpMethod.Get,Configuration["TagExecutionServiceAppName"],$"tag/{domain}/{entity}/{tagName}/execute/{queryString}");
+            Logger.LogInformation("Tag Data Path :"+$"tag/{domain}/{entity}/{tagName}/execute/{queryString}");
+            Logger.LogInformation("Tag Data Serialized :"+JsonSerializer.Serialize(tagData));
             return tagData;
         }
         catch(InvocationException ex)
