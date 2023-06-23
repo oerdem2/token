@@ -14,10 +14,10 @@ public class ClientResponse
     [JsonPropertyName("login-url")]
     public string loginurl { get; set; }
 
-    [JsonPropertyName("return-uri")]
+    [JsonPropertyName("return-url")]
     public string returnuri { get; set; }
 
-    [JsonPropertyName("logout-uri")]
+    [JsonPropertyName("logout-url")]
     public string logouturi { get; set; }
 
     [JsonPropertyName("client-secret")]
