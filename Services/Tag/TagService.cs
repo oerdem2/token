@@ -18,7 +18,7 @@ public class TagService : ServiceBase,ITagService
     {
         try
         {
-            var tagData = await _daprClient.InvokeMethodAsync<dynamic>(HttpMethod.Get,Configuration["TagExecutionServiceAppName"],$"tag/{domain}/{entity}/{tagName}{queryString}");
+            var tagData = await _daprClient.InvokeMethodAsync<dynamic>(HttpMethod.Get,Configuration["TagExecutionServiceAppName"],$"tag/{domain}/{entity}/{tagName}/execute/{queryString}");
             return tagData;
         }
         catch(InvocationException ex)
