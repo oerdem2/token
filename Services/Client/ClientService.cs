@@ -19,7 +19,7 @@ public class ClientService : ServiceBase,IClientService
 
         try
         {
-            var client = await _daprClient.InvokeMethodAsync<ClientResponse>(HttpMethod.Get,Configuration["ClientServiceAppName"],"client/get");
+            var client = await _daprClient.InvokeMethodAsync<ClientResponse>(HttpMethod.Get,Configuration["ClientServiceAppName"],"client/"+clientId);
             if(client == null)
             {
                 throw new ServiceException((int)Errors.InvalidClient,"Client not found with provided ClientId");
