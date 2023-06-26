@@ -36,6 +36,10 @@ public class UserService : ServiceBase, IUserService
         catch(InvocationException ex)
         {
             Logger.LogError("Dapr Service Invocation Failed | Detail:"+ex.Message);
+            if(ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                throw new ServiceException((int)Errors.InvalidUser,"User not found with provided info");
+            }
         }
         catch (System.Exception ex)
         {

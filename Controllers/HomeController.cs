@@ -11,6 +11,7 @@ using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 using AuthServer.Models.User;
 using AuthServer.Services.User;
+using AuthServer.Exceptions;
 
 namespace AuthServer.Controllers;
 
@@ -63,20 +64,35 @@ public class HomeController : Controller
     [HttpPost]
     public async Task<IActionResult> Login(Login loginRequest)
     {
-
-        var user = await _userService.Login(new LoginRequest(){Reference = loginRequest.UserName,Password = loginRequest.Password});
-        if(user != null )
-        {
-            HttpContext.Session.SetString("LoggedUser",JsonSerializer.Serialize(user));
-            await _authorizationService.AssignUserToAuthorizationCode(user,loginRequest.Code);
         
-            return Redirect($"{loginRequest.RedirectUri}&code={loginRequest.Code}");
-        }
-        else
+        try
         {
-            return Forbid();
-        }        
-
+            var user = await _userService.Login(new LoginRequest(){Reference = loginRequest.UserName,Password = loginRequest.Password});
+            if(user != null )
+            {
+                HttpContext.Session.SetString("LoggedUser",JsonSerializer.Serialize(user));
+                await _authorizationService.AssignUserToAuthorizationCode(user,loginRequest.Code);
+            
+                return Redirect($"{loginRequest.RedirectUri}&code={loginRequest.Code}");
+            }
+            else
+            {
+                return Forbid();
+            }        
+        }
+        catch (ServiceException ex)
+        {
+            ViewBag["Error"] = true;
+            ViewBag["ErrorDetail"] = "Kullanıcı Bulunamadı.";
+            return View("Login");
+        }
+        catch (System.Exception ex)
+        {
+            
+            throw;
+        }
+        
+        return Forbid();
     }
 
     [HttpPost]
