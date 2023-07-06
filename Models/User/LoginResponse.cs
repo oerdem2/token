@@ -15,6 +15,7 @@ public class LoginResponse
     public Phone? MobilePhone { get; set; } = new Phone();
 
     public string Reference { get; set; } = string.Empty;
+    public string State {get;set;}
 }
 
 public class Phone

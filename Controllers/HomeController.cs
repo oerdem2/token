@@ -68,7 +68,7 @@ public class HomeController : Controller
         try
         {
             var user = await _userService.Login(new LoginRequest(){Reference = loginRequest.UserName,Password = loginRequest.Password});
-            if(user != null )
+            if(user != null && (user?.State.ToLower() == "active" || user?.State.ToLower() == "new") )
             {
                 HttpContext.Session.SetString("LoggedUser",JsonSerializer.Serialize(user));
                 await _authorizationService.AssignUserToAuthorizationCode(user,loginRequest.Code);
