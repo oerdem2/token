@@ -171,12 +171,21 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration["JwtSecretKey"]));
         var signinCredentials = new SigningCredentials(secretKey,SecurityAlgorithms.HmacSha384);
 
+        var expires = DateTime.UtcNow.AddSeconds(accessDuration);
         string access_token = JwtHelper.GenerateJwt("Test", client.returnuri, tokenClaims,
-            expires: DateTime.UtcNow.AddSeconds(accessDuration), signingCredentials:signinCredentials);
+            expires: expires, signingCredentials:signinCredentials);
 
         tokenResponse.token_type = "Bearer";
         tokenResponse.access_token = access_token;
         tokenResponse.expires = accessDuration;
+
+        var tokenInfo = new TokenInfo();
+        tokenInfo.ClientId = authorizationCodeInfo.ClientId;
+        tokenInfo.ExpiredAt = expires;
+        tokenInfo.IsActive = true;
+        tokenInfo.Jwt = access_token;
+        tokenInfo.Reference = authorizationCodeInfo.Subject.Reference;
+        tokenInfo.Scopes = authorizationCodeInfo.RequestedScopes.ToList();
 
         return tokenResponse;
     }
