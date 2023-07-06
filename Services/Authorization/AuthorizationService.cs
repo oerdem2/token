@@ -190,6 +190,8 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         tokenInfo.Jwt = access_token;
         tokenInfo.Reference = authorizationCodeInfo.Subject.Reference;
         tokenInfo.Scopes = authorizationCodeInfo.RequestedScopes.ToList();
+        tokenInfo.UserId = authorizationCodeInfo.Subject.Id;
+
         await _databaseContext.Tokens.AddAsync(tokenInfo);
         await _databaseContext.SaveChangesAsync();
         return tokenResponse;

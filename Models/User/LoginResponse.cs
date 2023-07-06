@@ -16,6 +16,7 @@ public class LoginResponse
 
     public string Reference { get; set; } = string.Empty;
     public string State {get;set;}
+    public Guid Id{get;set;}
 }
 
 public class Phone
