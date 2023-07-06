@@ -16,6 +16,7 @@ using Dapr.Client;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.Json.Serialization;
 using token.Services.Tag;
+using amorphie.token;
 
 namespace AuthServer.Services.Authorization;
 
@@ -26,14 +27,17 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
     private readonly DaprClient _daprClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
+    private readonly DatabaseContext _databaseContext;
+
     public AuthorizationService(ILogger<AuthorizationService> logger,IConfiguration configuration,IClientService clientService,ITagService tagService,
-    DaprClient daprClient,IHttpContextAccessor httpContextAccessor)
+    DaprClient daprClient,IHttpContextAccessor httpContextAccessor,DatabaseContext databaseContext)
     :base(logger,configuration)
     {
         _clientService = clientService;
         _tagService = tagService;
         _daprClient = daprClient;
         _httpContextAccessor = httpContextAccessor;
+        _databaseContext = databaseContext;
     }
 
     public async Task<TokenResponse> GenerateToken(TokenRequest tokenRequest)
@@ -186,7 +190,8 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         tokenInfo.Jwt = access_token;
         tokenInfo.Reference = authorizationCodeInfo.Subject.Reference;
         tokenInfo.Scopes = authorizationCodeInfo.RequestedScopes.ToList();
-
+        await _databaseContext.Tokens.AddAsync(tokenInfo);
+        await _databaseContext.SaveChangesAsync();
         return tokenResponse;
     }
 

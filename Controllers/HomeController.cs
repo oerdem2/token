@@ -77,7 +77,7 @@ public class HomeController : Controller
             }
             else
             {
-                return Forbid();
+                return Unauthorized();
             }        
         }
         catch (ServiceException ex)
