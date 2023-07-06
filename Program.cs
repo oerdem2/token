@@ -1,12 +1,14 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using amorphie.core.security.Extensions;
+using amorphie.token;
 using AuthServer.Services.Authorization;
 using AuthServer.Services.Client;
 using AuthServer.Services.User;
 using Dapr.Client;
 using Dapr.Extensions.Configuration;
 using Jose;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using token.Services.Tag;
@@ -26,6 +28,8 @@ builder.Services.AddSession(opt => {
     opt.Cookie.Name = ".AuthServer";
 });
 
+builder.Services.AddDbContext<DatabaseContext>
+    (options => options.UseNpgsql(builder.Configuration["DatabaseConnection"]));
 builder.Services.AddScoped<IAuthorizationService,AuthorizationService>();
 
 if(builder.Environment.IsDevelopment())
