@@ -12,6 +12,8 @@ using Microsoft.IdentityModel.Tokens;
 using AuthServer.Models.User;
 using AuthServer.Services.User;
 using AuthServer.Exceptions;
+using amorphie.token;
+using token.Models.Token;
 
 namespace AuthServer.Controllers;
 
@@ -20,12 +22,13 @@ public class HomeController : Controller
     private readonly ILogger<HomeController> _logger;
     private readonly IAuthorizationService _authorizationService;
     private readonly IUserService _userService;
-
-    public HomeController(ILogger<HomeController> logger,IAuthorizationService authorizationService,IUserService userService)
+    private readonly DatabaseContext _databaseContext;
+    public HomeController(ILogger<HomeController> logger,IAuthorizationService authorizationService,IUserService userService,DatabaseContext databaseContext)
     {
         _logger = logger;
         _authorizationService = authorizationService;
         _userService = userService;
+        _databaseContext = databaseContext;
     }
     
     public  IActionResult CodeChallange(string code_verifier)
@@ -100,6 +103,28 @@ public class HomeController : Controller
     {
         var token = await _authorizationService.GenerateToken(tokenRequest);
         return Json(token);
+    }
+
+
+    [Route("Tokens/User/{UserId}")]
+    public async Task<IActionResult> GetTokensBelongToUser(Guid UserId)
+    {
+        List<TokenInfoDto> tokensBelongToUser = new List<TokenInfoDto>();
+        var tokens = _databaseContext.Tokens.Where(t => t.UserId == UserId).OrderByDescending(t => t.IssuedAt);
+        foreach(var token in tokens)
+        {
+            tokensBelongToUser.Add(new(){
+                ClientId = token.ClientId,
+                ExpiredAt = token.ExpiredAt,
+                IsActive = token.IsActive,
+                IssuedAt = token.IssuedAt,
+                Reference = token.Reference,
+                Scopes = token.Scopes,
+                UserId = token.UserId
+            });
+        }
+
+        return Json(tokens);
     }
 
     

@@ -11,6 +11,7 @@ public class TokenInfo
 {
     public Guid Id{get;set;}
     public Guid UserId{get;set;}
+    public DateTime IssuedAt{get;set;} = DateTime.UtcNow;
     public string Jwt{get;set;}
     public bool IsActive { get; set; }
     public List<string> Scopes{ get; set; }
