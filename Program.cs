@@ -28,6 +28,9 @@ builder.Services.AddSession(opt => {
     opt.Cookie.Name = ".AuthServer";
 });
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 builder.Services.AddDbContext<DatabaseContext>
     (options => options.UseNpgsql(builder.Configuration["DatabaseConnection"]));
 builder.Services.AddScoped<IAuthorizationService,AuthorizationService>();
@@ -87,5 +90,8 @@ app.UseSession();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.Run();

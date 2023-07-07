@@ -31,9 +31,9 @@ public class HomeController : Controller
         _databaseContext = databaseContext;
     }
     
+    [HttpGet("GenerateCodeChallenge")]
     public  IActionResult CodeChallange(string code_verifier)
     {
-        Console.WriteLine("CodeChallange Called");
         var codeVerifierAsByte = System.Text.Encoding.ASCII.GetBytes(code_verifier);
 
         using var sha256 = SHA256.Create();
@@ -41,6 +41,7 @@ public class HomeController : Controller
         return Content(hashedCodeVerifier);
     }
 
+    [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> Authorize(AuthorizationRequest authorizationRequest)
     {
         var authorizationResponse = await _authorizationService.Authorize(authorizationRequest);
@@ -64,6 +65,7 @@ public class HomeController : Controller
 
     }
 
+    [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost]
     public async Task<IActionResult> Login(Login loginRequest)
     {
@@ -95,9 +97,10 @@ public class HomeController : Controller
             throw;
         }
         
-        return Forbid();
+        return Unauthorized();
     }
 
+    [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost]
     public async Task<IActionResult> Token(TokenRequest tokenRequest)
     {
@@ -106,7 +109,7 @@ public class HomeController : Controller
     }
 
 
-    [Route("Tokens/User/{UserId}")]
+    [HttpGet("Tokens/User/{UserId}")]
     public async Task<IActionResult> GetTokensBelongToUser(Guid UserId)
     {
         List<TokenInfoDto> tokensBelongToUser = new List<TokenInfoDto>();
