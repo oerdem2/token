@@ -14,6 +14,7 @@ using AuthServer.Services.User;
 using AuthServer.Exceptions;
 using amorphie.token;
 using token.Models.Token;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace AuthServer.Controllers;
 
@@ -110,6 +111,7 @@ public class HomeController : Controller
 
 
     [HttpGet("Tokens/User/{UserId}")]
+    [SwaggerResponse(200, "Sms was sent successfully", typeof(List<TokenInfoDto>))]
     public async Task<IActionResult> GetTokensBelongToUser(Guid UserId)
     {
         List<TokenInfoDto> tokensBelongToUser = new List<TokenInfoDto>();
