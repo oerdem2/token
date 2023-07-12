@@ -192,7 +192,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         tokenInfo.Scopes = authorizationCodeInfo.RequestedScopes.ToList();
         tokenInfo.UserId = authorizationCodeInfo.Subject.Id;
 
-        var ttl = (DateTime.Now-tokenInfo.ExpiredAt).TotalSeconds + 5;
+        var ttl = ((int)(DateTime.Now-tokenInfo.ExpiredAt).TotalSeconds) + 5;
         await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"],tokenInfo.Jwt,tokenInfo,metadata:new Dictionary<string, string> { { "ttlInSeconds", ttl.ToString() } });
 
         await _databaseContext.Tokens.AddAsync(tokenInfo);
