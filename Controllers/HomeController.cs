@@ -140,7 +140,7 @@ public class HomeController : Controller
         return Json(tokens);
     }
 
-    [HttpGet("TokenInfo")]
+    [HttpPost("TokenInfo")]
     [SwaggerResponse(200, "Token is Valid", typeof(List<TokenInfoResponse>))]
     public async Task<IActionResult> GetTokenInfo([FromBody] TokenInfoRequest request)
     {
