@@ -192,6 +192,9 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         tokenInfo.Scopes = authorizationCodeInfo.RequestedScopes.ToList();
         tokenInfo.UserId = authorizationCodeInfo.Subject.Id;
 
+        var ttl = (DateTime.Now-tokenInfo.ExpiredAt).TotalSeconds + 5;
+        await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"],tokenInfo.Jwt,tokenInfo,metadata:new Dictionary<string, string> { { "ttlInSeconds", ttl.ToString() } });
+
         await _databaseContext.Tokens.AddAsync(tokenInfo);
         await _databaseContext.SaveChangesAsync();
         return tokenResponse;
@@ -213,7 +216,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         try
         {
             var client = await _clientService.CheckClient(request.client_id);
-
+            
             if(client != null)
             {
                 if(string.IsNullOrEmpty(request.response_type) || request.response_type != "code")

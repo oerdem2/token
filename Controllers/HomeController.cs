@@ -15,6 +15,9 @@ using AuthServer.Exceptions;
 using amorphie.token;
 using token.Models.Token;
 using Swashbuckle.AspNetCore.Annotations;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+using Dapr.Client;
 
 namespace AuthServer.Controllers;
 
@@ -24,12 +27,17 @@ public class HomeController : Controller
     private readonly IAuthorizationService _authorizationService;
     private readonly IUserService _userService;
     private readonly DatabaseContext _databaseContext;
-    public HomeController(ILogger<HomeController> logger,IAuthorizationService authorizationService,IUserService userService,DatabaseContext databaseContext)
+    private readonly IConfiguration _configuration;
+    private readonly DaprClient _daprClient;
+    public HomeController(ILogger<HomeController> logger,IAuthorizationService authorizationService,IUserService userService,DatabaseContext databaseContext
+    ,IConfiguration configuration,DaprClient daprClient)
     {
         _logger = logger;
         _authorizationService = authorizationService;
         _userService = userService;
         _databaseContext = databaseContext;
+        _configuration = configuration;
+        _daprClient = daprClient;
     }
     
     [HttpGet("GenerateCodeChallenge")]
@@ -130,6 +138,42 @@ public class HomeController : Controller
         }
 
         return Json(tokens);
+    }
+
+    [HttpGet("TokenInfo")]
+    [SwaggerResponse(200, "Token is Valid", typeof(List<TokenInfoResponse>))]
+    public async Task<IActionResult> GetTokenInfo([FromBody] TokenInfoRequest request)
+    {
+        TokenInfoResponse response = new();
+
+        JwtSecurityTokenHandler handler = new();
+        SecurityToken validatedToken;
+        try
+        {
+            handler.ValidateToken(request.token,new TokenValidationParameters
+            {
+                ClockSkew = TimeSpan.Zero,
+                ValidateLifetime = false,
+                ValidateIssuerSigningKey = true,
+
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSecretKey"]))
+            },out validatedToken);
+
+            var tokenInfo = await _daprClient.GetStateAsync<TokenInfo>(_configuration["DAPR_STATE_STORE_NAME"],request.token);
+
+            response.Active = true;
+            response.ClientId = tokenInfo.ClientId;
+            response.Scope = string.Join(" ",tokenInfo.Scopes);
+            response.Reference = tokenInfo.Reference;
+            response.ExpiredAt = tokenInfo.ExpiredAt;
+            return Json(response);
+        }
+        catch (Exception ex)
+        {
+            response.Active = false;
+            return Json(response);
+        }
+        
     }
 
     
