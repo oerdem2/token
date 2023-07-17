@@ -122,7 +122,7 @@ public class HomeController : Controller
             var token = await _authorizationService.GenerateToken(tokenRequest);
             if(token.StatusCode == 200)
             {
-                return Json(token);
+                return Json(token.Response);
             }
             else
             {
@@ -134,7 +134,7 @@ public class HomeController : Controller
             var token = await _authorizationService.GenerateTokenWithPassword(tokenRequest);
             if(token.StatusCode == 200)
             {
-                return Json(token);
+                return Json(token.Response);
             }
             else
             {
