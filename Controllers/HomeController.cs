@@ -111,7 +111,7 @@ public class HomeController : Controller
 
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost]
-    public async Task<IActionResult> Token(TokenRequest tokenRequest)
+    public async Task<IActionResult> Token([FromBody]TokenRequest tokenRequest)
     {
         if(tokenRequest.grant_type == "authorization_code")
         {
