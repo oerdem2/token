@@ -28,7 +28,6 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
     private readonly IUserService _userService;
     private readonly DaprClient _daprClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
-
     private readonly DatabaseContext _databaseContext;
 
     public AuthorizationService(ILogger<AuthorizationService> logger,IConfiguration configuration,IClientService clientService,ITagService tagService,
@@ -41,6 +40,88 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         _httpContextAccessor = httpContextAccessor;
         _databaseContext = databaseContext;
         _userService = userService;
+    }
+
+    private async Task<Claim> GetClaimDetail(string[] claimPath,string queryStringForTag,LoginResponse user)
+    {
+        if(claimPath.First().Equals("tag"))
+        {
+            try
+            {
+                var domain = claimPath[1];
+                var entity = claimPath[2];
+                var tagName = claimPath[3];
+                var fieldName = claimPath[4];
+
+                var tagData = await _tagService.GetTagInfo(domain,entity,tagName,queryStringForTag);
+                if(tagData == null)
+                    return null;
+
+                return new Claim(string.Join('.',claimPath),tagData[fieldName].ToString());
+
+            }
+            catch(Exception ex)
+            {
+                Logger.LogError("Get Tag Info :" +ex.ToString());
+            }
+        }
+        else
+        {
+            if(claimPath.First().Equals("user"))
+            {
+                
+                Type t = user.GetType();
+                var property = t.GetProperties().First(p => p.Name.ToLower() == claimPath[1]);
+                
+                if(property == null)
+                    return null;
+                return new Claim(string.Join('.',claimPath),property.GetValue(user).ToString());
+            }
+        }
+
+        return null;
+    }
+
+    private async Task<List<Claim>> PopulateClaims(List<string> clientClaims,LoginResponse user)
+    {
+        List<Claim> claims = new List<Claim>();
+
+        string queryStringForTag = string.Empty;
+        queryStringForTag += "?reference="+user.Reference;
+        queryStringForTag += "&mail="+user.EMail;
+        queryStringForTag += "&phone="+user.MobilePhone.ToString();
+        foreach(var identityClaim in clientClaims)
+        {
+            var claimDetail = identityClaim.Split("||");
+            var primaryClaim = String.Empty;
+            var alternativeClaim = String.Empty;
+
+            if(claimDetail.Length == 1)
+            {
+                primaryClaim = claimDetail.First();
+            }
+            else
+            {
+                primaryClaim = claimDetail.First();
+                alternativeClaim = claimDetail[1];
+            }
+
+            var claimInfo = primaryClaim.Split(".");
+            
+            var claimValue = await GetClaimDetail(claimInfo,queryStringForTag,user);
+
+            if(claimValue != null)
+            {
+                claims.Add(claimValue);
+            }
+            else
+            {
+                claimInfo = alternativeClaim.Split(".");
+                claimValue = await GetClaimDetail(claimInfo,queryStringForTag,user);
+            }
+        }
+
+        return claims;
     }
 
     public async Task<TokenResponse> GenerateTokenWithPassword(TokenRequest tokenRequest)
@@ -72,43 +153,8 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             var identityInfo = client.tokens.FirstOrDefault(t => t.type == 2);
             if(identityInfo != null)
             {
-                string queryStringForTag = string.Empty;
-                queryStringForTag += "?reference="+user.Reference;
-                queryStringForTag += "&mail="+user.EMail;
-                queryStringForTag += "&phone="+user.MobilePhone.ToString();
-                foreach(var identityClaim in identityInfo.claims)
-                {
-                    var claimInfo = identityClaim.Split(".");
-                    if(claimInfo.First().Equals("tag")){
-                        try
-                        {
-                            var domain = claimInfo[1];
-                            var entity = claimInfo[2];
-                            var tagName = claimInfo[3];
-                            var fieldName = claimInfo[4];
-
-                            var tagData = await _tagService.GetTagInfo(domain,entity,tagName,queryStringForTag);
-                            
-                            claims.Add(new Claim(identityClaim,tagData[fieldName].ToString()));    
-
-                        }
-                        catch(Exception ex)
-                        {
-                            Logger.LogError("Get Tag Info :" +ex.ToString());
-                        }
-                    }
-                    else
-                    {
-                        if(claimInfo.First().Equals("user"))
-                        {
-                            
-                            Type t = user.GetType();
-                            var property = t.GetProperties().First(p => p.Name.ToLower() == claimInfo[1]);
-                           
-                            claims.Add(new Claim(identityClaim,property.GetValue(user).ToString()));
-                        }
-                    }
-                }
+                var populatedClaims = await PopulateClaims(identityInfo.claims,user);
+                claims.AddRange(populatedClaims);
             }
 
             int idDuration = 0;
@@ -122,7 +168,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             }
             
 
-            var idToken = JwtHelper.GenerateJwt("Test", client.returnuri, claims,
+            var idToken = JwtHelper.GenerateJwt("BurganIam", client.returnuri, claims,
             expires: DateTime.UtcNow.AddSeconds(idDuration));
             tokenResponse.id_token = idToken;
         }
@@ -138,23 +184,20 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         int accessDuration = 0;
         try
         {
-                accessDuration = TimeHelper.ConvertStrDurationToSeconds(accessInfo.duration);
+            accessDuration = TimeHelper.ConvertStrDurationToSeconds(accessInfo.duration);
         }
         catch (FormatException ex)
         {
             Logger.LogError(ex.Message);
         }
         
-        if(client.jws.mode.Equals("must"))
-        {
-            _httpContextAccessor.HttpContext.Response.Headers["test"] = "123";
-        }
 
         if(accessInfo != null)
         {
             foreach(var accessClaim in accessInfo.claims)
             {
-                tokenClaims.Add(new Claim(accessClaim,"123"));
+                var populatedClaims = await PopulateClaims(accessInfo.claims,user);
+                tokenClaims.AddRange(populatedClaims);
             }
         }
 
@@ -163,7 +206,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         var signinCredentials = new SigningCredentials(secretKey,SecurityAlgorithms.HmacSha384);
 
         var expires = DateTime.UtcNow.AddSeconds(accessDuration);
-        string access_token = JwtHelper.GenerateJwt("Test", client.returnuri, tokenClaims,
+        string access_token = JwtHelper.GenerateJwt("BurganIam", client.returnuri, tokenClaims,
             expires: expires, signingCredentials:signinCredentials);
 
         tokenResponse.token_type = "Bearer";
@@ -231,44 +274,8 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             var identityInfo = client.tokens.FirstOrDefault(t => t.type == 2);
             if(identityInfo != null)
             {
-                var user = authorizationCodeInfo.Subject;
-                string queryStringForTag = string.Empty;
-                queryStringForTag += "?reference="+user.Reference;
-                queryStringForTag += "&mail="+user.EMail;
-                queryStringForTag += "&phone="+user.MobilePhone.ToString();
-                foreach(var identityClaim in identityInfo.claims)
-                {
-                    var claimInfo = identityClaim.Split(".");
-                    if(claimInfo.First().Equals("tag")){
-                        try
-                        {
-                            var domain = claimInfo[1];
-                            var entity = claimInfo[2];
-                            var tagName = claimInfo[3];
-                            var fieldName = claimInfo[4];
-
-                            var tagData = await _tagService.GetTagInfo(domain,entity,tagName,queryStringForTag);
-                            
-                            claims.Add(new Claim(identityClaim,tagData[fieldName].ToString()));    
-
-                        }
-                        catch(Exception ex)
-                        {
-                            Logger.LogError("Get Tag Info :" +ex.ToString());
-                        }
-                    }
-                    else
-                    {
-                        if(claimInfo.First().Equals("user"))
-                        {
-                            
-                            Type t = user.GetType();
-                            var property = t.GetProperties().First(p => p.Name.ToLower() == claimInfo[1]);
-                           
-                            claims.Add(new Claim(identityClaim,property.GetValue(user).ToString()));
-                        }
-                    }
-                }
+                var populatedClaims = await PopulateClaims(identityInfo.claims,authorizationCodeInfo.Subject);
+                claims.AddRange(populatedClaims);
             }
 
             int idDuration = 0;
@@ -298,23 +305,19 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         int accessDuration = 0;
         try
         {
-                accessDuration = TimeHelper.ConvertStrDurationToSeconds(accessInfo.duration);
+            accessDuration = TimeHelper.ConvertStrDurationToSeconds(accessInfo.duration);
         }
         catch (FormatException ex)
         {
             Logger.LogError(ex.Message);
-        }
-        
-        if(client.jws.mode.Equals("must"))
-        {
-            _httpContextAccessor.HttpContext.Response.Headers["test"] = "123";
         }
 
         if(accessInfo != null)
         {
             foreach(var accessClaim in accessInfo.claims)
             {
-                tokenClaims.Add(new Claim(accessClaim,"123"));
+                var populatedClaims = await PopulateClaims(accessInfo.claims,authorizationCodeInfo.Subject);
+                tokenClaims.AddRange(populatedClaims);
             }
         }
 
@@ -323,7 +326,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         var signinCredentials = new SigningCredentials(secretKey,SecurityAlgorithms.HmacSha384);
 
         var expires = DateTime.UtcNow.AddSeconds(accessDuration);
-        string access_token = JwtHelper.GenerateJwt("Test", client.returnuri, tokenClaims,
+        string access_token = JwtHelper.GenerateJwt("BurganIam", client.returnuri, tokenClaims,
             expires: expires, signingCredentials:signinCredentials);
 
         tokenResponse.token_type = "Bearer";
