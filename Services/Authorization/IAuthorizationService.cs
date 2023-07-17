@@ -15,4 +15,5 @@ public interface IAuthorizationService
     public Task<AuthorizationResponse> Authorize(AuthorizationRequest request); 
     public Task AssignUserToAuthorizationCode(LoginResponse user,string authorizationCode);
     public Task<TokenResponse> GenerateToken(TokenRequest tokenRequest);
+    public Task<TokenResponse> GenerateTokenWithPassword(TokenRequest tokenRequest);
 }

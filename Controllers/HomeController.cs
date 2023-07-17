@@ -113,8 +113,16 @@ public class HomeController : Controller
     [HttpPost]
     public async Task<IActionResult> Token(TokenRequest tokenRequest)
     {
-        var token = await _authorizationService.GenerateToken(tokenRequest);
-        return Json(token);
+        if(tokenRequest.grant_type == "authorization_code")
+        {
+            var token = await _authorizationService.GenerateToken(tokenRequest);
+            return Json(token);
+        }
+        if(tokenRequest.grant_type == "password")
+        {
+            var token = await _authorizationService.GenerateTokenWithPasswword(tokenRequest);
+        }
+        return Conflict();
     }
 
 

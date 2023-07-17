@@ -20,6 +20,16 @@ await builder.Configuration.AddVaultSecrets(builder.Configuration["DAPR_SECRET_S
 
 
 // Add services to the container.
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+        builder =>
+        {
+            builder.WithOrigins("*")
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
 builder.Services.AddControllersWithViews();
 builder.Services.AddDaprClient();
 builder.Services.AddHttpContextAccessor();
@@ -78,6 +88,8 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
+app.UseCors();
 
 app.UseStaticFiles();
 
