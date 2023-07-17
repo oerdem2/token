@@ -121,6 +121,7 @@ public class HomeController : Controller
         if(tokenRequest.grant_type == "password")
         {
             var token = await _authorizationService.GenerateTokenWithPassword(tokenRequest);
+            return Json(token);
         }
         return Conflict();
     }
