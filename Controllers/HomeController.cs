@@ -55,22 +55,24 @@ public class HomeController : Controller
     {
         var authorizationResponse = await _authorizationService.Authorize(authorizationRequest);
         
+        var authorizationResult = authorizationResponse.Response;
+
         if(HttpContext.Session.Get("LoggedUser") == null)
         {
             var loginModel = new Login()
             {
-                Code = authorizationResponse.Code,
-                RedirectUri = authorizationResponse.RedirectUri,
-                RequestedScopes = authorizationResponse.RequestedScopes
+                Code = authorizationResult.Code,
+                RedirectUri = authorizationResult.RedirectUri,
+                RequestedScopes = authorizationResult.RequestedScopes
             };
             return View("Login",loginModel);
         }
 
         var loggedUser = JsonSerializer.Deserialize<LoginResponse>(HttpContext.Session.GetString("LoggedUser"));
         
-        await _authorizationService.AssignUserToAuthorizationCode(loggedUser,authorizationResponse.Code);
+        await _authorizationService.AssignUserToAuthorizationCode(loggedUser,authorizationResult.Code);
 
-        return Redirect($"{authorizationResponse.RedirectUri}&code={authorizationResponse.Code}");
+        return Redirect($"{authorizationResult.RedirectUri}&code={authorizationResult.Code}");
 
     }
 
@@ -81,8 +83,16 @@ public class HomeController : Controller
         
         try
         {
-            var user = await _userService.Login(new LoginRequest(){Reference = loginRequest.UserName,Password = loginRequest.Password});
-            if(user != null && (user?.State.ToLower() == "active" || user?.State.ToLower() == "new") )
+            var userResponse = await _userService.Login(new LoginRequest(){Reference = loginRequest.UserName,Password = loginRequest.Password});
+            if(userResponse.StatusCode != 200)
+            {
+                ViewBag.HasError = true;
+                ViewBag.ErrorDetail = userResponse.Detail;
+                return View("Login");
+            }
+            var user = userResponse.Response;
+
+            if((user?.State.ToLower() == "active" || user?.State.ToLower() == "new") )
             {
                 HttpContext.Session.SetString("LoggedUser",JsonSerializer.Serialize(user));
                 await _authorizationService.AssignUserToAuthorizationCode(user,loginRequest.Code);
@@ -91,22 +101,16 @@ public class HomeController : Controller
             }
             else
             {
-                return Unauthorized();
+                ViewBag.HasError = true;
+                ViewBag.ErrorDetail = "User Is Disabled";
+                return View("Login");
             }        
-        }
-        catch (ServiceException ex)
-        {
-            ViewBag["Error"] = true;
-            ViewBag["ErrorDetail"] = "Kullanıcı Bulunamadı.";
-            return View("Login");
         }
         catch (System.Exception ex)
         {
             
             throw;
         }
-        
-        return Unauthorized();
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
@@ -116,14 +120,28 @@ public class HomeController : Controller
         if(tokenRequest.grant_type == "authorization_code")
         {
             var token = await _authorizationService.GenerateToken(tokenRequest);
-            return Json(token);
+            if(token.StatusCode == 200)
+            {
+                return Json(token);
+            }
+            else
+            {
+                return Problem(detail:token.Detail,statusCode:token.StatusCode);
+            }
         }
         if(tokenRequest.grant_type == "password")
         {
             var token = await _authorizationService.GenerateTokenWithPassword(tokenRequest);
-            return Json(token);
+            if(token.StatusCode == 200)
+            {
+                return Json(token);
+            }
+            else
+            {
+                return Problem(detail:token.Detail,statusCode:token.StatusCode);
+            }
         }
-        return Conflict();
+        return Problem(detail:"Invalid Grant Type",statusCode:480);
     }
 
 

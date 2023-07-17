@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AuthServer.Enums;
 using AuthServer.Exceptions;
 using AuthServer.Models.User;
+using token.Models;
 
 namespace AuthServer.Services.User;
 
@@ -16,7 +17,7 @@ public class UserServiceLocal : IUserService
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<LoginResponse> Login(LoginRequest loginRequest)
+    public async Task<ServiceResponse<LoginResponse>> Login(LoginRequest loginRequest)
     {
         var httpClient = _httpClientFactory.CreateClient("User");
         var httpResponseMessage = await httpClient.PostAsJsonAsync<LoginRequest>(
@@ -29,7 +30,7 @@ public class UserServiceLocal : IUserService
             {
                 throw new ServiceException((int)Errors.InvalidUser,"User not found with provided info");
             }         
-            return user;   
+            return new ServiceResponse<LoginResponse>(){StatusCode = 200,Response = user};   
         }
         else
         {

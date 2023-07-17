@@ -6,6 +6,7 @@ using AuthServer.Enums;
 using AuthServer.Exceptions;
 using AuthServer.Models.Client;
 using AuthServer.Models.MockData;
+using token.Models;
 
 namespace AuthServer.Services.Client;
 
@@ -17,7 +18,7 @@ public class ClientServiceLocal : IClientService
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<ClientResponse> CheckClient(string clientId)
+    public async Task<ServiceResponse<ClientResponse>> CheckClient(string clientId)
     {
 
         var httpClient = _httpClientFactory.CreateClient("Client");
@@ -30,7 +31,10 @@ public class ClientServiceLocal : IClientService
             {
                 throw new ServiceException((int)Errors.InvalidClient,"Client not found with provided ClientId");
             }         
-            return client;   
+            return new ServiceResponse<ClientResponse>(){
+                StatusCode = 200,
+                Response = client
+            };   
         }
         else
         {
@@ -40,13 +44,11 @@ public class ClientServiceLocal : IClientService
         }
 
         
-
-        return null;
     }
 
-    public async Task<ClientResponse> ValidateClient(string clientId, string clientSecret)
+    public async Task<ServiceResponse<ClientResponse>> ValidateClient(string clientId, string clientSecret)
     {
         await Task.CompletedTask;
-        return new ClientResponse();
+        return new ServiceResponse<ClientResponse>();
     }
 }

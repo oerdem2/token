@@ -6,6 +6,7 @@ using AuthServer.Enums;
 using AuthServer.Exceptions;
 using AuthServer.Models.User;
 using Dapr.Client;
+using token.Models;
 
 namespace AuthServer.Services.User;
 
@@ -17,7 +18,7 @@ public class UserService : ServiceBase, IUserService
         _daprClient = daprClient;
     }
 
-    public async Task<LoginResponse> Login(LoginRequest loginRequest)
+    public async Task<ServiceResponse<LoginResponse>> Login(LoginRequest loginRequest)
     {
         try
         {
@@ -29,21 +30,49 @@ public class UserService : ServiceBase, IUserService
             });
             if(user == null)
             {
-                throw new ServiceException((int)Errors.InvalidUser,"User not found with provided info");
+                return new ServiceResponse<LoginResponse>(){
+                    StatusCode = 460,
+                    Detail = "User Not Found"
+                };
             }         
-            return user;   
+            return new ServiceResponse<LoginResponse>(){
+                    StatusCode = 200,
+                    Detail = "",
+                    Response = user
+                };
         }
         catch(InvocationException ex)
         {
             Logger.LogError("Dapr Service Invocation Failed | Detail:"+ex.Message);
-            if(ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+
+            if((int)ex.Response.StatusCode >= 400 && (int)ex.Response.StatusCode < 500)
             {
-                throw new ServiceException((int)Errors.InvalidUser,"User not found with provided info");
+                if((int)ex.Response.StatusCode == 460)
+                {
+                    return new ServiceResponse<LoginResponse>(){
+                        StatusCode = 460,
+                        Detail = "User Not Found"
+                    };
+                }
+                if((int)ex.Response.StatusCode == 461)
+                {
+                    return new ServiceResponse<LoginResponse>(){
+                        StatusCode = 461,
+                        Detail = "Invalid Reference or Password"
+                    };
+                }
+            }
+            else
+            {
+                return new ServiceResponse<LoginResponse>(){
+                        StatusCode = 500,
+                        Detail = "Server Error"
+                    };
             }
         }
         catch (System.Exception ex)
         {
-            Logger.LogError("An Error Occured At Client Invocation | Detail:"+ex.Message);
+            Logger.LogError("An Error Occured At User Invocation | Detail:"+ex.Message);
         }
         return null;
     }

@@ -7,13 +7,14 @@ using AuthServer.Models.Account;
 using AuthServer.Models.Authorization;
 using AuthServer.Models.Token;
 using AuthServer.Models.User;
+using token.Models;
 
 namespace AuthServer.Services.Authorization;
 
 public interface IAuthorizationService
 {
-    public Task<AuthorizationResponse> Authorize(AuthorizationRequest request); 
+    public Task<ServiceResponse<AuthorizationResponse>> Authorize(AuthorizationRequest request); 
     public Task AssignUserToAuthorizationCode(LoginResponse user,string authorizationCode);
-    public Task<TokenResponse> GenerateToken(TokenRequest tokenRequest);
-    public Task<TokenResponse> GenerateTokenWithPassword(TokenRequest tokenRequest);
+    public Task<ServiceResponse<TokenResponse>> GenerateToken(TokenRequest tokenRequest);
+    public Task<ServiceResponse<TokenResponse>> GenerateTokenWithPassword(TokenRequest tokenRequest);
 }

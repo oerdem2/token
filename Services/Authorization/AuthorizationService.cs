@@ -18,6 +18,7 @@ using System.Text.Json.Serialization;
 using token.Services.Tag;
 using amorphie.token;
 using AuthServer.Services.User;
+using token.Models;
 
 namespace AuthServer.Services.Authorization;
 
@@ -124,21 +125,39 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         return claims;
     }
 
-    public async Task<TokenResponse> GenerateTokenWithPassword(TokenRequest tokenRequest)
+    public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithPassword(TokenRequest tokenRequest)
     {
         TokenResponse tokenResponse = new();
 
-        var client = await _clientService.ValidateClient(tokenRequest.client_id,tokenRequest.client_secret);
+        var clientResponse = await _clientService.ValidateClient(tokenRequest.client_id,tokenRequest.client_secret);
 
-        if(client == null)
+        if(clientResponse.StatusCode != 200)
         {
-            throw new ServiceException((int)Errors.InvalidClient,"Client Not Found");
+            return new ServiceResponse<TokenResponse>(){
+                StatusCode = clientResponse.StatusCode,
+                Detail = clientResponse.Detail
+            };
+        }
+        var client = clientResponse.Response;
+
+        var userResponse = await _userService.Login(new LoginRequest(){Reference = tokenRequest.username,Password = tokenRequest.password});
+
+        if(userResponse.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>(){
+                StatusCode = userResponse.StatusCode,
+                Detail = userResponse.Detail
+            };
         }
 
-        var user = await _userService.Login(new LoginRequest(){Reference = tokenRequest.username,Password = tokenRequest.password});
-        if(user == null || (user?.State.ToLower() != "active" && user?.State.ToLower() != "new") )
+        var user = userResponse.Response;
+
+        if((user?.State.ToLower() != "active" && user?.State.ToLower() != "new") )
         {
-            throw new ServiceException((int)Errors.InvalidUser,"User Not Found");
+            return new ServiceResponse<TokenResponse>(){
+                StatusCode = 470,
+                Detail = "User is disabled"
+            };
         }
 
         //openId Section
@@ -227,37 +246,53 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
 
         await _databaseContext.Tokens.AddAsync(tokenInfo);
         await _databaseContext.SaveChangesAsync();
-        return tokenResponse;
+        return new ServiceResponse<TokenResponse>(){
+            StatusCode = 200,
+            Response = tokenResponse
+        };
     }
 
-    public async Task<TokenResponse> GenerateToken(TokenRequest tokenRequest)
+    public async Task<ServiceResponse<TokenResponse>> GenerateToken(TokenRequest tokenRequest)
     {
         TokenResponse tokenResponse = new();
 
-        var client = await _clientService.ValidateClient(tokenRequest.client_id,tokenRequest.client_secret);
-
-        if(client == null)
+        var clientResponse = await _clientService.ValidateClient(tokenRequest.client_id,tokenRequest.client_secret);
+        if(clientResponse.StatusCode != 200)
         {
-            throw new ServiceException((int)Errors.InvalidClient,"Client Not Found");
+            return new ServiceResponse<TokenResponse>(){
+                StatusCode = clientResponse.StatusCode,
+                Detail = clientResponse.Detail
+            };
         }
 
+        var client = clientResponse.Response;
+        
         var authorizationCodeInfo = await _daprClient.GetStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"],tokenRequest.code);
 
         if(authorizationCodeInfo == null)
         {
-            throw new ServiceException((int)Errors.InvalidAuthorizationCode,"Authorization Code Not Found");
+            return new ServiceResponse<TokenResponse>(){
+                StatusCode = 470,
+                Detail = "Invalid Authorization Code"
+            };
         }
 
         if(!authorizationCodeInfo.ClientId.Equals(tokenRequest.client_id,StringComparison.OrdinalIgnoreCase))
         {
-            throw new ServiceException((int)Errors.InvalidClient,"Invalid Client");
+            return new ServiceResponse<TokenResponse>(){
+                StatusCode = 471,
+                Detail = "ClientId Not Matched"
+            };
         }
         
         if(client.pkce == "must")
         {
             if(!authorizationCodeInfo.CodeChallenge.Equals(GetHashedCodeVerifier(tokenRequest.code_verifier)))
             {
-                throw new ServiceException((int)Errors.CodeVerifierNotMatched,"Code Verifier Not Matched With Code Challange");
+                return new ServiceResponse<TokenResponse>(){
+                StatusCode = 472,
+                Detail = "Code Verifier Not Matched"
+            };
             }
         }
 
@@ -347,7 +382,10 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
 
         await _databaseContext.Tokens.AddAsync(tokenInfo);
         await _databaseContext.SaveChangesAsync();
-        return tokenResponse;
+        return new ServiceResponse<TokenResponse>(){
+            StatusCode = 200,
+            Response = tokenResponse
+        };
     }
 
     public async Task AssignUserToAuthorizationCode(LoginResponse user, string authorizationCode)
@@ -360,56 +398,74 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         await _daprClient.SaveStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"],authorizationCode,newAuthorizationCodeInfo);
     }
 
-    public async Task<AuthorizationResponse> Authorize(AuthorizationRequest request)
+    public async Task<ServiceResponse<AuthorizationResponse>> Authorize(AuthorizationRequest request)
     {
         AuthorizationResponse authorizationResponse = new();
         try
         {
-            var client = await _clientService.CheckClient(request.client_id);
-            
-            if(client != null)
+            var clientResponse = await _clientService.CheckClient(request.client_id);
+            if(clientResponse.StatusCode != 200)
             {
-                if(string.IsNullOrEmpty(request.response_type) || request.response_type != "code")
-                {
-                    throw new ServiceException((int)Errors.InvalidResponseType,"Response Type Parameter Has To Be Set As 'Code'");
-                }
-
-                var requestedScopes = request.scope.ToList();
-                var clientScopes = client.allowedscopetags.Intersect(requestedScopes);
-
-                if(!clientScopes.Any())
-                {
-                    throw new ServiceException((int)Errors.InvalidScopes,"Client is Not Authorized For Requested Scopes");
-                }
-
-                var authCode = new AuthorizationCode
-                {
-                    ClientId = request.client_id,
-                    RedirectUri = request.redirect_uri,
-                    RequestedScopes = clientScopes.ToList(),
-                    CodeChallenge = request.code_challenge,
-                    CodeChallengeMethod = request.code_challenge_method,
-                    CreationTime = DateTime.UtcNow,
-                    Subject = null,
-                    Nonce = request.nonce
+                return new ServiceResponse<AuthorizationResponse>(){
+                    StatusCode = clientResponse.StatusCode,
+                    Detail = clientResponse.Detail
                 };
-
-                var code = await GenerateAuthorizationCode(authCode);
-
-                authorizationResponse.RedirectUri = $"{client.returnuri}?response_type=code&state={request.state}";
-                authorizationResponse.Code = code;
-                authorizationResponse.RequestedScopes = clientScopes.ToList();
-                authorizationResponse.State = request.state;
-
-                return authorizationResponse;
             }
+            var client = clientResponse.Response;
+        
+            if(string.IsNullOrEmpty(request.response_type) || request.response_type != "code")
+            {
+                return new ServiceResponse<AuthorizationResponse>(){
+                    StatusCode = 473,
+                    Detail = "Response Type Parameter Has To Be Set As 'Code'"
+                };
+            }
+
+            var requestedScopes = request.scope.ToList();
+            var clientScopes = client.allowedscopetags.Intersect(requestedScopes);
+
+            if(!clientScopes.Any())
+            {
+                return new ServiceResponse<AuthorizationResponse>(){
+                    StatusCode = 473,
+                    Detail = "Client is Not Authorized For Requested Scopes"
+                };
+            }
+
+            var authCode = new AuthorizationCode
+            {
+                ClientId = request.client_id,
+                RedirectUri = request.redirect_uri,
+                RequestedScopes = clientScopes.ToList(),
+                CodeChallenge = request.code_challenge,
+                CodeChallengeMethod = request.code_challenge_method,
+                CreationTime = DateTime.UtcNow,
+                Subject = null,
+                Nonce = request.nonce
+            };
+
+            var code = await GenerateAuthorizationCode(authCode);
+
+            authorizationResponse.RedirectUri = $"{client.returnuri}?response_type=code&state={request.state}";
+            authorizationResponse.Code = code;
+            authorizationResponse.RequestedScopes = clientScopes.ToList();
+            authorizationResponse.State = request.state;
+
+            return new ServiceResponse<AuthorizationResponse>(){
+                StatusCode = 200,
+                Response = authorizationResponse
+            };
+            
         }
         catch (Exception ex)
         {
             Logger.LogError(ex.Message);
+            return new ServiceResponse<AuthorizationResponse>(){
+                StatusCode = 500,
+                Response = null
+            };
         }
         
-        return authorizationResponse;
     }
 
     private async Task<string> GenerateAuthorizationCode(AuthorizationCode authorizationCode)
