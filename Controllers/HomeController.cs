@@ -90,7 +90,13 @@ public class HomeController : Controller
             {
                 ViewBag.HasError = true;
                 ViewBag.ErrorDetail = userResponse.Detail;
-                return View("Login");
+                var loginModel = new Login()
+                {
+                    Code = loginRequest.Code,
+                    RedirectUri = loginRequest.RedirectUri,
+                    RequestedScopes = loginRequest.RequestedScopes
+                };
+                return View("Login",loginModel);
             }
             var user = userResponse.Response;
 
@@ -105,7 +111,13 @@ public class HomeController : Controller
             {
                 ViewBag.HasError = true;
                 ViewBag.ErrorDetail = "User Is Disabled";
-                return View("Login");
+                var loginModel = new Login()
+                {
+                    Code = loginRequest.Code,
+                    RedirectUri = loginRequest.RedirectUri,
+                    RequestedScopes = loginRequest.RequestedScopes
+                };
+                return View("Login",loginModel);
             }        
         }
         catch (System.Exception ex)
