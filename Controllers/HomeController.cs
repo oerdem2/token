@@ -53,6 +53,7 @@ public class HomeController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> Authorize(AuthorizationRequest authorizationRequest)
     {
+        
         var authorizationResponse = await _authorizationService.Authorize(authorizationRequest);
         
         var authorizationResult = authorizationResponse.Response;
@@ -65,6 +66,7 @@ public class HomeController : Controller
                 RedirectUri = authorizationResult.RedirectUri,
                 RequestedScopes = authorizationResult.RequestedScopes
             };
+            ViewBag.HasError = false;
             return View("Login",loginModel);
         }
 

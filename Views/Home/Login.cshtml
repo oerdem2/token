@@ -13,7 +13,6 @@
                 <div class="card-body">
 
                     <form class="px-4 py-3" asp-action="Login" asp-controller="Home" method="post">
-
                         <input type="hidden" asp-for="RedirectUri" />
                         <input type="hidden" asp-for="Code" />
                         @for (int i = 0; i < Model.RequestedScopes.Count; i++)
@@ -41,6 +40,11 @@
                         </div>
                         <button type="submit" class="btn btn-primary">Login</button>
                     </form>
+                    @if(ViewBag.HasError){
+                        <div class="alert alert-danger" role="alert">
+                            @ViewBag.ErrorDetail
+                        </div>
+                    }
                     
                     
                 </div>
