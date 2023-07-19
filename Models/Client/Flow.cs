@@ -8,7 +8,7 @@ public class Flow
     public string type { get; set; }
     public string workflow { get; set; }
 
-    [JsonPropertyName("token-duration")]
+    [JsonPropertyName("duration")]
     public string tokenduration { get; set; }
     public string token { get; set; }
 }
