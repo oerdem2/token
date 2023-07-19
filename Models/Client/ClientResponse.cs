@@ -8,19 +8,19 @@ public class ClientResponse
     public string name { get; set; }
     public List<Flow> flows { get; set; }
 
-    [JsonPropertyName("allowed-scope-tags")]
+    [JsonPropertyName("allowedScopeTags")]
     public List<string> allowedscopetags { get; set; }
 
-    [JsonPropertyName("login-url")]
+    [JsonPropertyName("loginUrl")]
     public string loginurl { get; set; }
 
-    [JsonPropertyName("return-url")]
+    [JsonPropertyName("returnUrl")]
     public string returnuri { get; set; }
 
-    [JsonPropertyName("logout-url")]
+    [JsonPropertyName("logoutUrl")]
     public string logouturi { get; set; }
 
-    [JsonPropertyName("client-secret")]
+    [JsonPropertyName("clientSecret")]
     public string clientsecret { get; set; }
     public string pkce { get; set; }
     public Jws jws { get; set; }
