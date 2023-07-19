@@ -18,6 +18,7 @@ using Swashbuckle.AspNetCore.Annotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Dapr.Client;
+using Microsoft.EntityFrameworkCore;
 
 namespace AuthServer.Controllers;
 
@@ -40,6 +41,22 @@ public class HomeController : Controller
         _daprClient = daprClient;
     }
     
+    [HttpPut("Token/Revoke/{reference}")]
+    public async Task<IActionResult> Revoke(string reference)
+    {
+        try
+        {
+            await _databaseContext.Tokens.Where(t => t.Reference == reference).ExecuteUpdateAsync(s => s.SetProperty(t => t.IsActive,false));
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Revoke Tokens Failed. Detail:"+ex.ToString());
+        }
+        
+        return StatusCode(500); 
+    }
+
     [HttpGet("GenerateCodeChallenge")]
     public  IActionResult CodeChallange(string code_verifier)
     {
