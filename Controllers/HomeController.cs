@@ -73,6 +73,11 @@ public class HomeController : Controller
         
         var authorizationResponse = await _authorizationService.Authorize(authorizationRequest);
         
+        if(authorizationResponse.StatusCode != 200)
+        {
+            return Content($"An Error Occured. Detail : "+authorizationResponse.Detail);
+        }
+
         var authorizationResult = authorizationResponse.Response;
 
         if(HttpContext.Session.Get("LoggedUser") == null)
