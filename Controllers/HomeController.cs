@@ -102,6 +102,11 @@ public class HomeController : Controller
         
         try
         {
+            if(string.IsNullOrWhiteSpace(loginRequest.UserName) || string.IsNullOrWhiteSpace(loginRequest.Password))
+            {
+                ViewBag.HasError = true;
+                ViewBag.ErrorDetail = "Reference and Password Can Not Be Empty";
+            }
             var userResponse = await _userService.Login(new LoginRequest(){Reference = loginRequest.UserName,Password = loginRequest.Password});
             if(userResponse.StatusCode != 200)
             {
