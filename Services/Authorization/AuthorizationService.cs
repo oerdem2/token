@@ -153,7 +153,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
 
         var requestedScopes = tokenRequest.scopes.ToList();
 
-        if(!client.allowedscopetags.All(requestedScopes.Contains))
+        if(!requestedScopes.All(client.allowedscopetags.Contains))
         {
             return new ServiceResponse<TokenResponse>(){
                 StatusCode = 473,
@@ -452,7 +452,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
 
             var requestedScopes = request.scope.ToList();
 
-            if(!client.allowedscopetags.All(requestedScopes.Contains))
+            if(!requestedScopes.All(client.allowedscopetags.Contains))
             {
                 return new ServiceResponse<AuthorizationResponse>(){
                     StatusCode = 473,
