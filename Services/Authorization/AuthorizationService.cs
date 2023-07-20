@@ -152,9 +152,8 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         }
 
         var requestedScopes = tokenRequest.scopes.ToList();
-        var clientScopes = client.allowedscopetags.Intersect(requestedScopes);
 
-        if(!clientScopes.All(requestedScopes.Contains))
+        if(!client.allowedscopetags.All(requestedScopes.Contains))
         {
             return new ServiceResponse<TokenResponse>(){
                 StatusCode = 473,
@@ -260,7 +259,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         tokenInfo.IsActive = true;
         tokenInfo.Jwt = access_token;
         tokenInfo.Reference = user.Reference;
-        tokenInfo.Scopes = clientScopes.ToList();
+        tokenInfo.Scopes = requestedScopes.ToList();
         tokenInfo.UserId = user.Id;
 
         var ttl = ((int)(DateTime.Now-tokenInfo.ExpiredAt).TotalSeconds) + 5;
@@ -452,9 +451,8 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             }
 
             var requestedScopes = request.scope.ToList();
-            var clientScopes = client.allowedscopetags.Intersect(requestedScopes);
 
-            if(!clientScopes.All(requestedScopes.Contains))
+            if(!client.allowedscopetags.All(requestedScopes.Contains))
             {
                 return new ServiceResponse<AuthorizationResponse>(){
                     StatusCode = 473,
@@ -466,7 +464,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             {
                 ClientId = request.client_id,
                 RedirectUri = request.redirect_uri,
-                RequestedScopes = clientScopes.ToList(),
+                RequestedScopes = requestedScopes,
                 CodeChallenge = request.code_challenge,
                 CodeChallengeMethod = request.code_challenge_method,
                 CreationTime = DateTime.UtcNow,
@@ -478,7 +476,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
 
             authorizationResponse.RedirectUri = $"{client.returnuri}?response_type=code&state={request.state}";
             authorizationResponse.Code = code;
-            authorizationResponse.RequestedScopes = clientScopes.ToList();
+            authorizationResponse.RequestedScopes = requestedScopes;
             authorizationResponse.State = request.state;
 
             return new ServiceResponse<AuthorizationResponse>(){
