@@ -154,7 +154,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         var requestedScopes = tokenRequest.scopes.ToList();
         var clientScopes = client.allowedscopetags.Intersect(requestedScopes);
 
-        if(!clientScopes.Any())
+        if(!clientScopes.All(requestedScopes.Contains))
         {
             return new ServiceResponse<TokenResponse>(){
                 StatusCode = 473,
@@ -260,7 +260,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         tokenInfo.IsActive = true;
         tokenInfo.Jwt = access_token;
         tokenInfo.Reference = user.Reference;
-        tokenInfo.Scopes = tokenRequest.scopes.ToList();
+        tokenInfo.Scopes = clientScopes.ToList();
         tokenInfo.UserId = user.Id;
 
         var ttl = ((int)(DateTime.Now-tokenInfo.ExpiredAt).TotalSeconds) + 5;
@@ -454,7 +454,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             var requestedScopes = request.scope.ToList();
             var clientScopes = client.allowedscopetags.Intersect(requestedScopes);
 
-            if(!clientScopes.Any())
+            if(!clientScopes.All(requestedScopes.Contains))
             {
                 return new ServiceResponse<AuthorizationResponse>(){
                     StatusCode = 473,
