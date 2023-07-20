@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using token.Models.Client;
 
 namespace AuthServer.Models.Client;
 
@@ -7,7 +8,8 @@ public class ClientResponse
     public string id { get; set; }
     public string name { get; set; }
     public List<Flow> flows { get; set; }
-
+    [JsonPropertyName("allowedGrantTypes")]
+    public ICollection<ClientGrantType> allowedgranttypes{get;set;}
     [JsonPropertyName("allowedScopeTags")]
     public List<string> allowedscopetags { get; set; }
 

@@ -119,6 +119,10 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             {
                 claimInfo = alternativeClaim.Split(".");
                 claimValue = await GetClaimDetail(claimInfo,queryStringForTag,user);
+                if(claimValue != null)
+                {
+                    claims.Add(claimValue);
+                }
             }
         }
 
@@ -139,6 +143,24 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             };
         }
         var client = clientResponse.Response;
+        if(!client.allowedgranttypes.Any(g => g.GrantType == tokenRequest.grant_type))
+        {
+            return new ServiceResponse<TokenResponse>(){
+                StatusCode = 471,
+                Detail = "Client Has No Authorize To Use Requested Grant Type"
+            };
+        }
+
+        var requestedScopes = tokenRequest.scopes.ToList();
+        var clientScopes = client.allowedscopetags.Intersect(requestedScopes);
+
+        if(!clientScopes.Any())
+        {
+            return new ServiceResponse<TokenResponse>(){
+                StatusCode = 473,
+                Detail = "Client is Not Authorized For Requested Scopes"
+            };
+        }
 
         var userResponse = await _userService.Login(new LoginRequest(){Reference = tokenRequest.username,Password = tokenRequest.password});
 
@@ -267,6 +289,14 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
 
         var client = clientResponse.Response;
         
+        if(!client.allowedgranttypes.Any(g => g.GrantType == tokenRequest.grant_type))
+        {
+            return new ServiceResponse<TokenResponse>(){
+                StatusCode = 471,
+                Detail = "Client Has No Authorize To Use Requested Grant Type"
+            };
+        }
+
         var authorizationCodeInfo = await _daprClient.GetStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"],tokenRequest.code);
 
         if(authorizationCodeInfo == null)
