@@ -56,7 +56,7 @@ jobs:
 
       - name: Replace redis-host
         run: |
-          sed -i -e "s/redis-host/${{ secrets.REDIS-HOST }}/g" ./manifest/Dapr/cache-redis-component.yaml
+          sed -i -e "s/redis-host/${{ secrets.REDIS_HOST }}/g" ./manifest/Dapr/cache-redis-component.yaml
           
       - name: Replace vault address
         run: |
