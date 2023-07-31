@@ -1,20 +1,14 @@
-name: CI-CD-API
+name: TOKEN-CI-CD-API
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'src/Api/**'
-      - 'src/Application/**'
   pull_request:
     branches: [ main ]
-    paths:
-      - 'src/Api/**'
-      - 'src/Application/**'
   workflow_dispatch:
 
 env:
-  APP_NAME: amorphie.mocks
-  NAMESPACE: amorphie-mocks
+  APP_NAME: amorphie.token
+  NAMESPACE: amorphie-token
   CLUSTER_NAME: BurganAKS
   CLUSTER_RESOURCE_GROUP: BurganTech
   SECRET: docker-hub
@@ -35,7 +29,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: ./amorphie.mocks/Dockerfile
+          file: ./amorphie.token/Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.APP_NAME }}:${{ github.sha }}
 
@@ -60,13 +54,27 @@ jobs:
           namespace: ${{ env.NAMESPACE }}
           arguments: --force true
 
+      - name: Replace redis-host
+        run: |
+          sed -i -e "s/redis-host/${{ secrets.REDIS-HOST }}/g" ./manifest/Dapr/cache-redis-component.yaml
+          
+      - name: Replace vault address
+        run: |
+          sed -i -e "s/vault-address/${{ secrets.VAULT_ADDRESS }}/g" ./manifest/Dapr/vault-component.yaml
+
+      - name: Replace vault token
+        run: |
+          sed -i -e "s/amorphie-vaulttoken/${{ secrets.VAULT_TOKEN }}/g" ./manifest/Dapr/vault-component.yaml
+
       # Deploy app to AKS
       - uses: azure/k8s-deploy@v1
         with:
           manifests: |
-            ${{ github.workspace }}/amorphie.mocks/manifest/deployment.yaml
-            ${{ github.workspace }}/amorphie.mocks/manifest/service.yaml
-            ${{ github.workspace }}/amorphie.mocks/manifest/ingress.yaml
+            ${{ github.workspace }}/amorphie.token/manifest/deployment.yaml
+            ${{ github.workspace }}/amorphie.token/manifest/service.yaml
+            ${{ github.workspace }}/amorphie.token/manifest/ingress.yaml
+            ${{ github.workspace }}/amorphie.token/manifest/dapr/cache-redis-component.yaml
+            ${{ github.workspace }}/amorphie.token/manifest/dapr/vault-component.yaml
           images: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.APP_NAME }}:${{ github.sha }}
           imagepullsecrets: |

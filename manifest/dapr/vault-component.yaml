@@ -14,6 +14,6 @@ spec:
   - name: skipVerify
     value: true
   - name: enginePath
-    value: "amorphie"
+    value: "amorphie-token"
   - name: vaultKVUsePrefix
     value: false
