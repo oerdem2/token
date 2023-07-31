@@ -70,11 +70,11 @@ jobs:
       - uses: azure/k8s-deploy@v1
         with:
           manifests: |
-            ${{ github.workspace }}/amorphie.token/manifest/deployment.yaml
-            ${{ github.workspace }}/amorphie.token/manifest/service.yaml
-            ${{ github.workspace }}/amorphie.token/manifest/ingress.yaml
-            ${{ github.workspace }}/amorphie.token/manifest/dapr/cache-redis-component.yaml
-            ${{ github.workspace }}/amorphie.token/manifest/dapr/vault-component.yaml
+            ${{ github.workspace }}/manifest/deployment.yaml
+            ${{ github.workspace }}/manifest/service.yaml
+            ${{ github.workspace }}/manifest/ingress.yaml
+            ${{ github.workspace }}/manifest/dapr/cache-redis-component.yaml
+            ${{ github.workspace }}/manifest/dapr/vault-component.yaml
           images: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.APP_NAME }}:${{ github.sha }}
           imagepullsecrets: |
