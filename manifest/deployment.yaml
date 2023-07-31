@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: amorphie-token
+  namespace: amorphie-token
+spec:
+  selector:
+    matchLabels:
+      app: amorphie-token
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: amorphie-token
+      annotations:
+        dapr.io/app-id: amorphie-token
+        dapr.io/enabled: 'true'
+        dapr.io/app-port: '5000'
+    spec:
+      serviceAccountName: amorphie-token
+      containers:
+        - name: amorphie-token
+          image: burganbank/amorphie.token:latest
+          ports:
+            - containerPort: 5000
+          env:
+          - name: ASPNETCORE_ENVIRONMENT
+            value: "Test"
+          - name: EnableApm
+            value: "true"
+          - name: TZ
+            value: Europe/Istanbul
+          - name: DAPR_SECRET_STORE_Name
+            value: user-secretstore
+          - name: DAPR_STATE_STORE_NAME
+            value: amorphie-cache
+          resources:
+            limits:
+              cpu: "1"
+              memory: "2048Mi"
+            requests:
+              cpu: "0.1"
+              memory: "128Mi"
+      volumes:
+        - name: appsettings-test-config-volume
+          configMap:
+            name: appsettings-test-config
