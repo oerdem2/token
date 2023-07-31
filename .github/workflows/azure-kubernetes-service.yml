@@ -56,15 +56,15 @@ jobs:
 
       - name: Replace redis-host
         run: |
-          sed -i -e "s/redis-host/${{ secrets.REDIS_HOST }}/g" manifest/Dapr/cache-redis-component.yaml
+          sed -i -e "s/redis-host/${{ secrets.REDIS_HOST }}/g" /manifest/Dapr/cache-redis-component.yaml
           
       - name: Replace vault address
         run: |
-          sed -i -e "s/vault-address/${{ secrets.VAULT_ADDRESS }}/g" manifest/Dapr/vault-component.yaml
+          sed -i -e "s/vault-address/${{ secrets.VAULT_ADDRESS }}/g" /manifest/Dapr/vault-component.yaml
 
       - name: Replace vault token
         run: |
-          sed -i -e "s/amorphie-vaulttoken/${{ secrets.VAULT_TOKEN }}/g" manifest/Dapr/vault-component.yaml
+          sed -i -e "s/amorphie-vaulttoken/${{ secrets.VAULT_TOKEN }}/g" /manifest/Dapr/vault-component.yaml
 
       # Deploy app to AKS
       - uses: azure/k8s-deploy@v1
