@@ -41,7 +41,3 @@ spec:
             requests:
               cpu: "0.1"
               memory: "128Mi"
-      volumes:
-        - name: appsettings-test-config-volume
-          configMap:
-            name: appsettings-test-config
