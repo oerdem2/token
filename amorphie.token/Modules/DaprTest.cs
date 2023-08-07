@@ -1,10 +1,6 @@
 
-using System.Text.Json;
-using amorphie.token.core.Models.Token;
-using amorphie.token.core.Models;
-using amorphie.token.Services.Authorization;
+
 using Microsoft.AspNetCore.Mvc;
-using amorphie.token.core.Helpers;
 using System.Dynamic;
 
 namespace amorphie.token.Modules;
@@ -15,6 +11,38 @@ public static class DaprTest
     {
         app.MapPost("/start-workflow", startWorkflow)
         .Produces(StatusCodes.Status200OK);
+
+        app.MapPost("/introspect",introspect)
+        .Produces(StatusCodes.Status200OK);
+
+        app.MapGet("/secured",secured)
+        .Produces(StatusCodes.Status200OK);
+
+ 
+
+        static async Task<IResult> secured(
+            HttpRequest request
+        )
+        {
+            foreach (var header in request.Headers)
+            {
+                Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
+            }
+            return Results.Ok(new{token="valid"});
+        }
+
+ 
+
+        static async Task<IResult> introspect(
+        [FromBody] dynamic data,HttpRequest request
+        )
+        {
+            foreach (var header in request.Headers)
+            {
+                Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
+            }
+            return Results.Ok(new{active = true,scope = "test mest"});
+        }
 
         static async Task<IResult> startWorkflow(
         [FromServices] DaprClient daprClient,

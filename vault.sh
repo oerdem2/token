@@ -10,7 +10,7 @@ curl -X POST 'http://vault:8200/v1/sys/mounts/token-secretstore' -H "Content-Typ
     }
 }
 ' && sleep 5 &&
-curl -X POST 'http://vault:8200/v2/token-secretstore/ServiceConnections' -H "Content-Type: application/json" -H "X-Vault-Token: admin" -d '
+curl -X POST 'http://vault:8200/v1/token-secretstore/ServiceConnections' -H "Content-Type: application/json" -H "X-Vault-Token: admin" -d '
 { 
     "DatabaseConnection":"Host=localhost:5432;Database=workflow;Username=postgres;Password=postgres;Include Error Detail=true;",
     "ClientBaseAddress" : "http://localhost:3000/",
