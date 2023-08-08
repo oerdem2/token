@@ -76,7 +76,10 @@ app.MapCheckUserControlEndpoints();
 app.MapCheckScopesControlEndpoints();
 app.MapGenerateTokensControlEndpoints();
 app.MapCheckUserStateControlEndpoints();
+app.MapLoginOtpFlowControlEndpoints();
+app.MapSetStateControlEndpoints();
 app.MapDaprTestControlEndpoints();
+app.MapCheckOtpControlEndpoints();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

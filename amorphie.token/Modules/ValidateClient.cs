@@ -36,6 +36,7 @@ public static class ValidateClient
                 dynamic variables = new ExpandoObject();
                 variables.status = true;
                 variables.clientSerialized = clientResult.Response;
+                variables.loginFlow = "Otp";
                 return Results.Ok(variables);
             }
             else

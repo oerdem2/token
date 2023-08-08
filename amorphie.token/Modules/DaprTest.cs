@@ -18,7 +18,8 @@ public static class DaprTest
         app.MapGet("/secured",secured)
         .Produces(StatusCodes.Status200OK);
 
- 
+        app.MapPost("/checkOtp",confirmOtp)
+        .Produces(StatusCodes.Status200OK);
 
         static async Task<IResult> secured(
             HttpRequest request
@@ -63,6 +64,24 @@ public static class DaprTest
 
             messageData.messageName  = "start-password-flow";
             messageData.variables = data;
+            await daprClient.InvokeBindingAsync<dynamic,dynamic>("zeebe-local","publish-message",messageData);
+            return Results.Ok();
+        }
+
+        static async Task<IResult> confirmOtp(
+        [FromServices] DaprClient daprClient,
+        [FromBody] dynamic body
+        )
+        {
+            dynamic messageData = new ExpandoObject();
+
+            dynamic data = new ExpandoObject();
+            
+            data.otpValue = body.GetProperty("otpValue").ToString();;
+
+            messageData.messageName  = "send-otp-login-flow";
+            messageData.variables = data;
+            messageData.correlationKey = "12312512512616161";
             await daprClient.InvokeBindingAsync<dynamic,dynamic>("zeebe-local","publish-message",messageData);
             return Results.Ok();
         }
