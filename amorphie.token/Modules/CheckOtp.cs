@@ -28,7 +28,7 @@ public static class CheckOtp
             var providedCode = entityObj["otpValue"].ToString();
 
             var generatedCode = await daprClient.GetStateAsync<string>(configuration["DAPR_STATE_STORE_NAME"],$"{transactionId}_Login_Otp_Code");
-            
+                  
             if(providedCode == generatedCode)
             {
                 dynamic variables = new ExpandoObject();
