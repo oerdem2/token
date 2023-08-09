@@ -251,7 +251,7 @@
   <bpmn:message id="Message_32a91dl" name="check-otp-login-flow" />
   <bpmn:message id="Message_18f9q5u" name="send-otp-login-flow">
     <bpmn:extensionElements>
-      <zeebe:subscription correlationKey="=transactionId" />
+      <zeebe:subscription correlationKey="=InstanceId" />
     </bpmn:extensionElements>
   </bpmn:message>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
