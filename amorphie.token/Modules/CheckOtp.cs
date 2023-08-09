@@ -24,7 +24,7 @@ public static class CheckOtp
             Console.WriteLine("check otp body:"+body.ToString());
             Console.WriteLine("check otp txn Id:"+transactionId);
             var providedCode = body.GetProperty("TRX-send-otp-login-flow");
-            providedCode = providedCode = providedCode.GetProperty("Data");
+            providedCode = providedCode.GetProperty("Data");
             providedCode = providedCode.GetProperty("entityData");
             providedCode = providedCode.GetProperty("otpValue");
             providedCode = providedCode.ToString();
