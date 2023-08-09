@@ -21,13 +21,12 @@ public static class CheckOtp
         )
         {
             var transactionId = body.GetProperty("InstanceId").ToString();
-            Console.WriteLine("check otp body:"+body.ToString());
             Console.WriteLine("check otp txn Id:"+transactionId);
-            var providedCode = body.GetProperty("TRX-send-otp-login-flow");
-            providedCode = providedCode.GetProperty("Data");
-            providedCode = providedCode.GetProperty("entityData");
-            providedCode = providedCode.GetProperty("otpValue");
-            providedCode = providedCode.ToString();
+            var entityData = body.GetProperty("TRX-send-otp-login-flow").GetProperty("Data").GetProperty("entityData").ToString();
+
+            var entityObj = JsonSerializer.Deserialize<dynamic>(entityData);
+            var providedCode = entityData.otpValue;
+
             var generatedCode = await daprClient.GetStateAsync<string>(configuration["DAPR_STATE_STORE_NAME"],$"{transactionId}_Login_Otp_Code");
             
             if(providedCode == generatedCode)
