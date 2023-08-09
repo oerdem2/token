@@ -17,7 +17,10 @@ public static class CheckGrantTypes
         [FromServices] IAuthorizationService authorizationService
         )
         {
-            var requestBodySerialized = body.GetProperty("body").ToString();
+            var transitionName = body.GetProperty("LastTransition").ToString();
+
+            var requestBodySerialized = body.GetProperty($"TRX-{transitionName}").GetProperty("Data").GetProperty("entityData").ToString();
+            
             
             TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized,new JsonSerializerOptions
             {

@@ -24,7 +24,7 @@ public static class ValidateClient
         {
             var transitionName = body.GetProperty("LastTransition").ToString();
             Console.WriteLine("Client validate worker txn name:"+transitionName);
-            var requestBodySerialized = body.GetProperty($"TRX-{transitionName}").GetProperty("Data").GetProperty("entityData");
+            var requestBodySerialized = body.GetProperty($"TRX-{transitionName}").GetProperty("Data").GetProperty("entityData").ToString();
             Console.WriteLine("Client validate worker request body:"+requestBodySerialized);
             var requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized,new JsonSerializerOptions
             {
