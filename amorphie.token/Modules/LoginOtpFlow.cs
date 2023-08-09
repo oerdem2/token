@@ -21,7 +21,7 @@ public static class LoginOtpFlow
         )
         {
             var transactionId = body.GetProperty("InstanceId").ToString();
-            
+            Console.WriteLine("generate otp txn Id:"+transactionId);
             var rand = new Random();
             var code = String.Empty;
 
