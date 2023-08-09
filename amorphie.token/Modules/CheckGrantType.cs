@@ -9,7 +9,7 @@ public static class CheckGrantTypes
 {
     public static void MapCheckGrantTypesControlEndpoints(this WebApplication app)
     {
-        app.MapPost("/check-grant-type", checkGrantTypes)
+        app.MapPost("/amorphie-token-check-grant-type", checkGrantTypes)
         .Produces(StatusCodes.Status200OK);
 
         static async Task<IResult> checkGrantTypes(

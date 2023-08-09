@@ -10,7 +10,7 @@ public static class LoginOtpFlow
 {
     public static void MapLoginOtpFlowControlEndpoints(this WebApplication app)
     {
-        app.MapPost("/login-otp-flow", loginOtpFlow)
+        app.MapPost("/amorphie-token-login-otp-flow", loginOtpFlow)
         .Produces(StatusCodes.Status200OK);
 
         static async Task<IResult> loginOtpFlow(
@@ -20,7 +20,7 @@ public static class LoginOtpFlow
         DaprClient daprClient
         )
         {
-            var transactionId = body.GetProperty("transactionId").ToString();
+            var transactionId = body.GetProperty("InstanceId").ToString();
             
             var rand = new Random();
             var code = String.Empty;

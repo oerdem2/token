@@ -14,7 +14,7 @@ public static class ValidateClient
 {
     public static void MapValidateClientControlEndpoints(this WebApplication app)
     {
-        app.MapPost("/validate-client", validateClient)
+        app.MapPost("/amorphie-token-validate-client", validateClient)
         .Produces(StatusCodes.Status200OK);
 
         static async Task<IResult> validateClient(
@@ -22,7 +22,9 @@ public static class ValidateClient
         [FromServices] IClientService clientService
         )
         {
-            var requestBodySerialized = body.GetProperty("body").ToString();
+            var transitionName = body.GetProperty("LastTransition").ToString();
+
+            var requestBodySerialized = body.GetProperty($"TRX-{transitionName}").GetProperty("Data").GetProperty("entityData");
             
             var requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized,new JsonSerializerOptions
             {

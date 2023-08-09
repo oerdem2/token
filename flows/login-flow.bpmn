@@ -23,35 +23,35 @@
     </bpmn:exclusiveGateway>
     <bpmn:serviceTask id="Activity_038ddcc" name="ValidateClient">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="validate-client" />
+        <zeebe:taskDefinition type="amorphie-token-validate-client" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_09kjbt0</bpmn:incoming>
       <bpmn:outgoing>Flow_0lkav5t</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:serviceTask id="Activity_1xxrx42" name="CheckGrantType">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="check-grant-type" />
+        <zeebe:taskDefinition type="amorphie-token-check-grant-type" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1g4x8f3</bpmn:incoming>
       <bpmn:outgoing>Flow_1ghwvks</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:serviceTask id="Activity_0df4e5s" name="CheckScopes">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="check-scopes" />
+        <zeebe:taskDefinition type="amorphie-token-check-scopes" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1eqjd87</bpmn:incoming>
       <bpmn:outgoing>Flow_1mu8ddn</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:serviceTask id="Activity_1vegwev" name="CheckUser">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="check-user" />
+        <zeebe:taskDefinition type="amorphie-token-check-user" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1kae7dh</bpmn:incoming>
       <bpmn:outgoing>Flow_115p3r0</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:serviceTask id="Activity_0n3bqd8" name="CheckUserState">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="check-user-state" />
+        <zeebe:taskDefinition type="amorphie-token-check-user-state" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_09014yz</bpmn:incoming>
       <bpmn:incoming>Flow_0o5pgyx</bpmn:incoming>
@@ -64,7 +64,7 @@
     </bpmn:exclusiveGateway>
     <bpmn:serviceTask id="Activity_1iry6c5" name="GenerateTokens">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="generate-tokens" />
+        <zeebe:taskDefinition type="amorphie-token-generate-tokens" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1vwpme7</bpmn:incoming>
       <bpmn:outgoing>Flow_01jx1rm</bpmn:outgoing>
@@ -102,7 +102,10 @@
     </bpmn:endEvent>
     <bpmn:serviceTask id="Activity_0q8wwau" name="SetState">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="set-state" />
+        <zeebe:taskDefinition type="amorphie-workflow-set-state" />
+        <zeebe:taskHeaders>
+          <zeebe:header key="TARGET_STATE" value="default" />
+        </zeebe:taskHeaders>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_00y8gkd</bpmn:incoming>
       <bpmn:outgoing>Flow_1w6ssk1</bpmn:outgoing>
@@ -113,7 +116,10 @@
     <bpmn:sequenceFlow id="Flow_1w6ssk1" sourceRef="Activity_0q8wwau" targetRef="Event_1t5uj9t" />
     <bpmn:serviceTask id="Activity_0cg0y35" name="SetState">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="set-state" />
+        <zeebe:taskDefinition type="amorphie-workflow-set-state" />
+        <zeebe:taskHeaders>
+          <zeebe:header key="TARGET_STATE" value="error" />
+        </zeebe:taskHeaders>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_005m4th</bpmn:incoming>
       <bpmn:incoming>Flow_0bbyphn</bpmn:incoming>
@@ -154,7 +160,7 @@
     </bpmn:sequenceFlow>
     <bpmn:serviceTask id="Activity_0ti4uas" name="LoginOtpFlow">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="login-otp-flow" />
+        <zeebe:taskDefinition type="amorphie-token-login-otp-flow" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1dt0poo</bpmn:incoming>
       <bpmn:outgoing>Flow_1lifyxj</bpmn:outgoing>
@@ -181,7 +187,10 @@
     <bpmn:sequenceFlow id="Flow_0dlhjen" sourceRef="Gateway_0rb4ux7" targetRef="Event_0yasv0q" />
     <bpmn:serviceTask id="Activity_1mkji7m" name="SetState">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="set-state" />
+        <zeebe:taskDefinition type="amorphie-workflow-set-state" />
+        <zeebe:taskHeaders>
+          <zeebe:header key="TARGET_STATE" value="error" />
+        </zeebe:taskHeaders>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_16bd4mz</bpmn:incoming>
       <bpmn:incoming>Flow_0y04hjl</bpmn:incoming>
@@ -190,7 +199,7 @@
     <bpmn:sequenceFlow id="Flow_16bd4mz" sourceRef="Event_1tx2alc" targetRef="Activity_1mkji7m" />
     <bpmn:serviceTask id="Activity_0vpp8nt" name="CheckOtpLoginFlow">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="check-otp-login-flow" />
+        <zeebe:taskDefinition type="amorphie-token-check-otp-login-flow" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1o38azi</bpmn:incoming>
       <bpmn:outgoing>Flow_0ma0rfz</bpmn:outgoing>
@@ -198,7 +207,10 @@
     <bpmn:sequenceFlow id="Flow_1o38azi" sourceRef="Event_0yasv0q" targetRef="Activity_0vpp8nt" />
     <bpmn:serviceTask id="Activity_0qswos6" name="SetState">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="set-state" />
+        <zeebe:taskDefinition type="amorphie-workflow-set-state" />
+        <zeebe:taskHeaders>
+          <zeebe:header key="TARGET_STATE" value="default" />
+        </zeebe:taskHeaders>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1dnohw3</bpmn:incoming>
       <bpmn:outgoing>Flow_1dt0poo</bpmn:outgoing>

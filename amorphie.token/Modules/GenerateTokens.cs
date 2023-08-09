@@ -13,7 +13,7 @@ public static class GenerateTokens
 {
     public static void MapGenerateTokensControlEndpoints(this WebApplication app)
     {
-        app.MapPost("/generate-tokens", generateTokens)
+        app.MapPost("/amorphie-token-generate-tokens", generateTokens)
         .Produces(StatusCodes.Status200OK);
 
         static async Task<IResult> generateTokens(
@@ -22,8 +22,9 @@ public static class GenerateTokens
         )
         {
             
+            var transitionName = body.GetProperty("LastTransition").ToString();
 
-            var requestBodySerialized = body.GetProperty("body").ToString();
+            var requestBodySerialized = body.GetProperty($"TRX-{transitionName}").GetProperty("Data").GetProperty("entityData");
             
             TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized,new JsonSerializerOptions
             {

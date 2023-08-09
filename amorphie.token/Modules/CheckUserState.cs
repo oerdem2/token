@@ -13,7 +13,7 @@ public static class CheckUserState
 {
     public static void MapCheckUserStateControlEndpoints(this WebApplication app)
     {
-        app.MapPost("/check-user-state", checkUserState)
+        app.MapPost("/amorphie-token-check-user-state", checkUserState)
         .Produces(StatusCodes.Status200OK);
 
         static async Task<IResult> checkUserState(

@@ -13,7 +13,7 @@ public static class CheckScopes
 {
     public static void MapCheckScopesControlEndpoints(this WebApplication app)
     {
-        app.MapPost("/check-scopes", checkScopes)
+        app.MapPost("/amorphie-token-check-scopes", checkScopes)
         .Produces(StatusCodes.Status200OK);
 
         static async Task<IResult> checkScopes(
@@ -21,7 +21,9 @@ public static class CheckScopes
         [FromServices] IAuthorizationService authorizationService
         )
         {
-            var requestBodySerialized = body.GetProperty("body").ToString();
+            var transitionName = body.GetProperty("LastTransition").ToString();
+
+            var requestBodySerialized = body.GetProperty($"TRX-{transitionName}").GetProperty("Data").GetProperty("entityData");
             
             TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized,new JsonSerializerOptions
             {

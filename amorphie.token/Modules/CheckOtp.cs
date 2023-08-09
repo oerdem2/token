@@ -10,7 +10,7 @@ public static class CheckOtp
 {
     public static void MapCheckOtpControlEndpoints(this WebApplication app)
     {
-        app.MapPost("/check-otp-login-flow", checkOtp)
+        app.MapPost("/amorphie-token-check-otp-login-flow", checkOtp)
         .Produces(StatusCodes.Status200OK);
 
         static async Task<IResult> checkOtp(
@@ -20,7 +20,7 @@ public static class CheckOtp
         DaprClient daprClient
         )
         {
-            var transactionId = body.GetProperty("transactionId").ToString();
+            var transactionId = body.GetProperty("InstanceId").ToString();
             
             var providedCode = body.GetProperty("otpValue").ToString();
             var generatedCode = await daprClient.GetStateAsync<string>(configuration["DAPR_STATE_STORE_NAME"],$"{transactionId}_Login_Otp_Code");
