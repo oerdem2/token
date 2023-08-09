@@ -24,8 +24,8 @@ public static class CheckOtp
             Console.WriteLine("check otp txn Id:"+transactionId);
             var entityData = body.GetProperty("TRX-send-otp-login-flow").GetProperty("Data").GetProperty("entityData").ToString();
 
-            var entityObj = JsonSerializer.Deserialize<dynamic>(entityData);
-            var providedCode = entityObj.otpValue;
+            var entityObj = JsonSerializer.Deserialize<Dictionary<string,object>>(entityData);
+            var providedCode = entityObj["otpValue"].ToString();
 
             var generatedCode = await daprClient.GetStateAsync<string>(configuration["DAPR_STATE_STORE_NAME"],$"{transactionId}_Login_Otp_Code");
             
