@@ -21,7 +21,14 @@ public static class LoginOtpFlow
         )
         {
             var transactionId = body.GetProperty("InstanceId").ToString();
-            Console.WriteLine("generate otp txn Id:"+transactionId);
+            
+            var userInfoSerialized = body.GetProperty("userSerialized").ToString();
+            
+            LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized,new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
             var rand = new Random();
             var code = String.Empty;
 
@@ -36,9 +43,9 @@ public static class LoginOtpFlow
                 Sender="AutoDetect",
                 SmsType="Otp",
                 Phone=new{
-                    CountryCode=configuration["PhoneTestCountryCode"],
-                    Prefix=configuration["PhoneTestPrefix"],
-                    Number=configuration["PhoneTestNumber"]
+                    CountryCode=userInfo.MobilePhone.CountryCode,
+                    Prefix=userInfo.MobilePhone.Prefix,
+                    Number=userInfo.MobilePhone.Number
                 },
                 Content = $"{code} şifresi ile giriş yapabilirsiniz",
                 Process = new{
