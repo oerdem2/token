@@ -58,7 +58,7 @@ public static class GenerateTokens
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.tokenResponse = result.Detail;
-
+                variables.LastTransition = "token-error";
                 return Results.Ok(variables);
             }
 

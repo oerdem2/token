@@ -37,6 +37,7 @@ public static class CheckUser
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = userResponse.Detail;
+                variables.LastTransition = "token-error";
                 return Results.Ok(variables);
             }
             else

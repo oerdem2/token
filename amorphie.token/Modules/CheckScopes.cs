@@ -44,6 +44,7 @@ public static class CheckScopes
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = "Client is Not Authorized For Requested Scopes";
+                variables.LastTransition = "token-error";
                 return Results.Ok(variables);
             }
             else

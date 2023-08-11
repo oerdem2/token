@@ -46,6 +46,7 @@ public static class ValidateClient
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = clientResult.Detail;
+                variables.LastTransition = "token-error";
                 return Results.Ok(variables);
             }
         }

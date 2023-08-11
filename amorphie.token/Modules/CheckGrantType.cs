@@ -39,6 +39,7 @@ public static class CheckGrantTypes
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = "Client Has No Authorize To Use Requested Grant Type";
+                variables.LastTransition = "token-error";
                 return Results.Ok(variables);
             }
             else

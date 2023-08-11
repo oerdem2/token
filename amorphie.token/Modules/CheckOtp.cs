@@ -40,6 +40,7 @@ public static class CheckOtp
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = "Otp Check Failed";
+                variables.LastTransition = "token-error";
                 return Results.Ok(variables);
             }
         }

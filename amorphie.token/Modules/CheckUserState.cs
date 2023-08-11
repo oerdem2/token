@@ -35,6 +35,7 @@ public static class CheckUserState
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = "User is disabled";
+                variables.LastTransition = "token-error";
                 return Results.Ok(variables);
             }
             else
