@@ -1,13 +1,13 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: login-otp-flow
+  name: amorphie-token-login-otp-flow
 spec:
   type: bindings.zeebe.jobworker
   version: v1
   metadata:
   - name: jobType
-    value: login-otp-flow
+    value: amorphie-token-login-otp-flow
   - name: gatewayAddr
     value: localhost:26500
   - name: gatewayKeepAlive

@@ -1,13 +1,13 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: generate-tokens
+  name: amorphie-token-generate-tokens
 spec:
   type: bindings.zeebe.jobworker
   version: v1
   metadata:
   - name: jobType
-    value: generate-tokens
+    value: amorphie-token-generate-tokens
   - name: gatewayAddr
     value: localhost:26500
   - name: gatewayKeepAlive

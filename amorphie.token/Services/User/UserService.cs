@@ -56,6 +56,7 @@ public class UserService : ServiceBase, IUserService
             }
             else
             {
+                Logger.LogError("An Error Occured At User Invocation | Detail:"+ex.ToString());
                 return new ServiceResponse<LoginResponse>(){
                         StatusCode = 500,
                         Detail = "Server Error"

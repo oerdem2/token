@@ -47,21 +47,23 @@ public static class DaprTest
 
         static async Task<IResult> startWorkflow(
         [FromServices] DaprClient daprClient,
-        [FromBody] dynamic body
+        [FromBody] dynamic body,
+        [FromServices] IUserService  userService
         )
         {
+            var userResponse = await userService.Login(new LoginRequest(){Reference = "123",Password = "21125"});
+
             dynamic messageData = new ExpandoObject();
 
-            dynamic data = new ExpandoObject();
-            data.transactionId = "12312512512616161";
+            dynamic data = new Dictionary<string,dynamic>();
+            dynamic targetObj = new ExpandoObject();
 
-            dynamic client = new ExpandoObject();
-            client.Id = "1231312";
-            client.Secret = "2151251251";
-            data.Client = client;
-
-            data.body = body;
-
+            data.Add("transactionId","12312512512616161");
+            data.Add("LastTransition","send-otp-login-flow");
+            data.Add("InstanceId","121321321");
+            targetObj.Data = new ExpandoObject();
+            targetObj.Data.entityData = body;
+            data.Add("TRX-send-otp-login-flow",targetObj);
             messageData.messageName  = "start-password-flow";
             messageData.variables = data;
             await daprClient.InvokeBindingAsync<dynamic,dynamic>("zeebe-local","publish-message",messageData);
@@ -82,6 +84,7 @@ public static class DaprTest
             messageData.messageName  = "send-otp-login-flow";
             messageData.variables = data;
             messageData.correlationKey = "12312512512616161";
+            
             await daprClient.InvokeBindingAsync<dynamic,dynamic>("zeebe-local","publish-message",messageData);
             return Results.Ok();
         }
