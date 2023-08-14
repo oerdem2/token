@@ -2,6 +2,7 @@
 
 using Microsoft.AspNetCore.Mvc;
 using System.Dynamic;
+using System.Text.Json;
 
 namespace amorphie.token.Modules;
 
@@ -51,6 +52,13 @@ public static class DaprTest
         [FromServices] IUserService  userService
         )
         {
+            var client = new HttpClient();
+            var res = await client.GetAsync("http://localhost:3000/test");
+
+            dynamic dynoObject = JsonSerializer.Deserialize<dynamic>(await res.Content.ReadAsStringAsync()); 
+            dynamic dynoData = body.GetProperty("TRX-start-password-flow").GetProperty("Data");
+            
+
             var userResponse = await userService.Login(new LoginRequest(){Reference = "123",Password = "21125"});
 
             dynamic messageData = new ExpandoObject();

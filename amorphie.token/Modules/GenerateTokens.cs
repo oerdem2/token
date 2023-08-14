@@ -22,8 +22,15 @@ public static class GenerateTokens
         )
         {
             var transitionName = body.GetProperty("LastTransition").ToString();
-            dynamic bodyData = body.GetProperty("TRX-start-password-flow").GetProperty("Data");
 
+            var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
+
+            dynamic dataChanged = Newtonsoft.Json.JsonConvert.DeserializeObject<ExpandoObject>(dataBody.ToString());
+
+            dynamic targetObject = new System.Dynamic.ExpandoObject();
+
+            targetObject.Data = dataChanged ;
+        
             var requestBodySerialized = body.GetProperty("TRX-start-password-flow").GetProperty("Data").GetProperty("entityData").ToString();
             
             TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized,new JsonSerializerOptions
@@ -49,10 +56,13 @@ public static class GenerateTokens
 
             if(result.StatusCode == 200)
             {
-                bodyData.additionalData = result.Response;
+                dataChanged.additionalData = result.Response;
+                targetObject.Data = dataChanged;
+                targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
+                targetObject.TriggeredByBehalfOf =Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf ").ToString());
                 dynamic variables = new Dictionary<string,dynamic>();
                 variables.Add("status" ,true);
-                variables.Add($"TRX-{transitionName}",bodyData);
+                variables.Add($"TRX-{transitionName}",targetObject);
                 return Results.Ok(variables);
             }
             else
