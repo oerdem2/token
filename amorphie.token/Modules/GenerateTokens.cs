@@ -59,7 +59,7 @@ public static class GenerateTokens
                 dataChanged.additionalData = result.Response;
                 targetObject.Data = dataChanged;
                 targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
-                targetObject.TriggeredByBehalfOf =Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf ").ToString());
+                targetObject.TriggeredByBehalfOf =Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
                 dynamic variables = new Dictionary<string,dynamic>();
                 variables.Add("status" ,true);
                 variables.Add($"TRX-{transitionName}",targetObject);
