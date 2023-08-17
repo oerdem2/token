@@ -2,6 +2,8 @@
 
 using Microsoft.AspNetCore.Mvc;
 using System.Dynamic;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 
 namespace amorphie.token.Modules;
@@ -26,6 +28,7 @@ public static class DaprTest
             HttpRequest request
         )
         {
+           
             foreach (var header in request.Headers)
             {
                 Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
