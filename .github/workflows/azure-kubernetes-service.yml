@@ -5,7 +5,7 @@ on:
       - 'main'
       - 'LoginFlow'
     paths:
-      - './amorphie.mocks'
+      - './amorphie.token'
   pull_request:
     types:
       - closed
@@ -13,7 +13,7 @@ on:
       - 'main'
       - 'LoginFlow'
     paths:
-      - './amorphie.mocks'
+      - './amorphie.token'
 
 env:
   APP_NAME: amorphie.token
