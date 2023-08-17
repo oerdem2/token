@@ -22,13 +22,25 @@ public static class DaprTest
         app.MapPost("/checkOtp",confirmOtp)
         .Produces(StatusCodes.Status200OK);
 
+        app.MapGet("/oidc",oidc)
+        .Produces(StatusCodes.Status200OK);
+
+        static async Task<IResult> oidc(
+            HttpRequest request
+        )
+        {
+            Console.WriteLine("geldi oidc");
+            await Task.CompletedTask;
+            return Results.Content("test");
+        }
+
         static async Task<IResult> secured(
             HttpRequest request
         )
         {
             foreach (var header in request.Headers)
             {
-                Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
+                Console.WriteLine($"Secured header {header.Key}:{header.Value} ");
             }
             return Results.Ok(new{token="valid"});
         }
@@ -36,14 +48,14 @@ public static class DaprTest
  
 
         static async Task<IResult> introspect(
-        [FromBody] dynamic data,HttpRequest request
+        HttpRequest request
         )
         {
             foreach (var header in request.Headers)
             {
                 Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
             }
-            return Results.Ok(new{active = true,scope = "test mest"});
+            return Results.Json(new{active = true,name="sercan"});
         }
 
         static async Task<IResult> startWorkflow(
