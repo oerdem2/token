@@ -2,6 +2,9 @@
 
 using Microsoft.AspNetCore.Mvc;
 using System.Dynamic;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 
 namespace amorphie.token.Modules;
 
@@ -18,15 +21,29 @@ public static class DaprTest
         app.MapGet("/secured",secured)
         .Produces(StatusCodes.Status200OK);
 
- 
+        app.MapPost("/checkOtp",confirmOtp)
+        .Produces(StatusCodes.Status200OK);
+
+        app.MapGet("/oidc",oidc)
+        .Produces(StatusCodes.Status200OK);
+
+        static async Task<IResult> oidc(
+            HttpRequest request
+        )
+        {
+            Console.WriteLine("geldi oidc");
+            await Task.CompletedTask;
+            return Results.Content("test");
+        }
 
         static async Task<IResult> secured(
             HttpRequest request
         )
         {
+           
             foreach (var header in request.Headers)
             {
-                Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
+                Console.WriteLine($"Secured header {header.Key}:{header.Value} ");
             }
             return Results.Ok(new{token="valid"});
         }
@@ -34,17 +51,49 @@ public static class DaprTest
  
 
         static async Task<IResult> introspect(
-        [FromBody] dynamic data,HttpRequest request
+        HttpRequest request
         )
         {
             foreach (var header in request.Headers)
             {
                 Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
             }
-            return Results.Ok(new{active = true,scope = "test mest"});
+            return Results.Json(new{active = true,name="sercan"});
         }
 
         static async Task<IResult> startWorkflow(
+        [FromServices] DaprClient daprClient,
+        [FromBody] dynamic body,
+        [FromServices] IUserService  userService
+        )
+        {
+            var client = new HttpClient();
+            var res = await client.GetAsync("http://localhost:3000/test");
+
+            dynamic dynoObject = JsonSerializer.Deserialize<dynamic>(await res.Content.ReadAsStringAsync()); 
+            dynamic dynoData = body.GetProperty("TRX-start-password-flow").GetProperty("Data");
+            
+
+            var userResponse = await userService.Login(new LoginRequest(){Reference = "123",Password = "21125"});
+
+            dynamic messageData = new ExpandoObject();
+
+            dynamic data = new Dictionary<string,dynamic>();
+            dynamic targetObj = new ExpandoObject();
+
+            data.Add("transactionId","12312512512616161");
+            data.Add("LastTransition","send-otp-login-flow");
+            data.Add("InstanceId","121321321");
+            targetObj.Data = new ExpandoObject();
+            targetObj.Data.entityData = body;
+            data.Add("TRX-send-otp-login-flow",targetObj);
+            messageData.messageName  = "start-password-flow";
+            messageData.variables = data;
+            await daprClient.InvokeBindingAsync<dynamic,dynamic>("zeebe-local","publish-message",messageData);
+            return Results.Ok();
+        }
+
+        static async Task<IResult> confirmOtp(
         [FromServices] DaprClient daprClient,
         [FromBody] dynamic body
         )
@@ -52,17 +101,13 @@ public static class DaprTest
             dynamic messageData = new ExpandoObject();
 
             dynamic data = new ExpandoObject();
-            data.transactionId = "12312512512616161";
+            
+            data.otpValue = body.GetProperty("otpValue").ToString();;
 
-            dynamic client = new ExpandoObject();
-            client.Id = "1231312";
-            client.Secret = "2151251251";
-            data.Client = client;
-
-            data.body = body;
-
-            messageData.messageName  = "start-password-flow";
+            messageData.messageName  = "send-otp-login-flow";
             messageData.variables = data;
+            messageData.correlationKey = "12312512512616161";
+            
             await daprClient.InvokeBindingAsync<dynamic,dynamic>("zeebe-local","publish-message",messageData);
             return Results.Ok();
         }

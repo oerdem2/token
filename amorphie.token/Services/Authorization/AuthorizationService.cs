@@ -171,12 +171,15 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         }
         
 
+        var jti = Guid.NewGuid();
+
         if(accessInfo != null)
         {
             foreach(var accessClaim in accessInfo.claims)
             {
                 var populatedClaims = await PopulateClaims(accessInfo.claims,user);
                 tokenClaims.AddRange(populatedClaims);
+                tokenClaims.Add(new Claim("jti",jti.ToString()));
             }
         }
 
@@ -192,14 +195,8 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         tokenResponse.access_token = access_token;
         tokenResponse.expires = accessDuration;
 
-        var tokenInfo = new TokenInfo();
-        tokenInfo.ClientId = tokenRequest.client_id;
-        tokenInfo.ExpiredAt = expires;
-        tokenInfo.IsActive = true;
-        tokenInfo.Jwt = access_token;
-        tokenInfo.Reference = user.Reference;
-        tokenInfo.Scopes = tokenRequest.scopes.ToList();
-        tokenInfo.UserId = user.Id;
+        var tokenInfo = JwtHelper.CreateTokenInfo(jti,tokenRequest.client_id,expires,true,access_token,user.Reference
+        ,tokenRequest.scopes.ToList().ToList(),user.Id);
 
         var ttl = ((int)(DateTime.Now-tokenInfo.ExpiredAt).TotalSeconds) + 5;
         await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"],tokenInfo.Jwt,tokenInfo,metadata:new Dictionary<string, string> { { "ttlInSeconds", ttl.ToString() } });
@@ -318,12 +315,14 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         }
         
 
+        var jti = Guid.NewGuid();
         if(accessInfo != null)
         {
             foreach(var accessClaim in accessInfo.claims)
             {
                 var populatedClaims = await PopulateClaims(accessInfo.claims,user);
                 tokenClaims.AddRange(populatedClaims);
+                tokenClaims.Add(new Claim("jti",jti.ToString()));
             }
         }
 
@@ -339,14 +338,8 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         tokenResponse.access_token = access_token;
         tokenResponse.expires = accessDuration;
 
-        var tokenInfo = new TokenInfo();
-        tokenInfo.ClientId = tokenRequest.client_id;
-        tokenInfo.ExpiredAt = expires;
-        tokenInfo.IsActive = true;
-        tokenInfo.Jwt = access_token;
-        tokenInfo.Reference = user.Reference;
-        tokenInfo.Scopes = requestedScopes.ToList();
-        tokenInfo.UserId = user.Id;
+        var tokenInfo = JwtHelper.CreateTokenInfo(jti,tokenRequest.client_id,expires,true,access_token,user.Reference
+        ,requestedScopes.ToList(),user.Id);
 
         var ttl = ((int)(DateTime.Now-tokenInfo.ExpiredAt).TotalSeconds) + 5;
         await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"],tokenInfo.Jwt,tokenInfo,metadata:new Dictionary<string, string> { { "ttlInSeconds", ttl.ToString() } });
@@ -462,12 +455,14 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             Logger.LogError(ex.Message);
         }
 
+        var jti = Guid.NewGuid();
         if(accessInfo != null)
         {
             foreach(var accessClaim in accessInfo.claims)
             {
                 var populatedClaims = await PopulateClaims(accessInfo.claims,authorizationCodeInfo.Subject);
                 tokenClaims.AddRange(populatedClaims);
+                tokenClaims.Add(new Claim("jti",jti.ToString()));
             }
         }
 
@@ -483,14 +478,8 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         tokenResponse.access_token = access_token;
         tokenResponse.expires = accessDuration;
 
-        var tokenInfo = new TokenInfo();
-        tokenInfo.ClientId = authorizationCodeInfo.ClientId;
-        tokenInfo.ExpiredAt = expires;
-        tokenInfo.IsActive = true;
-        tokenInfo.Jwt = access_token;
-        tokenInfo.Reference = authorizationCodeInfo.Subject.Reference;
-        tokenInfo.Scopes = authorizationCodeInfo.RequestedScopes.ToList();
-        tokenInfo.UserId = authorizationCodeInfo.Subject.Id;
+        var tokenInfo = JwtHelper.CreateTokenInfo(jti,authorizationCodeInfo.ClientId,expires,true,access_token,authorizationCodeInfo.Subject.Reference
+        ,authorizationCodeInfo.RequestedScopes.ToList(),authorizationCodeInfo.Subject.Id);
 
         var ttl = ((int)(DateTime.Now-tokenInfo.ExpiredAt).TotalSeconds) + 5;
         await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"],tokenInfo.Jwt,tokenInfo,metadata:new Dictionary<string, string> { { "ttlInSeconds", ttl.ToString() } });
@@ -603,4 +592,5 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
 
         return hashedCodeVerifier;
     }
+
 }

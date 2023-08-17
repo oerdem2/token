@@ -1,9 +1,9 @@
 
+using System.Dynamic;
 using System.Text.Json;
 using amorphie.core.security.Extensions;
 using amorphie.token.data;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
@@ -11,6 +11,7 @@ builder.Configuration.AddEnvironmentVariables();
 await builder.Configuration.AddVaultSecrets(builder.Configuration["DAPR_SECRET_STORE_NAME"],new string[]{"ServiceConnections"});
 
 var tt = builder.Configuration["DatabaseConnection"];
+
 // Add services to the container.
 builder.Services.AddCors(options =>
 {
@@ -78,7 +79,10 @@ app.MapCheckUserControlEndpoints();
 app.MapCheckScopesControlEndpoints();
 app.MapGenerateTokensControlEndpoints();
 app.MapCheckUserStateControlEndpoints();
+app.MapLoginOtpFlowControlEndpoints();
+app.MapSetStateControlEndpoints();
 app.MapDaprTestControlEndpoints();
+app.MapCheckOtpControlEndpoints();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

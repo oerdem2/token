@@ -13,7 +13,7 @@ public static class CheckUser
 {
     public static void MapCheckUserControlEndpoints(this WebApplication app)
     {
-        app.MapPost("/check-user", checkUser)
+        app.MapPost("/amorphie-token-check-user", checkUser)
         .Produces(StatusCodes.Status200OK);
 
         static async Task<IResult> checkUser(
@@ -21,7 +21,9 @@ public static class CheckUser
         [FromServices] IUserService userService
         )
         {
-            var requestBodySerialized = body.GetProperty("body").ToString();
+            var transitionName = body.GetProperty("LastTransition").ToString();
+
+            var requestBodySerialized = body.GetProperty($"TRX-{transitionName}").GetProperty("Data").GetProperty("entityData").ToString();
             
             TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized,new JsonSerializerOptions
             {
@@ -35,6 +37,7 @@ public static class CheckUser
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = userResponse.Detail;
+                variables.LastTransition = "token-error";
                 return Results.Ok(variables);
             }
             else

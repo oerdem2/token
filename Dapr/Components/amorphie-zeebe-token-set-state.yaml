@@ -1,13 +1,13 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: amorphie-token-validate-client
+  name: set-state
 spec:
   type: bindings.zeebe.jobworker
   version: v1
   metadata:
   - name: jobType
-    value: amorphie-token-validate-client
+    value: set-state
   - name: gatewayAddr
     value: localhost:26500
   - name: gatewayKeepAlive

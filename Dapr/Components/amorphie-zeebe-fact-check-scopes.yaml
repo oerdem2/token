@@ -1,13 +1,13 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: check-scopes
+  name: amorphie-token-check-scopes
 spec:
   type: bindings.zeebe.jobworker
   version: v1
   metadata:
   - name: jobType
-    value: check-scopes
+    value: amorphie-token-check-scopes
   - name: gatewayAddr
     value: localhost:26500
   - name: gatewayKeepAlive

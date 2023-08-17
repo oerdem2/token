@@ -21,8 +21,8 @@ public class LoginResponse
 
 public class Phone
 {
-    public string CountryCode{get;set;}
-    public string Prefix{get;set;}
+    public int CountryCode{get;set;}
+    public int Prefix{get;set;}
     public string Number{get;set;}
 
     public override string ToString()

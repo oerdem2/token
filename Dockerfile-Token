@@ -6,14 +6,15 @@ USER amorphie-tokenuser
 
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
-COPY ["./amorphie.token/amorphie.token.csproj", "."]
-RUN dotnet restore "./amorphie.token/amorphie.token.csproj"
+#COPY ["./amorphie.token/amorphie.token.csproj", "."]
+#RUN dotnet restore "./amorphie.token.csproj"
 COPY . .
-WORKDIR "/src/."
-RUN dotnet build "./amorphie.token/amorphie.token.csproj" -c Release -o /app/build
+RUN dotnet restore "amorphie.token/amorphie.token.csproj"
+WORKDIR "/src/amorphie.token"
+RUN dotnet build "amorphie.token.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "./amorphie.token/amorphie.token.csproj" -c Release -o /app/publish
+RUN dotnet publish "amorphie.token.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app

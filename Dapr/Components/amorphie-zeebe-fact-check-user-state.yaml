@@ -1,13 +1,13 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: check-user-state
+  name: amorphie-token-check-user-state
 spec:
   type: bindings.zeebe.jobworker
   version: v1
   metadata:
   - name: jobType
-    value: check-user-state
+    value: amorphie-token-check-user-state
   - name: gatewayAddr
     value: localhost:26500
   - name: gatewayKeepAlive

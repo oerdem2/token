@@ -13,7 +13,7 @@ public static class GenerateTokens
 {
     public static void MapGenerateTokensControlEndpoints(this WebApplication app)
     {
-        app.MapPost("/generate-tokens", generateTokens)
+        app.MapPost("/amorphie-token-generate-tokens", generateTokens)
         .Produces(StatusCodes.Status200OK);
 
         static async Task<IResult> generateTokens(
@@ -21,9 +21,17 @@ public static class GenerateTokens
         [FromServices] IAuthorizationService authorizationService
         )
         {
-            
+            var transitionName = body.GetProperty("LastTransition").ToString();
 
-            var requestBodySerialized = body.GetProperty("body").ToString();
+            var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
+
+            dynamic dataChanged = Newtonsoft.Json.JsonConvert.DeserializeObject<ExpandoObject>(dataBody.ToString());
+
+            dynamic targetObject = new System.Dynamic.ExpandoObject();
+
+            targetObject.Data = dataChanged ;
+        
+            var requestBodySerialized = body.GetProperty("TRX-start-password-flow").GetProperty("Data").GetProperty("entityData").ToString();
             
             TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized,new JsonSerializerOptions
             {
@@ -48,10 +56,13 @@ public static class GenerateTokens
 
             if(result.StatusCode == 200)
             {
-                dynamic variables = new ExpandoObject();
-                variables.status = true;
-                variables.tokenResponse = result.Response;
-
+                dataChanged.additionalData = result.Response;
+                targetObject.Data = dataChanged;
+                targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
+                targetObject.TriggeredByBehalfOf =Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
+                dynamic variables = new Dictionary<string,dynamic>();
+                variables.Add("status" ,true);
+                variables.Add($"TRX-{transitionName}",targetObject);
                 return Results.Ok(variables);
             }
             else
@@ -59,7 +70,7 @@ public static class GenerateTokens
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.tokenResponse = result.Detail;
-
+                variables.LastTransition = "token-error";
                 return Results.Ok(variables);
             }
 

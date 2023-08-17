@@ -1,13 +1,13 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: check-grant-type
+  name: amorphie-token-check-grant-type
 spec:
   type: bindings.zeebe.jobworker
   version: v1
   metadata:
   - name: jobType
-    value: check-grant-type
+    value: amorphie-token-check-grant-type
   - name: gatewayAddr
     value: localhost:26500
   - name: gatewayKeepAlive

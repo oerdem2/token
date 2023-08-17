@@ -9,7 +9,7 @@ public static class CheckGrantTypes
 {
     public static void MapCheckGrantTypesControlEndpoints(this WebApplication app)
     {
-        app.MapPost("/check-grant-type", checkGrantTypes)
+        app.MapPost("/amorphie-token-check-grant-type", checkGrantTypes)
         .Produces(StatusCodes.Status200OK);
 
         static async Task<IResult> checkGrantTypes(
@@ -17,7 +17,10 @@ public static class CheckGrantTypes
         [FromServices] IAuthorizationService authorizationService
         )
         {
-            var requestBodySerialized = body.GetProperty("body").ToString();
+            var transitionName = body.GetProperty("LastTransition").ToString();
+
+            var requestBodySerialized = body.GetProperty($"TRX-{transitionName}").GetProperty("Data").GetProperty("entityData").ToString();
+            
             
             TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized,new JsonSerializerOptions
             {
@@ -36,6 +39,7 @@ public static class CheckGrantTypes
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = "Client Has No Authorize To Use Requested Grant Type";
+                variables.LastTransition = "token-error";
                 return Results.Ok(variables);
             }
             else

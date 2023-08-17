@@ -14,7 +14,7 @@ public static class ValidateClient
 {
     public static void MapValidateClientControlEndpoints(this WebApplication app)
     {
-        app.MapPost("/validate-client", validateClient)
+        app.MapPost("/amorphie-token-validate-client", validateClient)
         .Produces(StatusCodes.Status200OK);
 
         static async Task<IResult> validateClient(
@@ -22,8 +22,10 @@ public static class ValidateClient
         [FromServices] IClientService clientService
         )
         {
-            var requestBodySerialized = body.GetProperty("body").ToString();
-            
+            var transitionName = body.GetProperty("LastTransition").ToString();
+            Console.WriteLine("Client validate worker txn name:"+transitionName);
+            var requestBodySerialized = body.GetProperty($"TRX-{transitionName}").GetProperty("Data").GetProperty("entityData").ToString();
+            Console.WriteLine("Client validate worker request body:"+requestBodySerialized);
             var requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized,new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -36,6 +38,7 @@ public static class ValidateClient
                 dynamic variables = new ExpandoObject();
                 variables.status = true;
                 variables.clientSerialized = clientResult.Response;
+                variables.loginFlow = "Otp";
                 return Results.Ok(variables);
             }
             else
@@ -43,6 +46,7 @@ public static class ValidateClient
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = clientResult.Detail;
+                variables.LastTransition = "token-error";
                 return Results.Ok(variables);
             }
         }

@@ -7,6 +7,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using amorphie.token.data;
+using Login = amorphie.token.core.Models.Account.Login;
 
 namespace amorphie.token.core.Controllers;
 
