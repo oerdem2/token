@@ -35,7 +35,7 @@ public class UserService : ServiceBase, IUserService
         }
         catch(InvocationException ex)
         {
-            Logger.LogError("Dapr Service Invocation Failed | Detail:"+ex.Message);
+            Logger.LogError("Dapr Service Invocation Failed | Detail:"+ex.ToString());
 
             if((int)ex.Response.StatusCode >= 400 && (int)ex.Response.StatusCode < 500)
             {
