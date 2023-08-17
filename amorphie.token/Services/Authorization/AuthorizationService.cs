@@ -60,7 +60,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
                 
                 Type t = user.GetType();
                 var property = t.GetProperties().First(p => p.Name.ToLower() == claimPath[1]);
-                
+                Console.WriteLine("Type lower : "+"Id".ToLower());
                 if(property == null)
                     return null;
                 return new Claim(string.Join('.',claimPath),property.GetValue(user).ToString());
