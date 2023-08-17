@@ -4,16 +4,12 @@ on:
     branches:
       - 'main'
       - 'LoginFlow'
-    paths:
-      - './amorphie.token'
   pull_request:
     types:
       - closed
     branches:
       - 'main'
       - 'LoginFlow'
-    paths:
-      - './amorphie.token'
 
 env:
   APP_NAME: amorphie.token
