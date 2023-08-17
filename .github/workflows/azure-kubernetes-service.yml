@@ -1,15 +1,9 @@
 name: TOKEN-CI-CD-API
 on:
   push:
-    branches:
-      - 'main'
-      - 'LoginFlow'
+    branches: [ main, LoginFlow ]
   pull_request:
-    types:
-      - closed
-    branches:
-      - 'main'
-      - 'LoginFlow'
+    branches: [ main, LoginFlow ]
 
 env:
   APP_NAME: amorphie.token
