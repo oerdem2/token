@@ -59,6 +59,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             {
                 
                 Type t = user.GetType();
+                Console.WriteLine("prop lower : "+"Id".ToLower());
                 var property = t.GetProperties().First(p => p.Name.ToLower() == claimPath[1]);
                 
                 if(property == null)
