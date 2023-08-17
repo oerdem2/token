@@ -6,7 +6,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "dapr-debug-amorphie-token",
-            "program": "${workspaceFolder}/bin/Debug/net7.0/amorphie.token.dll",
+            "program": "${workspaceFolder}/amorphie.token/bin/Debug/net7.0/amorphie.token.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
@@ -16,10 +16,30 @@
                 "DAPR_HTTP_PORT": "49010",
                 "DAPR_GRPC_PORT": "49011",
                 "DAPR_SECRET_STORE_NAME" : "token-secretstore",
-                "DAPR_STATE_STORE_NAME" :  "token-cache"
+                "DAPR_STATE_STORE_NAME" :  "token-statestore"
 
             },
             "postDebugTask": "daprd-down-amorphie-token"
+        },
+        {
+            "name": "amorphie-token-zeebe-workers",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "dapr-debug-amorphie-token-zeebe-workers",
+            "program": "${workspaceFolder}/amorphie.token.zeebe.workers/bin/Debug/net7.0/amorphie.token.zeebe.workers.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4901",
+                "DAPR_HTTP_PORT": "49020",
+                "DAPR_GRPC_PORT": "49021",
+                "DAPR_SECRET_STORE_NAME" : "token-secretstore",
+                "DAPR_STATE_STORE_NAME" :  "token-cache"
+
+            },
+            "postDebugTask": "daprd-down-amorphie-token-zeebe-workers"
         }
     ]
 }

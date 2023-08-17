@@ -1,11 +1,10 @@
 name: TOKEN-CI-CD-API
 on:
   push:
-    branches: [ main ]
+    branches: [ main, LoginFlow ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, LoginFlow ]
   workflow_dispatch:
-
 env:
   APP_NAME: amorphie.token
   NAMESPACE: amorphie-token
@@ -71,7 +70,6 @@ jobs:
             ${{ github.workspace }}/manifest/dapr/cache-redis-component.yaml
             ${{ github.workspace }}/manifest/dapr/vault-component.yaml
             ${{ github.workspace }}/manifest/service.yaml
-          # ${{ github.workspace }}/manifest/ingress.yaml
           images: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.APP_NAME }}:${{ github.sha }}
           imagepullsecrets: |
