@@ -15,6 +15,7 @@ public class UserService : ServiceBase, IUserService
         try
         {
             await _daprClient.InvokeMethodAsync(HttpMethod.Get,Configuration["UserServiceAppName"],$"/userDevice/search?Page=0&PageSize=50&Keyword={userId}&&{clientId}");
+            Console.WriteLine("Device bulundu");
             return new ServiceResponse<object>(){
                     StatusCode = 200,
                     Detail = "",
@@ -23,7 +24,7 @@ public class UserService : ServiceBase, IUserService
         }
         catch(InvocationException ex)
         {
-
+            
             if((int)ex.Response.StatusCode >= 400 && (int)ex.Response.StatusCode < 500)
             {
                 if((int)ex.Response.StatusCode == 404)
