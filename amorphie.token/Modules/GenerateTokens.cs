@@ -31,7 +31,7 @@ public static class GenerateTokens
 
             targetObject.Data = dataChanged ;
         
-            var requestBodySerialized = body.GetProperty("TRX-start-password-flow").GetProperty("Data").GetProperty("entityData").ToString();
+            var requestBodySerialized = body.GetProperty("TRX-start-password-flow-web").GetProperty("Data").GetProperty("entityData").ToString();
             
             TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized,new JsonSerializerOptions
             {
