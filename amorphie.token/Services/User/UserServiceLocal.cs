@@ -9,6 +9,21 @@ public class UserServiceLocal : IUserService
         _httpClientFactory = httpClientFactory;
     }
 
+    public async Task<ServiceResponse<object>> CheckDevice(Guid userId, Guid clientId)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var httpResponseMessage = await httpClient.GetAsync("user/device");
+
+        if(httpResponseMessage.IsSuccessStatusCode)
+        {
+            return new ServiceResponse<object>(){StatusCode = 200,Response = null};   
+        }
+        else
+        {
+            throw new ServiceException(404,"Device Not Found");
+        }
+    }
+
     public async Task<ServiceResponse<LoginResponse>> Login(LoginRequest loginRequest)
     {
         var httpClient = _httpClientFactory.CreateClient("User");

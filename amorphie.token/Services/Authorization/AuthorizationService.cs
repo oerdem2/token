@@ -16,7 +16,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
     private readonly DaprClient _daprClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly DatabaseContext _databaseContext;
-    private object zeebemessagehelper;
+    private readonly Guid jti;
 
     public AuthorizationService(ILogger<AuthorizationService> logger,IConfiguration configuration,IClientService clientService,ITagService tagService,
     IUserService userService,DaprClient daprClient,IHttpContextAccessor httpContextAccessor,DatabaseContext databaseContext)
@@ -28,6 +28,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         _httpContextAccessor = httpContextAccessor;
         _databaseContext = databaseContext;
         _userService = userService;
+        jti = Guid.NewGuid();
     }
 
     private async Task<Claim> GetClaimDetail(string[] claimPath,string queryStringForTag,LoginResponse user)
@@ -171,8 +172,6 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         }
         
 
-        var jti = Guid.NewGuid();
-
         if(accessInfo != null)
         {
             foreach(var accessClaim in accessInfo.claims)
@@ -256,7 +255,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
 
         var user = userResponse.Response;
 
-        if((user?.State.ToLower() != "active" && user?.State.ToLower() != "new") )
+        if(user?.State.ToLower() != "active" && user?.State.ToLower() != "new" )
         {
             return new ServiceResponse<TokenResponse>(){
                 StatusCode = 470,
@@ -315,7 +314,6 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         }
         
 
-        var jti = Guid.NewGuid();
         if(accessInfo != null)
         {
             foreach(var accessClaim in accessInfo.claims)
@@ -455,7 +453,6 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             Logger.LogError(ex.Message);
         }
 
-        var jti = Guid.NewGuid();
         if(accessInfo != null)
         {
             foreach(var accessClaim in accessInfo.claims)

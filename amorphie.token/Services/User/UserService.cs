@@ -10,6 +10,51 @@ public class UserService : ServiceBase, IUserService
         _daprClient = daprClient;
     }
 
+    public async Task<ServiceResponse<object>> CheckDevice(Guid userId, Guid clientId)
+    {
+        try
+        {
+            await _daprClient.InvokeMethodAsync(HttpMethod.Get,Configuration["UserServiceAppName"],$"/userDevice/search?Page=0&PageSize=50&Keyword={userId}&&{clientId}");
+            return new ServiceResponse<object>(){
+                    StatusCode = 200,
+                    Detail = "",
+                    Response = null
+                };
+        }
+        catch(InvocationException ex)
+        {
+            Logger.LogError("Dapr Service Invocation Failed | Detail:"+ex.ToString());
+
+            if((int)ex.Response.StatusCode >= 400 && (int)ex.Response.StatusCode < 500)
+            {
+                if((int)ex.Response.StatusCode == 404)
+                {
+                    return new ServiceResponse<object>(){
+                        StatusCode = 404,
+                        Detail = "User Device Not Found"
+                    };
+                }
+                return new ServiceResponse<object>(){
+                        StatusCode = (int)ex.Response.StatusCode,
+                        Detail = "User Device Not Found"
+                    };
+            }
+            else
+            {
+                Logger.LogError("An Error Occured At User Device Invocation | Detail:"+ex.ToString());
+                return new ServiceResponse<object>(){
+                        StatusCode = 500,
+                        Detail = "Server Error"
+                    };
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Logger.LogError("An Error Occured At User Device Invocation | Detail:"+ex.ToString());
+        }
+        return null;
+    }
+
     public async Task<ServiceResponse<LoginResponse>> Login(LoginRequest loginRequest)
     {
         try
