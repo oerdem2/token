@@ -11,12 +11,12 @@ namespace amorphie.token.Modules
 {
     public static class LoginPushFlow
     {
-        public static void MapSetLoginTypeControlEndpoints(this WebApplication app)
+        public static void MapLoginPushFlowControlEndpoints(this WebApplication app)
         {
-            app.MapPost("/amorphie-token-set-login-type", setLoginType)
+            app.MapPost("/amorphie-token-set-login-type", loginPushFlow)
             .Produces(StatusCodes.Status200OK);
 
-            static async Task<IResult> setLoginType(
+            static async Task<IResult> loginPushFlow(
             [FromBody] dynamic body,
             [FromServices] IUserService userService,
             IConfiguration configuration,
@@ -47,7 +47,7 @@ namespace amorphie.token.Modules
                     Sender="AutoDetect",
                     CitizenshipNo=userInfo.Reference,
                     Template=configuration["PushOtpTemplate"],
-                    TemplateParams= JsonSerializer.Serialize(new{otpValue=code}),
+                    TemplateParams= JsonSerializer.Serialize(new{test=$"{code} şifresi ile giriş yapabilirsiniz."}),
                     SaveInbox=false,
                     Tags=new string[]{"Login Otp Flow"},
                     Process = new{

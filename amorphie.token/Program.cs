@@ -83,6 +83,9 @@ app.MapLoginOtpFlowControlEndpoints();
 app.MapSetStateControlEndpoints();
 app.MapDaprTestControlEndpoints();
 app.MapCheckOtpControlEndpoints();
+app.MapCheckPushControlEndpoints();
+app.MapSetLoginTypeControlEndpoints();
+app.MapLoginPushFlowControlEndpoints();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

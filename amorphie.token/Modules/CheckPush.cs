@@ -10,10 +10,10 @@ public static class CheckPush
 {
     public static void MapCheckPushControlEndpoints(this WebApplication app)
     {
-        app.MapPost("/amorphie-token-check-push-login-flow", checkOtp)
+        app.MapPost("/amorphie-token-check-push-login-flow", checkPush)
         .Produces(StatusCodes.Status200OK);
 
-        static async Task<IResult> checkOtp(
+        static async Task<IResult> checkPush(
         [FromBody] dynamic body,
         [FromServices] IAuthorizationService authorizationService,
         IConfiguration configuration,
