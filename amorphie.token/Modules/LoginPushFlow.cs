@@ -13,7 +13,7 @@ namespace amorphie.token.Modules
     {
         public static void MapLoginPushFlowControlEndpoints(this WebApplication app)
         {
-            app.MapPost("/amorphie-token-set-login-type", loginPushFlow)
+            app.MapPost("/amorphie-token-login-push-flow", loginPushFlow)
             .Produces(StatusCodes.Status200OK);
 
             static async Task<IResult> loginPushFlow(
