@@ -69,6 +69,7 @@ namespace amorphie.token.Modules
                 }
                 else
                 {
+                    Console.WriteLine("Push Service Error : "+ await httpResponse.Content.ReadAsStringAsync());
                     dynamic variables = new ExpandoObject();
                     variables.status = false;
                     variables.message = "Push Service Error - Status Code : "+httpResponse.StatusCode;
