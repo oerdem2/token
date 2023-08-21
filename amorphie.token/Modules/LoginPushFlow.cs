@@ -71,7 +71,7 @@ namespace amorphie.token.Modules
                 {
                     dynamic variables = new ExpandoObject();
                     variables.status = false;
-                    variables.message = "Push Service Error";
+                    variables.message = "Push Service Error - Status Code : "+httpResponse.StatusCode;
                     variables.LastTransition = "token-error";
                     return Results.Ok(variables);
                 }
