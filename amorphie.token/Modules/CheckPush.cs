@@ -21,7 +21,7 @@ public static class CheckPush
         )
         {
             var transactionId = body.GetProperty("InstanceId").ToString();
-            var entityData = body.GetProperty("TRX-send-otp-login-flow").GetProperty("Data").GetProperty("entityData").ToString();
+            var entityData = body.GetProperty("TRX-send-push-login-flow").GetProperty("Data").GetProperty("entityData").ToString();
 
             var entityObj = JsonSerializer.Deserialize<Dictionary<string,object>>(entityData);
             var providedCode = entityObj["otpValue"].ToString();
