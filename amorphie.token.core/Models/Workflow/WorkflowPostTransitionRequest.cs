@@ -6,6 +6,6 @@ public class WorkflowPostTransitionRequest
     public string FormData{get;set;}
     public string additionalData{get;set;}
     public bool GetSignalRHub{get;set;}
-    public bool RouteData{get;set;}
-    public bool QueryData{get;set;}
+    public string RouteData{get;set;}
+    public string QueryData{get;set;}
 }
