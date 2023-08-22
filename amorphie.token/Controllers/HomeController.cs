@@ -106,7 +106,7 @@ public class TokenController : Controller
 
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("/Token/Flow")]
-    public async Task<IActionResult> TokenWorkflow(TokenRequest tokenRequest)
+    public async Task<IActionResult> TokenWorkflow([FromBody]TokenRequest tokenRequest)
     {
         var clientReponse =  await _clientService.ValidateClient(tokenRequest.client_id,tokenRequest.client_secret);
         if(clientReponse.StatusCode != 200)
