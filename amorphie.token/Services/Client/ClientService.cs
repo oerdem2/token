@@ -32,7 +32,7 @@ public class ClientService : ServiceBase,IClientService
         }
         catch(InvocationException ex)
         {
-            Logger.LogError("Dapr Service Invocation Failed | Detail:"+JsonSerializer.Serialize(ex));
+            Logger.LogError("Dapr Service Invocation Failed | Detail:"+ex.ToString());
             if((int)ex.Response.StatusCode >= 400 && (int)ex.Response.StatusCode < 500)
             {
                 if((int)ex.Response.StatusCode == 460)
@@ -92,7 +92,7 @@ public class ClientService : ServiceBase,IClientService
         }
         catch(InvocationException ex)
         {
-            Logger.LogError("Dapr Service Invocation Failed | Detail:"+ex.Message);
+            Logger.LogError("Dapr Service Invocation Failed | Detail:"+ex.ToString());
             if((int)ex.Response.StatusCode >= 400 && (int)ex.Response.StatusCode < 500)
             {
                 if((int)ex.Response.StatusCode == 460)
