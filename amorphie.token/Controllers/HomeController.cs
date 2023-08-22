@@ -23,7 +23,7 @@ public class TokenController : Controller
     private readonly IConfiguration _configuration;
     private readonly DaprClient _daprClient;
     public TokenController(ILogger<TokenController> logger,IAuthorizationService authorizationService,IUserService userService,DatabaseContext databaseContext
-    ,IConfiguration configuration,DaprClient daprClient,ClientService clientService)
+    ,IConfiguration configuration,DaprClient daprClient,IClientService clientService)
     {
         _logger = logger;
         _authorizationService = authorizationService;
