@@ -115,7 +115,7 @@ public class TokenController : Controller
         }
 
         var client = clientReponse.Response;
-        var flowType = client.flows.FirstOrDefault(f => f.type == "Login");
+        var flowType = client.flows.FirstOrDefault(f => f.type.ToLower().Equals("login"));
 
         using var httpClient = new HttpClient();
         var workflowRequest = new WorkflowPostTransitionRequest();
