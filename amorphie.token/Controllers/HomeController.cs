@@ -8,6 +8,8 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using amorphie.token.data;
 using Login = amorphie.token.core.Models.Account.Login;
+using amorphie.token.core.Models.Workflow;
+using System.Runtime.CompilerServices;
 
 namespace amorphie.token.core.Controllers;
 
@@ -16,11 +18,12 @@ public class TokenController : Controller
     private readonly ILogger<TokenController> _logger;
     private readonly IAuthorizationService _authorizationService;
     private readonly IUserService _userService;
+    private readonly IClientService _clientService;
     private readonly DatabaseContext _databaseContext;
     private readonly IConfiguration _configuration;
     private readonly DaprClient _daprClient;
     public TokenController(ILogger<TokenController> logger,IAuthorizationService authorizationService,IUserService userService,DatabaseContext databaseContext
-    ,IConfiguration configuration,DaprClient daprClient)
+    ,IConfiguration configuration,DaprClient daprClient,ClientService clientService)
     {
         _logger = logger;
         _authorizationService = authorizationService;
@@ -28,6 +31,7 @@ public class TokenController : Controller
         _databaseContext = databaseContext;
         _configuration = configuration;
         _daprClient = daprClient;
+        _clientService = clientService;
     }
 
    
@@ -101,6 +105,36 @@ public class TokenController : Controller
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
+    [HttpPost("/Login/Flow")]
+    public async Task<IActionResult> TokenWorkflow(TokenRequest tokenRequest)
+    {
+        var clientReponse =  await _clientService.ValidateClient(tokenRequest.client_id,tokenRequest.client_secret);
+        if(clientReponse.StatusCode != 200)
+        {
+            return Problem(detail:clientReponse.Detail,statusCode:clientReponse.StatusCode);
+        }
+
+        var client = clientReponse.Response;
+        var flowType = client.flows.FirstOrDefault(f => f.type == "Login");
+
+        using var httpClient = new HttpClient();
+        var workflowRequest = new WorkflowPostTransitionRequest();
+        workflowRequest.EntityData = JsonSerializer.Serialize(tokenRequest);
+        workflowRequest.GetSignalRHub = true;
+        var httpResponse = await httpClient.PostAsJsonAsync(_configuration["workflowPostTransitionUri"].Replace("recordId",tokenRequest.recordId),workflowRequest);
+
+        if(httpResponse.IsSuccessStatusCode)
+        {
+            var workflowResponse = await httpResponse.Content.ReadFromJsonAsync<WorkflowPostTransitionResponse>();
+            return Ok(workflowResponse.Result);
+        }
+        else
+        {
+            return Problem(detail:"Workflow Error",statusCode:clientReponse.StatusCode);
+        }
+    }
+
+    [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost]
     public async Task<IActionResult> Login(Login loginRequest)
     {
@@ -127,7 +161,7 @@ public class TokenController : Controller
             }
             var user = userResponse.Response;
 
-            if((user?.State.ToLower() == "active" || user?.State.ToLower() == "new") )
+            if(user?.State.ToLower() == "active" || user?.State.ToLower() == "new")
             {
                 HttpContext.Session.SetString("LoggedUser",JsonSerializer.Serialize(user));
                 await _authorizationService.AssignUserToAuthorizationCode(user,loginRequest.Code);
