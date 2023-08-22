@@ -123,8 +123,9 @@ public class TokenController : Controller
         workflowRequest.GetSignalRHub = true;
 
         StringContent request = new(JsonSerializer.Serialize(workflowRequest),Encoding.UTF8,"application/json");
-        _logger.LogInformation("request body :"+JsonSerializer.Serialize(workflowRequest));
-        _logger.LogInformation("wf url : "+_configuration["workflowPostTransitionUri"].Replace("{{recordId}}",tokenRequest.record_id));
+        request.Headers.Add("User",Guid.NewGuid().ToString());
+        request.Headers.Add("Behalf-Of-User",Guid.NewGuid().ToString());
+
         var httpResponse = await httpClient.PostAsync(_configuration["workflowPostTransitionUri"].Replace("{{recordId}}",tokenRequest.record_id),request);
         
         if(httpResponse.IsSuccessStatusCode)
