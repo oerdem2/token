@@ -105,7 +105,7 @@ public class TokenController : Controller
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpPost("/Login/Flow")]
+    [HttpPost("/Token/Flow")]
     public async Task<IActionResult> TokenWorkflow(TokenRequest tokenRequest)
     {
         var clientReponse =  await _clientService.ValidateClient(tokenRequest.client_id,tokenRequest.client_secret);
