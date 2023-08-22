@@ -15,6 +15,7 @@ public class TokenRequest
     public string grant_type { get; set; }
     public string redirect_uri { get; set; }
     public string code_verifier { get; set; }
+    public string record_id{get;set;}
     public IEnumerable<string> scopes { get; set; }
-    public string? recordId{get;set;}
+    
 }
