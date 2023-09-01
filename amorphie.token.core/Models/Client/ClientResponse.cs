@@ -10,7 +10,7 @@ public class ClientResponse
     public string name { get; set; }
     public List<Flow> flows { get; set; }
     [JsonPropertyName("allowedGrantTypes")]
-    public ICollection<ClientGrantType> allowedgranttypes{get;set;}
+    public ICollection<ClientGrantType> allowedgranttypes { get; set; }
     [JsonPropertyName("allowedScopeTags")]
     public List<string> allowedscopetags { get; set; }
 

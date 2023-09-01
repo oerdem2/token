@@ -17,11 +17,11 @@ public static class CheckState
         [FromServices] IAuthorizationService authorizationService
         )
         {
-            
-                dynamic variables = new ExpandoObject();
-                variables.status = true;
-                return Results.Ok(variables);
-            
+
+            dynamic variables = new ExpandoObject();
+            variables.status = true;
+            return Results.Ok(variables);
+
         }
 
     }

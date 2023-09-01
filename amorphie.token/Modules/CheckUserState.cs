@@ -21,16 +21,16 @@ public static class CheckUserState
         [FromServices] IAuthorizationService authorizationService
         )
         {
-            
+
             var userInfoSerialized = body.GetProperty("userSerialized").ToString();
-            
-            LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized,new JsonSerializerOptions
+
+            LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
-            
 
-            if((userInfo?.State.ToLower() != "active" && userInfo?.State.ToLower() != "new") )
+
+            if ((userInfo?.State.ToLower() != "active" && userInfo?.State.ToLower() != "new"))
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = false;

@@ -11,39 +11,39 @@ public static class MapperExtension
     public static void MatchAndMap<TSource, TDestination>(this TSource source, TDestination destination)
             where TSource : class, new()
             where TDestination : class, new()
+    {
+        if (source != null && destination != null)
         {
-            if (source != null && destination != null)
+            List<PropertyInfo> sourceProperties = source.GetType().GetProperties().ToList<PropertyInfo>();
+            List<PropertyInfo> destinationProperties = destination.GetType().GetProperties().ToList<PropertyInfo>();
+
+            foreach (PropertyInfo sourceProperty in sourceProperties)
             {
-                List<PropertyInfo> sourceProperties = source.GetType().GetProperties().ToList<PropertyInfo>();
-                List<PropertyInfo> destinationProperties = destination.GetType().GetProperties().ToList<PropertyInfo>();
+                PropertyInfo destinationProperty = destinationProperties.Find(item => item.Name == sourceProperty.Name);
 
-                foreach (PropertyInfo sourceProperty in sourceProperties)
+                if (destinationProperty != null)
                 {
-                    PropertyInfo destinationProperty = destinationProperties.Find(item => item.Name == sourceProperty.Name);
-
-                    if (destinationProperty != null)
+                    try
                     {
-                        try
-                        {
-                            destinationProperty.SetValue(destination, sourceProperty.GetValue(source, null), null);
-                        }
-                        catch (Exception ex)
-                        {
+                        destinationProperty.SetValue(destination, sourceProperty.GetValue(source, null), null);
+                    }
+                    catch (Exception ex)
+                    {
 
-                        }
                     }
                 }
             }
-
         }
 
-        public static TDestination MapTo<TDestination>(this object source)
-            where TDestination : class, new()
-        {
-            var destination = Activator.CreateInstance<TDestination>();
-            MatchAndMap(source, destination);
+    }
 
-            return destination;
-        }
+    public static TDestination MapTo<TDestination>(this object source)
+        where TDestination : class, new()
+    {
+        var destination = Activator.CreateInstance<TDestination>();
+        MatchAndMap(source, destination);
+
+        return destination;
+    }
 
 }

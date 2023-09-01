@@ -29,40 +29,40 @@ public static class GenerateTokens
 
             dynamic targetObject = new System.Dynamic.ExpandoObject();
 
-            targetObject.Data = dataChanged ;
-        
+            targetObject.Data = dataChanged;
+
             var requestBodySerialized = body.GetProperty("TRX-start-password-flow").GetProperty("Data").GetProperty("entityData").ToString();
-            
-            TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized,new JsonSerializerOptions
+
+            TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
 
             var clientInfoSerialized = body.GetProperty("clientSerialized").ToString();
-            
-            ClientResponse clientInfo = JsonSerializer.Deserialize<ClientResponse>(clientInfoSerialized,new JsonSerializerOptions
+
+            ClientResponse clientInfo = JsonSerializer.Deserialize<ClientResponse>(clientInfoSerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
 
             var userInfoSerialized = body.GetProperty("userSerialized").ToString();
-            
-            LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized,new JsonSerializerOptions
+
+            LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
 
-            ServiceResponse<TokenResponse> result = await authorizationService.GenerateTokenWithPasswordFromWorkflow(requestBody,clientInfo,userInfo);
+            ServiceResponse<TokenResponse> result = await authorizationService.GenerateTokenWithPasswordFromWorkflow(requestBody, clientInfo, userInfo);
 
-            if(result.StatusCode == 200)
+            if (result.StatusCode == 200)
             {
                 dataChanged.additionalData = result.Response;
                 targetObject.Data = dataChanged;
                 targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
-                targetObject.TriggeredByBehalfOf =Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
-                dynamic variables = new Dictionary<string,dynamic>();
-                variables.Add("status" ,true);
-                variables.Add($"TRX-{transitionName}",targetObject);
+                targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
+                dynamic variables = new Dictionary<string, dynamic>();
+                variables.Add("status", true);
+                variables.Add($"TRX-{transitionName}", targetObject);
                 return Results.Ok(variables);
             }
             else

@@ -13,20 +13,20 @@ public class UserServiceLocal : IUserService
     {
         var httpClient = _httpClientFactory.CreateClient("User");
         var httpResponseMessage = await httpClient.PostAsJsonAsync<LoginRequest>(
-            "user/login",loginRequest);
+            "user/login", loginRequest);
 
-        if(httpResponseMessage.IsSuccessStatusCode)
+        if (httpResponseMessage.IsSuccessStatusCode)
         {
             var user = await httpResponseMessage.Content.ReadFromJsonAsync<LoginResponse>();
-            if(user == null)
+            if (user == null)
             {
-                throw new ServiceException((int)Errors.InvalidUser,"User not found with provided info");
-            }         
-            return new ServiceResponse<LoginResponse>(){StatusCode = 200,Response = user};   
+                throw new ServiceException((int)Errors.InvalidUser, "User not found with provided info");
+            }
+            return new ServiceResponse<LoginResponse>() { StatusCode = 200, Response = user };
         }
         else
         {
-            throw new ServiceException((int)Errors.InvalidUser,"User Endpoint Did Not Response Successfully");
+            throw new ServiceException((int)Errors.InvalidUser, "User Endpoint Did Not Response Successfully");
         }
     }
 }
