@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
 
-await builder.Configuration.AddVaultSecrets(builder.Configuration["DAPR_SECRET_STORE_NAME"],new string[]{"ServiceConnections"});
+await builder.Configuration.AddVaultSecrets(builder.Configuration["DAPR_SECRET_STORE_NAME"], new string[] { "ServiceConnections" });
 
 var tt = builder.Configuration["DatabaseConnection"];
 
@@ -27,7 +27,8 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDaprClient();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession(opt => {
+builder.Services.AddSession(opt =>
+{
     opt.Cookie.Name = ".amorphie.token";
 });
 
@@ -35,14 +36,14 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<DatabaseContext>
-    (options => options.UseNpgsql(builder.Configuration["DatabaseConnection"],b => b.MigrationsAssembly("amorphie.token.data")));
-builder.Services.AddScoped<IAuthorizationService,AuthorizationService>();
+    (options => options.UseNpgsql(builder.Configuration["DatabaseConnection"], b => b.MigrationsAssembly("amorphie.token.data")));
+builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
-if(builder.Environment.IsDevelopment())
+if (builder.Environment.IsDevelopment())
 {
-    builder.Services.AddScoped<IClientService,ClientServiceLocal>();
-    builder.Services.AddScoped<IUserService,UserServiceLocal>();
-    builder.Services.AddScoped<ITagService,TagServiceLocal>();
+    builder.Services.AddScoped<IClientService, ClientServiceLocal>();
+    builder.Services.AddScoped<IUserService, UserServiceLocal>();
+    builder.Services.AddScoped<ITagService, TagServiceLocal>();
 
     builder.Services.AddHttpClient("Client", httpClient =>
     {
@@ -56,14 +57,14 @@ if(builder.Environment.IsDevelopment())
     {
         httpClient.BaseAddress = new Uri(builder.Configuration["TagBaseAddress"]);
     });
-}   
+}
 else
 {
-    builder.Services.AddScoped<IClientService,ClientService>();
-    builder.Services.AddScoped<IUserService,UserService>();
-    builder.Services.AddScoped<ITagService,TagService>();
+    builder.Services.AddScoped<IClientService, ClientService>();
+    builder.Services.AddScoped<IUserService, UserService>();
+    builder.Services.AddScoped<ITagService, TagService>();
 
-    
+
 }
 
 var app = builder.Build();

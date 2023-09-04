@@ -23,30 +23,30 @@ namespace amorphie.token.Modules
             )
             {
                 var userInfoSerialized = body.GetProperty("userSerialized").ToString();
-            
-                LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized,new JsonSerializerOptions
+
+                LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
 
-                
+
                 var clientInfoSerialized = body.GetProperty("clientSerialized").ToString();
-            
-                ClientResponse clientInfo = JsonSerializer.Deserialize<ClientResponse>(clientInfoSerialized,new JsonSerializerOptions
+
+                ClientResponse clientInfo = JsonSerializer.Deserialize<ClientResponse>(clientInfoSerialized, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
 
-                ServiceResponse<object> response = await userService.CheckDevice(userInfo.Id,Guid.Parse(clientInfo.id));
+                ServiceResponse<object> response = await userService.CheckDevice(userInfo.Id, Guid.Parse(clientInfo.id));
 
-                if(response.StatusCode == 200)
+                if (response.StatusCode == 200)
                 {
                     dynamic variables = new ExpandoObject();
                     variables.status = true;
                     variables.loginFlow = "push";
                     return Results.Ok(variables);
                 }
-                if(response.StatusCode == 404)
+                if (response.StatusCode == 404)
                 {
                     dynamic variables = new ExpandoObject();
                     variables.status = true;

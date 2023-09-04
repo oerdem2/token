@@ -23,12 +23,12 @@ namespace amorphie.token.Modules
             DaprClient daprClient
             )
             {
-                
+
                 var transactionId = body.GetProperty("InstanceId").ToString();
-            
+
                 var userInfoSerialized = body.GetProperty("userSerialized").ToString();
-                
-                LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized,new JsonSerializerOptions
+
+                LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
@@ -41,27 +41,29 @@ namespace amorphie.token.Modules
                     code += rand.Next(10);
                 }
 
-                await daprClient.SaveStateAsync(configuration["DAPR_STATE_STORE_NAME"],$"{transactionId}_Login_Otp_Code",code);
+                await daprClient.SaveStateAsync(configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code", code);
 
-                var pushRequest = new{
-                    Sender="AutoDetect",
-                    CitizenshipNo=userInfo.Reference,
-                    Template=configuration["PushOtpTemplate"],
-                    TemplateParams= JsonSerializer.Serialize(new{test=$"{code} şifresi ile giriş yapabilirsiniz."}),
-                    SaveInbox=false,
-                    Tags=new string[]{"Login Otp Flow"},
-                    Process = new{
-                        Name="Token Login Flow",
-                        Identity="Push Login"
+                var pushRequest = new
+                {
+                    Sender = "AutoDetect",
+                    CitizenshipNo = userInfo.Reference,
+                    Template = configuration["PushOtpTemplate"],
+                    TemplateParams = JsonSerializer.Serialize(new { test = $"{code} şifresi ile giriş yapabilirsiniz." }),
+                    SaveInbox = false,
+                    Tags = new string[] { "Login Otp Flow" },
+                    Process = new
+                    {
+                        Name = "Token Login Flow",
+                        Identity = "Push Login"
                     }
                 };
 
-                StringContent request = new(JsonSerializer.Serialize(pushRequest),Encoding.UTF8,"application/json");
+                StringContent request = new(JsonSerializer.Serialize(pushRequest), Encoding.UTF8, "application/json");
 
                 using var httpClient = new HttpClient();
-                var httpResponse = await httpClient.PostAsync(configuration["MessagingGatewayProdUri"],request);
-                
-                if(httpResponse.IsSuccessStatusCode)
+                var httpResponse = await httpClient.PostAsync(configuration["MessagingGatewayProdUri"], request);
+
+                if (httpResponse.IsSuccessStatusCode)
                 {
                     dynamic variables = new ExpandoObject();
                     variables.status = true;
@@ -69,10 +71,10 @@ namespace amorphie.token.Modules
                 }
                 else
                 {
-                    Console.WriteLine("Push Service Error : "+ await httpResponse.Content.ReadAsStringAsync());
+                    Console.WriteLine("Push Service Error : " + await httpResponse.Content.ReadAsStringAsync());
                     dynamic variables = new ExpandoObject();
                     variables.status = false;
-                    variables.message = "Push Service Error - Status Code : "+httpResponse.StatusCode;
+                    variables.message = "Push Service Error - Status Code : " + httpResponse.StatusCode;
                     variables.LastTransition = "token-error";
                     return Results.Ok(variables);
                 }
