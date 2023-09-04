@@ -1,7 +1,7 @@
 name: TOKEN-CI-CD-API
 on:
   push:
-    branches: [ main, LoginFlow ]
+    branches: [ main, LoginFlow, AksTest ]
   pull_request:
     branches: [ main, LoginFlow ]
   workflow_dispatch:
