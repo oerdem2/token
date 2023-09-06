@@ -39,6 +39,7 @@ public static class ValidateClient
                 variables.status = true;
                 variables.clientSerialized = clientResult.Response;
                 variables.loginFlow = "Otp";
+                Console.WriteLine("Client Validate Error "+JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
             else
@@ -47,6 +48,7 @@ public static class ValidateClient
                 variables.status = false;
                 variables.message = clientResult.Detail;
                 variables.LastTransition = "token-error";
+                Console.WriteLine("Client Validate Success "+JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
         }

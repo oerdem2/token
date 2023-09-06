@@ -17,6 +17,7 @@ public static class CheckGrantTypes
         [FromServices] IAuthorizationService authorizationService
         )
         {
+            Console.WriteLine("CheckGrantType called");
             var transitionName = body.GetProperty("LastTransition").ToString();
 
             var requestBodySerialized = body.GetProperty($"TRX-{transitionName}").GetProperty("Data").GetProperty("entityData").ToString();
@@ -40,12 +41,14 @@ public static class CheckGrantTypes
                 variables.status = false;
                 variables.message = "Client Has No Authorize To Use Requested Grant Type";
                 variables.LastTransition = "token-error";
+                Console.WriteLine("CheckGrantType Error "+JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
             else
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = true;
+                Console.WriteLine("CheckGrantType Success");
                 return Results.Ok(variables);
             }
         }

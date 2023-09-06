@@ -21,6 +21,7 @@ public static class GenerateTokens
         [FromServices] IAuthorizationService authorizationService
         )
         {
+            Console.WriteLine("GenerateTokens called");
             var transitionName = body.GetProperty("LastTransition").ToString();
 
             var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
@@ -63,6 +64,7 @@ public static class GenerateTokens
                 dynamic variables = new Dictionary<string, dynamic>();
                 variables.Add("status", true);
                 variables.Add($"TRX-{transitionName}", targetObject);
+                Console.WriteLine("GenerateTokens Success");
                 return Results.Ok(variables);
             }
             else
@@ -71,6 +73,7 @@ public static class GenerateTokens
                 variables.status = false;
                 variables.tokenResponse = result.Detail;
                 variables.LastTransition = "token-error";
+                Console.WriteLine("GenerateTokens Error "+JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
 

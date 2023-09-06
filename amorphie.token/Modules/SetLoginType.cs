@@ -22,6 +22,7 @@ namespace amorphie.token.Modules
             DaprClient daprClient
             )
             {
+                Console.WriteLine("SetLoginType called");
                 var userInfoSerialized = body.GetProperty("userSerialized").ToString();
 
                 LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized, new JsonSerializerOptions
@@ -44,6 +45,7 @@ namespace amorphie.token.Modules
                     dynamic variables = new ExpandoObject();
                     variables.status = true;
                     variables.loginFlow = "push";
+                    Console.WriteLine("SetLoginType Device Found");
                     return Results.Ok(variables);
                 }
                 if (response.StatusCode == 404)
@@ -51,6 +53,7 @@ namespace amorphie.token.Modules
                     dynamic variables = new ExpandoObject();
                     variables.status = true;
                     variables.loginFlow = "otp";
+                    Console.WriteLine("SetLoginType Device Not Found");
                     return Results.Ok(variables);
                 }
                 else
@@ -59,6 +62,7 @@ namespace amorphie.token.Modules
                     variables.status = false;
                     variables.message = response.Detail;
                     variables.LastTransition = "token-error";
+                    Console.WriteLine("SetLoginType Error"+JsonSerializer.Serialize(variables));
                     return Results.Ok(variables);
                 }
             }

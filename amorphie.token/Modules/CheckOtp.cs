@@ -20,6 +20,7 @@ public static class CheckOtp
         DaprClient daprClient
         )
         {
+            Console.WriteLine("CheckOtp called");
             var transactionId = body.GetProperty("InstanceId").ToString();
             Console.WriteLine("check otp txn Id:"+transactionId);
             var entityData = body.GetProperty("TRX-send-otp-login-flow").GetProperty("Data").GetProperty("entityData").ToString();
@@ -33,6 +34,7 @@ public static class CheckOtp
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = true;
+                Console.WriteLine("CheckOtp Success");
                 return Results.Ok(variables);
             }
             else
@@ -41,6 +43,7 @@ public static class CheckOtp
                 variables.status = false;
                 variables.message = "Otp Check Failed";
                 variables.LastTransition = "token-error";
+                Console.WriteLine("CheckOtp Error "+JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
         }

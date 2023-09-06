@@ -37,40 +37,56 @@ public static class LoginOtpFlow
                 code += rand.Next(10);
             }
 
+            var aks = Environment.GetEnvironmentVariable("AKS_ENV");
+            if(aks != null && aks.Equals("E"))
+                code = "123456";
+
             await daprClient.SaveStateAsync(configuration["DAPR_STATE_STORE_NAME"],$"{transactionId}_Login_Otp_Code",code);
 
-            var otpRequest = new{
-                Sender="AutoDetect",
-                SmsType="Otp",
-                Phone=new{
-                    CountryCode=userInfo.MobilePhone.CountryCode,
-                    Prefix=userInfo.MobilePhone.Prefix,
-                    Number=userInfo.MobilePhone.Number
-                },
-                Content = $"{code} şifresi ile giriş yapabilirsiniz",
-                Process = new{
-                    Name="Token Login Flow",
-                    Identity="Otp Login"
-                }
-            };
-
-            StringContent request = new(JsonSerializer.Serialize(otpRequest),Encoding.UTF8,"application/json");
-
-            using var httpClient = new HttpClient();
-            var httpResponse = await httpClient.PostAsync(configuration["MessagingGatewayUri"],request);
-            
-            if(httpResponse.IsSuccessStatusCode)
+            if(aks == null || aks.Equals("H"))
             {
-                dynamic variables = new ExpandoObject();
-                variables.status = true;
-                return Results.Ok(variables);
+                var otpRequest = new{
+                    Sender="AutoDetect",
+                    SmsType="Otp",
+                    Phone=new{
+                        CountryCode=userInfo.MobilePhone.CountryCode,
+                        Prefix=userInfo.MobilePhone.Prefix,
+                        Number=userInfo.MobilePhone.Number
+                    },
+                    Content = $"{code} şifresi ile giriş yapabilirsiniz",
+                    Process = new{
+                        Name="Token Login Flow",
+                        Identity="Otp Login"
+                    }
+                };
+
+                StringContent request = new(JsonSerializer.Serialize(otpRequest),Encoding.UTF8,"application/json");
+
+                using var httpClient = new HttpClient();
+                var httpResponse = await httpClient.PostAsync(configuration["MessagingGatewayUri"],request);
+                
+                if(httpResponse.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("LoginOtpFlow Success");
+                    dynamic variables = new ExpandoObject();
+                    variables.status = true;
+                    return Results.Ok(variables);
+                }
+                else
+                {
+                    dynamic variables = new ExpandoObject();
+                    variables.status = false;
+                    variables.message = "Otp Service Error";
+                    variables.LastTransition = "token-error";
+                    Console.WriteLine("LoginOtpFlow Error "+JsonSerializer.Serialize(variables));
+                    return Results.Ok(variables);
+                }
             }
             else
             {
+                Console.WriteLine("LoginOtpFlow Success");
                 dynamic variables = new ExpandoObject();
-                variables.status = false;
-                variables.message = "Otp Service Error";
-                variables.LastTransition = "token-error";
+                variables.status = true;
                 return Results.Ok(variables);
             }
         }

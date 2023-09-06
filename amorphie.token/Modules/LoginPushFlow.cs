@@ -23,7 +23,7 @@ namespace amorphie.token.Modules
             DaprClient daprClient
             )
             {
-
+                Console.WriteLine("LoginPushFlow called");
                 var transactionId = body.GetProperty("InstanceId").ToString();
 
                 var userInfoSerialized = body.GetProperty("userSerialized").ToString();
@@ -41,41 +41,57 @@ namespace amorphie.token.Modules
                     code += rand.Next(10);
                 }
 
+                var aks = Environment.GetEnvironmentVariable("AKS_ENV");
+                if(aks != null && aks.Equals("E"))
+                    code = "123456";
+
                 await daprClient.SaveStateAsync(configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code", code);
 
-                var pushRequest = new
+                if(aks == null || aks.Equals("H"))
                 {
-                    Sender = "AutoDetect",
-                    CitizenshipNo = userInfo.Reference,
-                    Template = configuration["PushOtpTemplate"],
-                    TemplateParams = JsonSerializer.Serialize(new { test = $"{code} şifresi ile giriş yapabilirsiniz." }),
-                    SaveInbox = false,
-                    Tags = new string[] { "Login Otp Flow" },
-                    Process = new
+                    var pushRequest = new
                     {
-                        Name = "Token Login Flow",
-                        Identity = "Push Login"
+                        Sender = "AutoDetect",
+                        CitizenshipNo = userInfo.Reference,
+                        Template = configuration["PushOtpTemplate"],
+                        TemplateParams = JsonSerializer.Serialize(new { test = $"{code} şifresi ile giriş yapabilirsiniz." }),
+                        SaveInbox = false,
+                        Tags = new string[] { "Login Otp Flow" },
+                        Process = new
+                        {
+                            Name = "Token Login Flow",
+                            Identity = "Push Login"
+                        }
+                    };
+
+                    StringContent request = new(JsonSerializer.Serialize(pushRequest), Encoding.UTF8, "application/json");
+
+                    using var httpClient = new HttpClient();
+                    var httpResponse = await httpClient.PostAsync(configuration["MessagingGatewayProdUri"], request);
+
+                    if (httpResponse.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine("LoginPushFlow Success");
+                        dynamic variables = new ExpandoObject();
+                        variables.status = true;
+                        return Results.Ok(variables);
                     }
-                };
-
-                StringContent request = new(JsonSerializer.Serialize(pushRequest), Encoding.UTF8, "application/json");
-
-                using var httpClient = new HttpClient();
-                var httpResponse = await httpClient.PostAsync(configuration["MessagingGatewayProdUri"], request);
-
-                if (httpResponse.IsSuccessStatusCode)
-                {
-                    dynamic variables = new ExpandoObject();
-                    variables.status = true;
-                    return Results.Ok(variables);
+                    else
+                    {
+                        Console.WriteLine("Push Service Error : " + await httpResponse.Content.ReadAsStringAsync());
+                        dynamic variables = new ExpandoObject();
+                        variables.status = false;
+                        variables.message = "Push Service Error - Status Code : " + httpResponse.StatusCode;
+                        variables.LastTransition = "token-error";
+                        Console.WriteLine("LoginPushFlow Error "+JsonSerializer.Serialize(variables));
+                        return Results.Ok(variables);
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("Push Service Error : " + await httpResponse.Content.ReadAsStringAsync());
                     dynamic variables = new ExpandoObject();
-                    variables.status = false;
-                    variables.message = "Push Service Error - Status Code : " + httpResponse.StatusCode;
-                    variables.LastTransition = "token-error";
+                    variables.status = true;
+                    Console.WriteLine("LoginPushFlow Success");
                     return Results.Ok(variables);
                 }
             }
