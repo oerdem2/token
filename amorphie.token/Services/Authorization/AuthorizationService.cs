@@ -8,7 +8,7 @@ using amorphie.token.data;
 
 namespace amorphie.token.Services.Authorization;
 
-public class AuthorizationService : ServiceBase,IAuthorizationService
+public class AuthorizationService : ServiceBase, IAuthorizationService
 {
     private readonly IClientService _clientService;
     private readonly ITagService _tagService;
@@ -16,11 +16,11 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
     private readonly DaprClient _daprClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly DatabaseContext _databaseContext;
-    private object zeebemessagehelper;
+    private readonly Guid jti;
 
-    public AuthorizationService(ILogger<AuthorizationService> logger,IConfiguration configuration,IClientService clientService,ITagService tagService,
-    IUserService userService,DaprClient daprClient,IHttpContextAccessor httpContextAccessor,DatabaseContext databaseContext)
-    :base(logger,configuration)
+    public AuthorizationService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, ITagService tagService,
+    IUserService userService, DaprClient daprClient, IHttpContextAccessor httpContextAccessor, DatabaseContext databaseContext)
+    : base(logger, configuration)
     {
         _clientService = clientService;
         _tagService = tagService;
@@ -28,11 +28,12 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         _httpContextAccessor = httpContextAccessor;
         _databaseContext = databaseContext;
         _userService = userService;
+        jti = Guid.NewGuid();
     }
 
-    private async Task<Claim> GetClaimDetail(string[] claimPath,string queryStringForTag,LoginResponse user)
+    private async Task<Claim> GetClaimDetail(string[] claimPath, string queryStringForTag, LoginResponse user)
     {
-        if(claimPath.First().Equals("tag"))
+        if (claimPath.First().Equals("tag"))
         {
             try
             {
@@ -41,50 +42,50 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
                 var tagName = claimPath[3];
                 var fieldName = claimPath[4];
 
-                var tagData = await _tagService.GetTagInfo(domain,entity,tagName,queryStringForTag);
-                if(tagData == null)
+                var tagData = await _tagService.GetTagInfo(domain, entity, tagName, queryStringForTag);
+                if (tagData == null)
                     return null;
 
-                return new Claim(string.Join('.',claimPath),tagData[fieldName].ToString());
+                return new Claim(string.Join('.', claimPath), tagData[fieldName].ToString());
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                Logger.LogError("Get Tag Info :" +ex.ToString());
+                Logger.LogError("Get Tag Info :" + ex.ToString());
             }
         }
         else
         {
-            if(claimPath.First().Equals("user"))
+            if (claimPath.First().Equals("user"))
             {
-                
+
                 Type t = user.GetType();
-                var property = t.GetProperties().First(p => p.Name.ToLower() == claimPath[1]);
-                
-                if(property == null)
+                t.GetProperties().ToList().ForEach(e => Console.WriteLine(e.Name.ToLower()));
+                var property = t.GetProperties().FirstOrDefault(p => p.Name.ToLower() == claimPath[1]);
+                if (property == null)
                     return null;
-                return new Claim(string.Join('.',claimPath),property.GetValue(user).ToString());
+                return new Claim(string.Join('.', claimPath), property.GetValue(user).ToString());
             }
         }
 
         return null;
     }
 
-    private async Task<List<Claim>> PopulateClaims(List<string> clientClaims,LoginResponse user)
+    private async Task<List<Claim>> PopulateClaims(List<string> clientClaims, LoginResponse user)
     {
         List<Claim> claims = new List<Claim>();
 
         string queryStringForTag = string.Empty;
-        queryStringForTag += "?reference="+user.Reference;
-        queryStringForTag += "&mail="+user.EMail;
-        queryStringForTag += "&phone="+user.MobilePhone.ToString();
-        foreach(var identityClaim in clientClaims)
+        queryStringForTag += "?reference=" + user.Reference;
+        queryStringForTag += "&mail=" + user.EMail;
+        queryStringForTag += "&phone=" + user.MobilePhone.ToString();
+        foreach (var identityClaim in clientClaims)
         {
             var claimDetail = identityClaim.Split("||");
             var primaryClaim = String.Empty;
             var alternativeClaim = String.Empty;
 
-            if(claimDetail.Length == 1)
+            if (claimDetail.Length == 1)
             {
                 primaryClaim = claimDetail.First();
             }
@@ -95,18 +96,18 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             }
 
             var claimInfo = primaryClaim.Split(".");
-            
-            var claimValue = await GetClaimDetail(claimInfo,queryStringForTag,user);
 
-            if(claimValue != null)
+            var claimValue = await GetClaimDetail(claimInfo, queryStringForTag, user);
+
+            if (claimValue != null)
             {
                 claims.Add(claimValue);
             }
             else
             {
                 claimInfo = alternativeClaim.Split(".");
-                claimValue = await GetClaimDetail(claimInfo,queryStringForTag,user);
-                if(claimValue != null)
+                claimValue = await GetClaimDetail(claimInfo, queryStringForTag, user);
+                if (claimValue != null)
                 {
                     claims.Add(claimValue);
                 }
@@ -116,12 +117,12 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         return claims;
     }
 
-    public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithPasswordFromWorkflow(TokenRequest tokenRequest,ClientResponse client,LoginResponse user)
+    public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithPasswordFromWorkflow(TokenRequest tokenRequest, ClientResponse client, LoginResponse user)
     {
         TokenResponse tokenResponse = new();
 
         //openId Section
-        if(tokenRequest.scopes.Contains("openId") || tokenRequest.scopes.Contains("profile"))
+        if (tokenRequest.scopes.Contains("openId") || tokenRequest.scopes.Contains("profile"))
         {
             int iat = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
             var claims = new List<Claim>()
@@ -130,22 +131,22 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             };
 
             var identityInfo = client.tokens.FirstOrDefault(t => t.type == 2);
-            if(identityInfo != null)
+            if (identityInfo != null)
             {
-                var populatedClaims = await PopulateClaims(identityInfo.claims,user);
+                var populatedClaims = await PopulateClaims(identityInfo.claims, user);
                 claims.AddRange(populatedClaims);
             }
 
             int idDuration = 0;
             try
             {
-                 idDuration = TimeHelper.ConvertStrDurationToSeconds(identityInfo.duration);
+                idDuration = TimeHelper.ConvertStrDurationToSeconds(identityInfo.duration);
             }
             catch (FormatException ex)
             {
                 Logger.LogError(ex.Message);
             }
-            
+
 
             var idToken = JwtHelper.GenerateJwt("BurganIam", client.returnuri, claims,
             expires: DateTime.UtcNow.AddSeconds(idDuration));
@@ -153,7 +154,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         }
 
         var tokenClaims = new List<Claim>();
-        var excludedScopes = new string[]{"openId","profile"};
+        var excludedScopes = new string[] { "openId", "profile" };
         foreach (var scope in tokenRequest.scopes.ToArray().Except(excludedScopes))
             tokenClaims.Add(new Claim("scope", scope));
 
@@ -169,44 +170,43 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         {
             Logger.LogError(ex.Message);
         }
-        
 
-        var jti = Guid.NewGuid();
 
-        if(accessInfo != null)
+        if (accessInfo != null)
         {
-            foreach(var accessClaim in accessInfo.claims)
+            foreach (var accessClaim in accessInfo.claims)
             {
-                var populatedClaims = await PopulateClaims(accessInfo.claims,user);
+                var populatedClaims = await PopulateClaims(accessInfo.claims, user);
                 tokenClaims.AddRange(populatedClaims);
-                tokenClaims.Add(new Claim("jti",jti.ToString()));
+                tokenClaims.Add(new Claim("jti", jti.ToString()));
             }
         }
 
 
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration["JwtSecretKey"]));
-        var signinCredentials = new SigningCredentials(secretKey,SecurityAlgorithms.HmacSha384);
+        var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha384);
 
         var expires = DateTime.UtcNow.AddSeconds(accessDuration);
         string access_token = JwtHelper.GenerateJwt("BurganIam", client.returnuri, tokenClaims,
-            expires: expires, signingCredentials:signinCredentials);
+            expires: expires, signingCredentials: signinCredentials);
 
         tokenResponse.token_type = "Bearer";
         tokenResponse.access_token = access_token;
         tokenResponse.expires = accessDuration;
 
-        var tokenInfo = JwtHelper.CreateTokenInfo(jti,tokenRequest.client_id,expires,true,access_token,user.Reference
-        ,tokenRequest.scopes.ToList().ToList(),user.Id);
+        var tokenInfo = JwtHelper.CreateTokenInfo(jti, tokenRequest.client_id, expires, true, access_token, user.Reference
+        , tokenRequest.scopes.ToList().ToList(), user.Id);
 
-        var ttl = ((int)(DateTime.Now-tokenInfo.ExpiredAt).TotalSeconds) + 5;
-        await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"],tokenInfo.Jwt,tokenInfo,metadata:new Dictionary<string, string> { { "ttlInSeconds", ttl.ToString() } });
+        var ttl = ((int)(DateTime.Now - tokenInfo.ExpiredAt).TotalSeconds) + 5;
+        await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"], tokenInfo.Jwt, tokenInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", ttl.ToString() } });
 
         await _databaseContext.Tokens.AddAsync(tokenInfo);
         await _databaseContext.SaveChangesAsync();
-        
-        
 
-        return new ServiceResponse<TokenResponse>(){
+
+
+        return new ServiceResponse<TokenResponse>()
+        {
             StatusCode = 200,
             Response = tokenResponse
         };
@@ -216,19 +216,21 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
     {
         TokenResponse tokenResponse = new();
 
-        var clientResponse = await _clientService.ValidateClient(tokenRequest.client_id,tokenRequest.client_secret);
+        var clientResponse = await _clientService.ValidateClient(tokenRequest.client_id, tokenRequest.client_secret);
 
-        if(clientResponse.StatusCode != 200)
+        if (clientResponse.StatusCode != 200)
         {
-            return new ServiceResponse<TokenResponse>(){
+            return new ServiceResponse<TokenResponse>()
+            {
                 StatusCode = clientResponse.StatusCode,
                 Detail = clientResponse.Detail
             };
         }
         var client = clientResponse.Response;
-        if(!client.allowedgranttypes.Any(g => g.GrantType == tokenRequest.grant_type))
+        if (!client.allowedgranttypes.Any(g => g.GrantType == tokenRequest.grant_type))
         {
-            return new ServiceResponse<TokenResponse>(){
+            return new ServiceResponse<TokenResponse>()
+            {
                 StatusCode = 471,
                 Detail = "Client Has No Authorize To Use Requested Grant Type"
             };
@@ -236,19 +238,21 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
 
         var requestedScopes = tokenRequest.scopes.ToList();
 
-        if(!requestedScopes.All(client.allowedscopetags.Contains))
+        if (!requestedScopes.All(client.allowedscopetags.Contains))
         {
-            return new ServiceResponse<TokenResponse>(){
+            return new ServiceResponse<TokenResponse>()
+            {
                 StatusCode = 473,
                 Detail = "Client is Not Authorized For Requested Scopes"
             };
         }
 
-        var userResponse = await _userService.Login(new LoginRequest(){Reference = tokenRequest.username,Password = tokenRequest.password});
+        var userResponse = await _userService.Login(new LoginRequest() { Reference = tokenRequest.username, Password = tokenRequest.password });
 
-        if(userResponse.StatusCode != 200)
+        if (userResponse.StatusCode != 200)
         {
-            return new ServiceResponse<TokenResponse>(){
+            return new ServiceResponse<TokenResponse>()
+            {
                 StatusCode = userResponse.StatusCode,
                 Detail = userResponse.Detail
             };
@@ -256,16 +260,17 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
 
         var user = userResponse.Response;
 
-        if((user?.State.ToLower() != "active" && user?.State.ToLower() != "new") )
+        if (user?.State.ToLower() != "active" && user?.State.ToLower() != "new")
         {
-            return new ServiceResponse<TokenResponse>(){
+            return new ServiceResponse<TokenResponse>()
+            {
                 StatusCode = 470,
                 Detail = "User is disabled"
             };
         }
 
         //openId Section
-        if(tokenRequest.scopes.Contains("openId") || tokenRequest.scopes.Contains("profile"))
+        if (tokenRequest.scopes.Contains("openId") || tokenRequest.scopes.Contains("profile"))
         {
             int iat = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
             var claims = new List<Claim>()
@@ -274,22 +279,22 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             };
 
             var identityInfo = client.tokens.FirstOrDefault(t => t.type == 2);
-            if(identityInfo != null)
+            if (identityInfo != null)
             {
-                var populatedClaims = await PopulateClaims(identityInfo.claims,user);
+                var populatedClaims = await PopulateClaims(identityInfo.claims, user);
                 claims.AddRange(populatedClaims);
             }
 
             int idDuration = 0;
             try
             {
-                 idDuration = TimeHelper.ConvertStrDurationToSeconds(identityInfo.duration);
+                idDuration = TimeHelper.ConvertStrDurationToSeconds(identityInfo.duration);
             }
             catch (FormatException ex)
             {
                 Logger.LogError(ex.Message);
             }
-            
+
 
             var idToken = JwtHelper.GenerateJwt("BurganIam", client.returnuri, claims,
             expires: DateTime.UtcNow.AddSeconds(idDuration));
@@ -297,7 +302,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         }
 
         var tokenClaims = new List<Claim>();
-        var excludedScopes = new string[]{"openId","profile"};
+        var excludedScopes = new string[] { "openId", "profile" };
         foreach (var scope in tokenRequest.scopes.ToArray().Except(excludedScopes))
             tokenClaims.Add(new Claim("scope", scope));
 
@@ -313,40 +318,40 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         {
             Logger.LogError(ex.Message);
         }
-        
 
-        var jti = Guid.NewGuid();
-        if(accessInfo != null)
+
+        if (accessInfo != null)
         {
-            foreach(var accessClaim in accessInfo.claims)
+            foreach (var accessClaim in accessInfo.claims)
             {
-                var populatedClaims = await PopulateClaims(accessInfo.claims,user);
+                var populatedClaims = await PopulateClaims(accessInfo.claims, user);
                 tokenClaims.AddRange(populatedClaims);
-                tokenClaims.Add(new Claim("jti",jti.ToString()));
+                tokenClaims.Add(new Claim("jti", jti.ToString()));
             }
         }
 
 
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration["JwtSecretKey"]));
-        var signinCredentials = new SigningCredentials(secretKey,SecurityAlgorithms.HmacSha384);
+        var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha384);
 
         var expires = DateTime.UtcNow.AddSeconds(accessDuration);
         string access_token = JwtHelper.GenerateJwt("BurganIam", client.returnuri, tokenClaims,
-            expires: expires, signingCredentials:signinCredentials);
+            expires: expires, signingCredentials: signinCredentials);
 
         tokenResponse.token_type = "Bearer";
         tokenResponse.access_token = access_token;
         tokenResponse.expires = accessDuration;
 
-        var tokenInfo = JwtHelper.CreateTokenInfo(jti,tokenRequest.client_id,expires,true,access_token,user.Reference
-        ,requestedScopes.ToList(),user.Id);
+        var tokenInfo = JwtHelper.CreateTokenInfo(jti, tokenRequest.client_id, expires, true, access_token, user.Reference
+        , requestedScopes.ToList(), user.Id);
 
-        var ttl = ((int)(DateTime.Now-tokenInfo.ExpiredAt).TotalSeconds) + 5;
-        await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"],tokenInfo.Jwt,tokenInfo,metadata:new Dictionary<string, string> { { "ttlInSeconds", ttl.ToString() } });
+        var ttl = ((int)(DateTime.Now - tokenInfo.ExpiredAt).TotalSeconds) + 5;
+        await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"], tokenInfo.Jwt, tokenInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", ttl.ToString() } });
 
         await _databaseContext.Tokens.AddAsync(tokenInfo);
         await _databaseContext.SaveChangesAsync();
-        return new ServiceResponse<TokenResponse>(){
+        return new ServiceResponse<TokenResponse>()
+        {
             StatusCode = 200,
             Response = tokenResponse
         };
@@ -356,56 +361,61 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
     {
         TokenResponse tokenResponse = new();
 
-        var clientResponse = await _clientService.ValidateClient(tokenRequest.client_id,tokenRequest.client_secret);
-        if(clientResponse.StatusCode != 200)
+        var clientResponse = await _clientService.ValidateClient(tokenRequest.client_id, tokenRequest.client_secret);
+        if (clientResponse.StatusCode != 200)
         {
-            return new ServiceResponse<TokenResponse>(){
+            return new ServiceResponse<TokenResponse>()
+            {
                 StatusCode = clientResponse.StatusCode,
                 Detail = clientResponse.Detail
             };
         }
 
         var client = clientResponse.Response;
-        
-        if(!client.allowedgranttypes.Any(g => g.GrantType == tokenRequest.grant_type))
+
+        if (!client.allowedgranttypes.Any(g => g.GrantType == tokenRequest.grant_type))
         {
-            return new ServiceResponse<TokenResponse>(){
+            return new ServiceResponse<TokenResponse>()
+            {
                 StatusCode = 471,
                 Detail = "Client Has No Authorize To Use Requested Grant Type"
             };
         }
 
-        var authorizationCodeInfo = await _daprClient.GetStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"],tokenRequest.code);
+        var authorizationCodeInfo = await _daprClient.GetStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"], tokenRequest.code);
 
-        if(authorizationCodeInfo == null)
+        if (authorizationCodeInfo == null)
         {
-            return new ServiceResponse<TokenResponse>(){
+            return new ServiceResponse<TokenResponse>()
+            {
                 StatusCode = 470,
                 Detail = "Invalid Authorization Code"
             };
         }
 
-        if(!authorizationCodeInfo.ClientId.Equals(tokenRequest.client_id,StringComparison.OrdinalIgnoreCase))
+        if (!authorizationCodeInfo.ClientId.Equals(tokenRequest.client_id, StringComparison.OrdinalIgnoreCase))
         {
-            return new ServiceResponse<TokenResponse>(){
+            return new ServiceResponse<TokenResponse>()
+            {
                 StatusCode = 471,
                 Detail = "ClientId Not Matched"
             };
         }
-        
-        if(client.pkce == "must")
+
+        if (client.pkce == "must")
         {
-            if(!authorizationCodeInfo.CodeChallenge.Equals(GetHashedCodeVerifier(tokenRequest.code_verifier)))
+            if (!authorizationCodeInfo.CodeChallenge.Equals(GetHashedCodeVerifier(tokenRequest.code_verifier)))
             {
-                return new ServiceResponse<TokenResponse>(){
-                StatusCode = 472,
-                Detail = "Code Verifier Not Matched"
-            };
+                return new ServiceResponse<TokenResponse>()
+                {
+                    StatusCode = 472,
+                    Detail = "Code Verifier Not Matched"
+                };
             }
         }
 
         //openId Section
-        if(authorizationCodeInfo.RequestedScopes.Contains("openId") || authorizationCodeInfo.RequestedScopes.Contains("profile"))
+        if (authorizationCodeInfo.RequestedScopes.Contains("openId") || authorizationCodeInfo.RequestedScopes.Contains("profile"))
         {
             int iat = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
             var claims = new List<Claim>()
@@ -415,22 +425,22 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             };
 
             var identityInfo = client.tokens.FirstOrDefault(t => t.type == 2);
-            if(identityInfo != null)
+            if (identityInfo != null)
             {
-                var populatedClaims = await PopulateClaims(identityInfo.claims,authorizationCodeInfo.Subject);
+                var populatedClaims = await PopulateClaims(identityInfo.claims, authorizationCodeInfo.Subject);
                 claims.AddRange(populatedClaims);
             }
 
             int idDuration = 0;
             try
             {
-                 idDuration = TimeHelper.ConvertStrDurationToSeconds(identityInfo.duration);
+                idDuration = TimeHelper.ConvertStrDurationToSeconds(identityInfo.duration);
             }
             catch (FormatException ex)
             {
                 Logger.LogError(ex.Message);
             }
-            
+
 
             var idToken = JwtHelper.GenerateJwt("Test", client.returnuri, claims,
             expires: DateTime.UtcNow.AddSeconds(idDuration));
@@ -438,7 +448,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         }
 
         var tokenClaims = new List<Claim>();
-        var excludedScopes = new string[]{"openId","profile"};
+        var excludedScopes = new string[] { "openId", "profile" };
         foreach (var scope in tokenRequest.scopes.ToArray().Except(excludedScopes))
             tokenClaims.Add(new Claim("scope", scope));
 
@@ -455,38 +465,38 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             Logger.LogError(ex.Message);
         }
 
-        var jti = Guid.NewGuid();
-        if(accessInfo != null)
+        if (accessInfo != null)
         {
-            foreach(var accessClaim in accessInfo.claims)
+            foreach (var accessClaim in accessInfo.claims)
             {
-                var populatedClaims = await PopulateClaims(accessInfo.claims,authorizationCodeInfo.Subject);
+                var populatedClaims = await PopulateClaims(accessInfo.claims, authorizationCodeInfo.Subject);
                 tokenClaims.AddRange(populatedClaims);
-                tokenClaims.Add(new Claim("jti",jti.ToString()));
+                tokenClaims.Add(new Claim("jti", jti.ToString()));
             }
         }
 
 
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration["JwtSecretKey"]));
-        var signinCredentials = new SigningCredentials(secretKey,SecurityAlgorithms.HmacSha384);
+        var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha384);
 
         var expires = DateTime.UtcNow.AddSeconds(accessDuration);
         string access_token = JwtHelper.GenerateJwt("BurganIam", client.returnuri, tokenClaims,
-            expires: expires, signingCredentials:signinCredentials);
+            expires: expires, signingCredentials: signinCredentials);
 
         tokenResponse.token_type = "Bearer";
         tokenResponse.access_token = access_token;
         tokenResponse.expires = accessDuration;
 
-        var tokenInfo = JwtHelper.CreateTokenInfo(jti,authorizationCodeInfo.ClientId,expires,true,access_token,authorizationCodeInfo.Subject.Reference
-        ,authorizationCodeInfo.RequestedScopes.ToList(),authorizationCodeInfo.Subject.Id);
+        var tokenInfo = JwtHelper.CreateTokenInfo(jti, authorizationCodeInfo.ClientId, expires, true, access_token, authorizationCodeInfo.Subject.Reference
+        , authorizationCodeInfo.RequestedScopes.ToList(), authorizationCodeInfo.Subject.Id);
 
-        var ttl = ((int)(DateTime.Now-tokenInfo.ExpiredAt).TotalSeconds) + 5;
-        await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"],tokenInfo.Jwt,tokenInfo,metadata:new Dictionary<string, string> { { "ttlInSeconds", ttl.ToString() } });
+        var ttl = ((int)(DateTime.Now - tokenInfo.ExpiredAt).TotalSeconds) + 5;
+        await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"], tokenInfo.Jwt, tokenInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", ttl.ToString() } });
 
         await _databaseContext.Tokens.AddAsync(tokenInfo);
         await _databaseContext.SaveChangesAsync();
-        return new ServiceResponse<TokenResponse>(){
+        return new ServiceResponse<TokenResponse>()
+        {
             StatusCode = 200,
             Response = tokenResponse
         };
@@ -494,12 +504,12 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
 
     public async Task AssignUserToAuthorizationCode(LoginResponse user, string authorizationCode)
     {
-        var authorizationCodeInfo = await _daprClient.GetStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"],authorizationCode);
+        var authorizationCodeInfo = await _daprClient.GetStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"], authorizationCode);
 
         var newAuthorizationCodeInfo = authorizationCodeInfo.MapTo<AuthorizationCode>();
         newAuthorizationCodeInfo.Subject = user;
 
-        await _daprClient.SaveStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"],authorizationCode,newAuthorizationCodeInfo);
+        await _daprClient.SaveStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"], authorizationCode, newAuthorizationCodeInfo);
     }
 
     public async Task<ServiceResponse<AuthorizationResponse>> Authorize(AuthorizationRequest request)
@@ -508,18 +518,20 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         try
         {
             var clientResponse = await _clientService.CheckClient(request.client_id);
-            if(clientResponse.StatusCode != 200)
+            if (clientResponse.StatusCode != 200)
             {
-                return new ServiceResponse<AuthorizationResponse>(){
+                return new ServiceResponse<AuthorizationResponse>()
+                {
                     StatusCode = clientResponse.StatusCode,
                     Detail = clientResponse.Detail
                 };
             }
             var client = clientResponse.Response;
-        
-            if(string.IsNullOrEmpty(request.response_type) || request.response_type != "code")
+
+            if (string.IsNullOrEmpty(request.response_type) || request.response_type != "code")
             {
-                return new ServiceResponse<AuthorizationResponse>(){
+                return new ServiceResponse<AuthorizationResponse>()
+                {
                     StatusCode = 473,
                     Detail = "Response Type Parameter Has To Be Set As 'Code'"
                 };
@@ -527,9 +539,10 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
 
             var requestedScopes = request.scope.ToList();
 
-            if(!requestedScopes.All(client.allowedscopetags.Contains))
+            if (!requestedScopes.All(client.allowedscopetags.Contains))
             {
-                return new ServiceResponse<AuthorizationResponse>(){
+                return new ServiceResponse<AuthorizationResponse>()
+                {
                     StatusCode = 473,
                     Detail = "Client is Not Authorized For Requested Scopes"
                 };
@@ -554,21 +567,23 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
             authorizationResponse.RequestedScopes = requestedScopes;
             authorizationResponse.State = request.state;
 
-            return new ServiceResponse<AuthorizationResponse>(){
+            return new ServiceResponse<AuthorizationResponse>()
+            {
                 StatusCode = 200,
                 Response = authorizationResponse
             };
-            
+
         }
         catch (Exception ex)
         {
             Logger.LogError(ex.Message);
-            return new ServiceResponse<AuthorizationResponse>(){
+            return new ServiceResponse<AuthorizationResponse>()
+            {
                 StatusCode = 500,
                 Response = null
             };
         }
-        
+
     }
 
     private async Task<string> GenerateAuthorizationCode(AuthorizationCode authorizationCode)
@@ -578,7 +593,7 @@ public class AuthorizationService : ServiceBase,IAuthorizationService
         rand.GetBytes(bytes);
         var code = Base64UrlEncoder.Encode(bytes);
 
-        await _daprClient.SaveStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"],code,authorizationCode);
+        await _daprClient.SaveStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"], code, authorizationCode);
 
         return code;
     }
