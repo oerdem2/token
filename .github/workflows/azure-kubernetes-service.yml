@@ -79,6 +79,7 @@ jobs:
             ${{ github.workspace }}/manifest/dapr/amorphie-zeebe-token-generate-tokens.yaml
             ${{ github.workspace }}/manifest/dapr/amorphie-zeebe-token-otp-login-flow.yaml
             ${{ github.workspace }}/manifest/dapr/amorphie-zeebe-token-set-state.yaml
+            ${{ github.workspace }}/manifest/dapr/amorphie-zeebe-token-set-login-type.yaml
             ${{ github.workspace }}/manifest/service.yaml
           images: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.APP_NAME }}:${{ github.sha }}
