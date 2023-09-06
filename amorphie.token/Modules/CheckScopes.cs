@@ -21,36 +21,39 @@ public static class CheckScopes
         [FromServices] IAuthorizationService authorizationService
         )
         {
+            Console.WriteLine("CheckScopes called");
             var transitionName = body.GetProperty("LastTransition").ToString();
 
             var requestBodySerialized = body.GetProperty($"TRX-{transitionName}").GetProperty("Data").GetProperty("entityData").ToString();
-            
-            TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized,new JsonSerializerOptions
+
+            TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
 
             var clientInfoSerialized = body.GetProperty("clientSerialized").ToString();
-            
-            ClientResponse clientInfo = JsonSerializer.Deserialize<ClientResponse>(clientInfoSerialized,new JsonSerializerOptions
+
+            ClientResponse clientInfo = JsonSerializer.Deserialize<ClientResponse>(clientInfoSerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
-            
+
             var requestedScopes = requestBody.scopes.ToList();
 
-            if(!requestedScopes.All(clientInfo.allowedscopetags.Contains))
+            if (!requestedScopes.All(clientInfo.allowedscopetags.Contains))
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = "Client is Not Authorized For Requested Scopes";
                 variables.LastTransition = "token-error";
+                Console.WriteLine("CheckScopes Error " + JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
             else
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = true;
+                Console.WriteLine("CheckScopes Success");
                 return Results.Ok(variables);
             }
 

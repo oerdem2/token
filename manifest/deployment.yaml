@@ -34,6 +34,8 @@ spec:
             value: user-secretstore
           - name: DAPR_STATE_STORE_NAME
             value: amorphie-cache
+          - name: AKS_ENV
+            value: "E"
           resources:
             limits:
               cpu: "1"
