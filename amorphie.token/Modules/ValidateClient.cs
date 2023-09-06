@@ -23,23 +23,23 @@ public static class ValidateClient
         )
         {
             var transitionName = body.GetProperty("LastTransition").ToString();
-            Console.WriteLine("Client validate worker txn name:"+transitionName);
+            Console.WriteLine("Client validate worker txn name:" + transitionName);
             var requestBodySerialized = body.GetProperty($"TRX-{transitionName}").GetProperty("Data").GetProperty("entityData").ToString();
-            Console.WriteLine("Client validate worker request body:"+requestBodySerialized);
-            var requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized,new JsonSerializerOptions
+            Console.WriteLine("Client validate worker request body:" + requestBodySerialized);
+            var requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
 
-            ServiceResponse<ClientResponse> clientResult = await clientService.ValidateClient(requestBody.client_id,requestBody.client_secret);
-            
-            if(clientResult.StatusCode == 200)
+            ServiceResponse<ClientResponse> clientResult = await clientService.ValidateClient(requestBody.client_id, requestBody.client_secret);
+
+            if (clientResult.StatusCode == 200)
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = true;
                 variables.clientSerialized = clientResult.Response;
                 variables.loginFlow = "Otp";
-                Console.WriteLine("Client Validate Error "+JsonSerializer.Serialize(variables));
+                Console.WriteLine("Client Validate Error " + JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
             else
@@ -48,7 +48,7 @@ public static class ValidateClient
                 variables.status = false;
                 variables.message = clientResult.Detail;
                 variables.LastTransition = "token-error";
-                Console.WriteLine("Client Validate Success "+JsonSerializer.Serialize(variables));
+                Console.WriteLine("Client Validate Success " + JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
         }

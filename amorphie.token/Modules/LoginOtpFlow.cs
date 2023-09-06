@@ -21,10 +21,10 @@ public static class LoginOtpFlow
         )
         {
             var transactionId = body.GetProperty("InstanceId").ToString();
-            
+
             var userInfoSerialized = body.GetProperty("userSerialized").ToString();
-            
-            LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized,new JsonSerializerOptions
+
+            LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
@@ -38,34 +38,37 @@ public static class LoginOtpFlow
             }
 
             var aks = Environment.GetEnvironmentVariable("AKS_ENV");
-            if(aks != null && aks.Equals("E"))
+            if (aks != null && aks.Equals("E"))
                 code = "123456";
 
-            await daprClient.SaveStateAsync(configuration["DAPR_STATE_STORE_NAME"],$"{transactionId}_Login_Otp_Code",code);
+            await daprClient.SaveStateAsync(configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code", code);
 
-            if(aks == null || aks.Equals("H"))
+            if (aks == null || aks.Equals("H"))
             {
-                var otpRequest = new{
-                    Sender="AutoDetect",
-                    SmsType="Otp",
-                    Phone=new{
-                        CountryCode=userInfo.MobilePhone.CountryCode,
-                        Prefix=userInfo.MobilePhone.Prefix,
-                        Number=userInfo.MobilePhone.Number
+                var otpRequest = new
+                {
+                    Sender = "AutoDetect",
+                    SmsType = "Otp",
+                    Phone = new
+                    {
+                        CountryCode = userInfo.MobilePhone.CountryCode,
+                        Prefix = userInfo.MobilePhone.Prefix,
+                        Number = userInfo.MobilePhone.Number
                     },
                     Content = $"{code} şifresi ile giriş yapabilirsiniz",
-                    Process = new{
-                        Name="Token Login Flow",
-                        Identity="Otp Login"
+                    Process = new
+                    {
+                        Name = "Token Login Flow",
+                        Identity = "Otp Login"
                     }
                 };
 
-                StringContent request = new(JsonSerializer.Serialize(otpRequest),Encoding.UTF8,"application/json");
+                StringContent request = new(JsonSerializer.Serialize(otpRequest), Encoding.UTF8, "application/json");
 
                 using var httpClient = new HttpClient();
-                var httpResponse = await httpClient.PostAsync(configuration["MessagingGatewayUri"],request);
-                
-                if(httpResponse.IsSuccessStatusCode)
+                var httpResponse = await httpClient.PostAsync(configuration["MessagingGatewayUri"], request);
+
+                if (httpResponse.IsSuccessStatusCode)
                 {
                     Console.WriteLine("LoginOtpFlow Success");
                     dynamic variables = new ExpandoObject();
@@ -78,7 +81,7 @@ public static class LoginOtpFlow
                     variables.status = false;
                     variables.message = "Otp Service Error";
                     variables.LastTransition = "token-error";
-                    Console.WriteLine("LoginOtpFlow Error "+JsonSerializer.Serialize(variables));
+                    Console.WriteLine("LoginOtpFlow Error " + JsonSerializer.Serialize(variables));
                     return Results.Ok(variables);
                 }
             }

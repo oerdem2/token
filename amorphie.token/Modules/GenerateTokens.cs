@@ -73,7 +73,7 @@ public static class GenerateTokens
                 variables.status = false;
                 variables.tokenResponse = result.Detail;
                 variables.LastTransition = "token-error";
-                Console.WriteLine("GenerateTokens Error "+JsonSerializer.Serialize(variables));
+                Console.WriteLine("GenerateTokens Error " + JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
 

@@ -23,20 +23,20 @@ public static class CheckUserState
         {
             Console.WriteLine("CheckUserState called");
             var userInfoSerialized = body.GetProperty("userSerialized").ToString();
-            
-            LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized,new JsonSerializerOptions
+
+            LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
-            
 
-            if(userInfo?.State.ToLower() != "active" && userInfo?.State.ToLower() != "new" )
+
+            if (userInfo?.State.ToLower() != "active" && userInfo?.State.ToLower() != "new")
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = "User is disabled";
                 variables.LastTransition = "token-error";
-                Console.WriteLine("CheckUserState Error "+JsonSerializer.Serialize(variables));
+                Console.WriteLine("CheckUserState Error " + JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
             else

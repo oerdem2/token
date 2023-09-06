@@ -42,7 +42,7 @@ public static class CheckPush
                 variables.status = false;
                 variables.message = "Push Check Failed";
                 variables.LastTransition = "token-error";
-                Console.WriteLine("CheckPush Error "+JsonSerializer.Serialize(variables));
+                Console.WriteLine("CheckPush Error " + JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
         }
