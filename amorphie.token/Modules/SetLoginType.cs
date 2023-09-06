@@ -62,7 +62,7 @@ namespace amorphie.token.Modules
                     variables.status = false;
                     variables.message = response.Detail;
                     variables.LastTransition = "token-error";
-                    Console.WriteLine("SetLoginType Error"+JsonSerializer.Serialize(variables));
+                    Console.WriteLine("SetLoginType Error" + JsonSerializer.Serialize(variables));
                     return Results.Ok(variables);
                 }
             }

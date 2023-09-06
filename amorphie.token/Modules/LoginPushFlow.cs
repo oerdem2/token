@@ -42,12 +42,12 @@ namespace amorphie.token.Modules
                 }
 
                 var aks = Environment.GetEnvironmentVariable("AKS_ENV");
-                if(aks != null && aks.Equals("E"))
+                if (aks != null && aks.Equals("E"))
                     code = "123456";
 
                 await daprClient.SaveStateAsync(configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code", code);
 
-                if(aks == null || aks.Equals("H"))
+                if (aks == null || aks.Equals("H"))
                 {
                     var pushRequest = new
                     {
@@ -83,7 +83,7 @@ namespace amorphie.token.Modules
                         variables.status = false;
                         variables.message = "Push Service Error - Status Code : " + httpResponse.StatusCode;
                         variables.LastTransition = "token-error";
-                        Console.WriteLine("LoginPushFlow Error "+JsonSerializer.Serialize(variables));
+                        Console.WriteLine("LoginPushFlow Error " + JsonSerializer.Serialize(variables));
                         return Results.Ok(variables);
                     }
                 }

@@ -21,27 +21,27 @@ public static class CheckGrantTypes
             var transitionName = body.GetProperty("LastTransition").ToString();
 
             var requestBodySerialized = body.GetProperty($"TRX-{transitionName}").GetProperty("Data").GetProperty("entityData").ToString();
-            
-            
-            TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized,new JsonSerializerOptions
+
+
+            TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
 
             var clientInfoSerialized = body.GetProperty("clientSerialized").ToString();
-            
-            ClientResponse clientInfo = JsonSerializer.Deserialize<ClientResponse>(clientInfoSerialized,new JsonSerializerOptions
+
+            ClientResponse clientInfo = JsonSerializer.Deserialize<ClientResponse>(clientInfoSerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
-            
-            if(clientInfo.allowedgranttypes == null || !clientInfo.allowedgranttypes.Any(g => g.GrantType == requestBody.grant_type))
+
+            if (clientInfo.allowedgranttypes == null || !clientInfo.allowedgranttypes.Any(g => g.GrantType == requestBody.grant_type))
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = "Client Has No Authorize To Use Requested Grant Type";
                 variables.LastTransition = "token-error";
-                Console.WriteLine("CheckGrantType Error "+JsonSerializer.Serialize(variables));
+                Console.WriteLine("CheckGrantType Error " + JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
             else
