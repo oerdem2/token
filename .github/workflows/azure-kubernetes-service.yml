@@ -76,6 +76,7 @@ jobs:
             ${{ github.workspace }}/manifest/dapr/amorphie-zeebe-fact-check-user.yaml
             ${{ github.workspace }}/manifest/dapr/amorphie-zeebe-fact-validate-client.yaml
             ${{ github.workspace }}/manifest/dapr/amorphie-zeebe-token-check-otp.yaml
+            ${{ github.workspace }}/manifest/dapr/amorphie-zeebe-token-check-push.yaml
             ${{ github.workspace }}/manifest/dapr/amorphie-zeebe-token-generate-tokens.yaml
             ${{ github.workspace }}/manifest/dapr/amorphie-zeebe-token-otp-login-flow.yaml
             ${{ github.workspace }}/manifest/dapr/amorphie-zeebe-token-push-login-flow.yaml
