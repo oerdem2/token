@@ -48,7 +48,7 @@ public static class ValidateClient
                 variables.status = false;
                 variables.message = clientResult.Detail;
                 variables.LastTransition = "token-error";
-                Console.WriteLine("Client Validate Error "+JsonSerializer.Serialize(variables));
+                Console.WriteLine("Client Validate Error " + JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
         }
