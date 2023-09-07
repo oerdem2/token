@@ -2,6 +2,7 @@ apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
   name: amorphie-token-set-login-type
+  namespace: amorphie-token
 spec:
   type: bindings.zeebe.jobworker
   version: v1

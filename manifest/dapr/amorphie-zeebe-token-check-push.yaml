@@ -2,6 +2,7 @@ apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
   name: amorphie-token-check-push-login-flow
+  namespace: amorphie-token
 spec:
   type: bindings.zeebe.jobworker
   version: v1
