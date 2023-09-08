@@ -1,14 +1,14 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: amorphie-token-push-otp-flow
+  name: amorphie-token-login-push-flow
   namespace: amorphie-token
 spec:
   type: bindings.zeebe.jobworker
   version: v1
   metadata:
   - name: jobType
-    value: amorphie-token-push-otp-flow
+    value: amorphie-token-login-push-flow
   - name: gatewayAddr
     value: zeebe-zeebe-gateway.amorphie-zeebe.svc.cluster.local:26500
   - name: gatewayKeepAlive
