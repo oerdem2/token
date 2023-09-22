@@ -71,6 +71,7 @@ public class TokenController : Controller
         return Content(hashedCodeVerifier);
     }
 
+
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> Authorize(AuthorizationRequest authorizationRequest)
     {
