@@ -127,7 +127,7 @@ public class UserService : ServiceBase, IUserService
     {
         try
         {
-            var user = await _daprClient.InvokeMethodAsync<LoginResponse>(Configuration["UserServiceAppName"], "/user/"+userId);
+            var user = await _daprClient.InvokeMethodAsync<LoginResponse>(HttpMethod.GET,Configuration["UserServiceAppName"], "/user/"+userId);
             if (user == null)
             {
                 return new ServiceResponse<LoginResponse>()
