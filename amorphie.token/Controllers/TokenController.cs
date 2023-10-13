@@ -71,6 +71,31 @@ public class TokenController : Controller
         return Content(hashedCodeVerifier);
     }
 
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> Demo()
+    {
+        ViewBag.tokenUrl = _configuration["tokenUrl"];
+        ViewBag.callUrl = _configuration["callUrl"];
+        return View();
+    }
+
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> OpenBankingAuthorize(OpenBankingAuthorizationRequest authorizationRequest)
+    {
+        // var authorizationResponse = await _authorizationService.OpenBankingAuthorize(authorizationRequest);
+
+        // if (authorizationResponse.StatusCode != 200)
+        // {
+        //     return Content($"An Error Occured. Detail : " + authorizationResponse.Detail);
+        // }
+
+        // var authorizationResult = authorizationResponse.Response;
+
+        var loginModel = new OpenBankingLogin();
+        ViewBag.HasError = false;
+        return View("OpenBankingLogin", loginModel);
+
+    }
 
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> Authorize(AuthorizationRequest authorizationRequest)
@@ -142,9 +167,49 @@ public class TokenController : Controller
 
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost]
+    public async Task<IActionResult> OpenBankingLogin(OpenBankingLogin openBankingLoginRequest)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(openBankingLoginRequest.UserName) || string.IsNullOrWhiteSpace(openBankingLoginRequest.Password))
+            {
+                ViewBag.HasError = true;
+                ViewBag.ErrorDetail = "Reference and Password Can Not Be Empty";
+            }
+            var userResponse = await _userService.Login(new LoginRequest() { Reference = openBankingLoginRequest.UserName, Password = openBankingLoginRequest.Password });
+            if (userResponse.StatusCode != 200)
+            {
+                ViewBag.HasError = true;
+                ViewBag.ErrorDetail = userResponse.Detail;
+                
+                return View("OpenBankingLogin", openBankingLoginRequest);
+            }
+            var user = userResponse.Response;
+
+            if (user?.State.ToLower() == "active" || user?.State.ToLower() == "new")
+            {
+                
+                return Redirect($"");
+            }
+            else
+            {
+                ViewBag.HasError = true;
+                ViewBag.ErrorDetail = "User Is Disabled";
+                
+                return View("Login", openBankingLoginRequest);
+            }
+        }
+        catch (System.Exception ex)
+        {
+
+            throw;
+        }
+    }
+
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [HttpPost]
     public async Task<IActionResult> Login(Login loginRequest)
     {
-
         try
         {
             if (string.IsNullOrWhiteSpace(loginRequest.UserName) || string.IsNullOrWhiteSpace(loginRequest.Password))
@@ -195,6 +260,44 @@ public class TokenController : Controller
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
+    [HttpPost("token/introspect")]
+    [Consumes("application/x-www-form-urlencoded")]
+    public async Task<IResult> Introspect([FromForm] string token)
+    {   
+        var jti = JwtHelper.GetClaim(token,"jti");
+        if(jti == null)
+            return Results.Json(new{active = false});
+
+        Guid checkedJti;
+        if(!Guid.TryParse(jti,out checkedJti))
+            return Results.Json(new{active = false});
+
+        var accessTokenInfo = _databaseContext.Tokens.FirstOrDefault(t => t.Id == Guid.Parse(jti));
+        if(accessTokenInfo == null)
+            return Results.Json(new{active = false});
+        if(!accessTokenInfo.IsActive)
+            return Results.Json(new{active = false});
+        
+        var clientInfo = await _clientService.CheckClient(accessTokenInfo.ClientId);
+        var client = clientInfo.Response;
+
+        if(client == null)
+        {
+            return Results.Json(new{active = false});
+        }
+
+        var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.clientsecret));
+        JwtSecurityToken validatedToken;
+
+        if(!JwtHelper.ValidateToken(token,"BurganIam",client.returnuri,secretKey,out validatedToken))
+        {
+            return Results.Json(new{active = false});
+        }
+
+        return Results.Json(new{active = true});
+    }
+
+    [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("Token")]
     public async Task<IActionResult> Token([FromBody] TokenRequest tokenRequest)
     {
@@ -213,6 +316,19 @@ public class TokenController : Controller
         if (tokenRequest.grant_type == "password")
         {
             var token = await _authorizationService.GenerateTokenWithPassword(tokenRequest);
+            if (token.StatusCode == 200)
+            {
+                return Json(token.Response);
+            }
+            else
+            {
+                return Problem(detail: token.Detail, statusCode: token.StatusCode);
+            }
+        }
+
+        if(tokenRequest.grant_type == "refresh_token")
+        {
+            var token = await _authorizationService.GenerateTokenWithRefreshToken(tokenRequest);
             if (token.StatusCode == 200)
             {
                 return Json(token.Response);

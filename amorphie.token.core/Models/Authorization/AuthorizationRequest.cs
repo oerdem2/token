@@ -2,6 +2,7 @@ namespace amorphie.token.core.Models.Authorization;
 
 public class AuthorizationRequest
 {
+    public string open_banking{get;set;}
     public string response_type{get;set;}
     public string client_id{get;set;}
     public string redirect_uri{get;set;}

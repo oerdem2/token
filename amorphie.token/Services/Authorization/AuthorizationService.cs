@@ -5,6 +5,7 @@ using System.Text;
 using amorphie.token.core.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using amorphie.token.data;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace amorphie.token.Services.Authorization;
 
@@ -16,7 +17,8 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
     private readonly DaprClient _daprClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly DatabaseContext _databaseContext;
-    private readonly Guid jti;
+    
+    private TokenInfoDetail _tokenInfoDetail;
 
     public AuthorizationService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, ITagService tagService,
     IUserService userService, DaprClient daprClient, IHttpContextAccessor httpContextAccessor, DatabaseContext databaseContext)
@@ -28,9 +30,153 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         _httpContextAccessor = httpContextAccessor;
         _databaseContext = databaseContext;
         _userService = userService;
-        jti = Guid.NewGuid();
+        _tokenInfoDetail = new();
     }
 
+    private async Task PersistTokenInfo()
+    {
+        await WriteToDb();
+        await WriteToCache();
+    }
+
+    private async Task WriteToDb()
+    {
+        foreach(var tokenInfo in _tokenInfoDetail.TokenList)
+        {
+            if(tokenInfo != null)
+                _databaseContext.Tokens.Add(tokenInfo);
+        }
+        await _databaseContext.SaveChangesAsync();
+    }
+
+    private async Task WriteToCache()
+    {
+        var accessTokenInfo = _tokenInfoDetail.TokenList.FirstOrDefault(t => t.TokenType == TokenType.AccessToken);
+        var refreshTokenInfo = _tokenInfoDetail.TokenList.FirstOrDefault(t => t.TokenType == TokenType.RefreshToken);
+
+        await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"], "access_token_"+accessTokenInfo.Jwt, accessTokenInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", _tokenInfoDetail.AccessTokenDuration.ToString() } });
+        await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"], "refresh_token_"+refreshTokenInfo.Jwt, refreshTokenInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", _tokenInfoDetail.RefreshTokenDuration.ToString() } });
+    }
+
+    private async Task<string> CreateIdToken(ClientResponse client,LoginResponse user)
+    {
+        int iat = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
+        var claims = new List<Claim>()
+        {
+            new Claim("iat", iat.ToString(), ClaimValueTypes.Integer),
+        };
+
+        var identityInfo = client.tokens.FirstOrDefault(t => t.type == 2);
+        if (identityInfo != null)
+        {
+            var populatedClaims = await PopulateClaims(identityInfo.claims, user);
+            claims.AddRange(populatedClaims);
+        }
+
+        int idDuration = 0;
+        try
+        {
+            idDuration = TimeHelper.ConvertStrDurationToSeconds(identityInfo.duration);
+        }
+        catch (FormatException ex)
+        {
+            Logger.LogError(ex.Message);
+        }
+
+        var idToken = JwtHelper.GenerateJwt("BurganIam", client.returnuri, claims,
+        expires: DateTime.UtcNow.AddSeconds(idDuration));
+
+        _tokenInfoDetail.IdTokenId = Guid.NewGuid();
+        _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.IdToken,_tokenInfoDetail.IdTokenId, client.id, DateTime.UtcNow.AddSeconds(idDuration), true, idToken, user.Reference
+        , new List<string>() , user.Id,_tokenInfoDetail.AccessTokenId));
+
+        return idToken;
+    }
+
+    private async Task<string> CreateAccessToken(TokenRequest tokenRequest,ClientResponse client,LoginResponse user)
+    {
+        _tokenInfoDetail.AccessTokenId = Guid.NewGuid();
+
+        var tokenClaims = new List<Claim>();
+        var excludedScopes = new string[] { "openId", "profile" };
+        foreach (var scope in tokenRequest.scopes.ToArray().Except(excludedScopes))
+            tokenClaims.Add(new Claim("scope", scope));
+
+
+        var accessInfo = client.tokens.FirstOrDefault(t => t.type == 0);
+
+        int accessDuration = 0;
+        try
+        {
+            accessDuration = TimeHelper.ConvertStrDurationToSeconds(accessInfo.duration);
+            _tokenInfoDetail.AccessTokenDuration = accessDuration;
+        }
+        catch (FormatException ex)
+        {
+            Logger.LogError(ex.Message);
+        }
+
+        if (accessInfo != null)
+        {
+            foreach (var accessClaim in accessInfo.claims)
+            {
+                var populatedClaims = await PopulateClaims(accessInfo.claims, user);
+                tokenClaims.AddRange(populatedClaims);
+            }
+            tokenClaims.Add(new Claim("jti", _tokenInfoDetail.AccessTokenId.ToString()));
+            tokenClaims.Add(new Claim("userId", user.Id.ToString()));
+        }
+
+
+        var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.clientsecret));
+        var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha384);
+
+        var expires = DateTime.UtcNow.AddSeconds(accessDuration);
+
+        string access_token = JwtHelper.GenerateJwt("BurganIam", client.returnuri, tokenClaims,
+            expires: expires, signingCredentials: signinCredentials);
+
+        _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.AccessToken,_tokenInfoDetail.AccessTokenId, client.id, DateTime.UtcNow.AddSeconds(accessDuration), true, access_token, user.Reference
+        , tokenRequest.scopes.ToArray().Except(excludedScopes).ToList(), user.Id, null));
+
+        return access_token;
+    }    
+
+    private string CreateRefreshToken(ClientResponse client,LoginResponse user)
+    {
+        _tokenInfoDetail.RefreshTokenId = Guid.NewGuid();
+        var refreshInfo = client.tokens.FirstOrDefault(t => t.type == 1);
+
+        var tokenClaims = new List<Claim>();
+        if (refreshInfo != null)
+        {
+            tokenClaims.Add(new Claim("jti", _tokenInfoDetail.RefreshTokenId.ToString()));
+            tokenClaims.Add(new Claim("userId", user.Id.ToString()));
+        }
+
+        int refreshDuration = 0;
+        try
+        {
+            refreshDuration = TimeHelper.ConvertStrDurationToSeconds(refreshInfo.duration);
+            _tokenInfoDetail.RefreshTokenDuration = refreshDuration;
+        }
+        catch (FormatException ex)
+        {
+            Logger.LogError(ex.Message);
+        }
+
+        var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.clientsecret));
+        var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha384);
+
+        var refreshExpires = DateTime.UtcNow.AddSeconds(refreshDuration);
+        string refresh_token = JwtHelper.GenerateJwt("BurganIam", client.returnuri, tokenClaims,
+            expires: refreshExpires, signingCredentials: signinCredentials);
+        
+        _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.RefreshToken,_tokenInfoDetail.RefreshTokenId, client.id, DateTime.UtcNow.AddSeconds(refreshDuration), true, refresh_token, user.Reference
+        , new List<string>()  , user.Id, _tokenInfoDetail.AccessTokenId));
+
+        return refresh_token;
+    }
     private async Task<Claim> GetClaimDetail(string[] claimPath, string queryStringForTag, LoginResponse user)
     {
         if (claimPath.First().Equals("tag"))
@@ -117,6 +263,134 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         return claims;
     }
 
+    public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithRefreshToken(TokenRequest tokenRequest)
+    {
+        
+        var refreshToken = tokenRequest.refresh_token;
+        var refreshTokenInfo = _databaseContext.Tokens.FirstOrDefault(t => 
+        t.TokenType == TokenType.RefreshToken && t.Jwt == refreshToken);
+
+        if(refreshToken == null)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 404,
+                Detail = "Refresh Token Not Found",
+                Response = null
+            };
+        }
+
+        if(!refreshTokenInfo.IsActive)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 403,
+                Detail = "Refresh Token is Not Valid",
+                Response = null
+            };
+        }
+
+        var relatedToken = _databaseContext.Tokens.FirstOrDefault(t => 
+        t.TokenType == TokenType.AccessToken && t.Id == refreshTokenInfo.RelatedTokenId);
+        if(relatedToken == null)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 404,
+                Detail = "Related Access Token Not Found",
+                Response = null
+            };
+        }
+
+        tokenRequest.scopes = relatedToken.Scopes;
+
+        var clientResponse = await _clientService.CheckClient(refreshTokenInfo.ClientId);
+
+        if (clientResponse.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = clientResponse.StatusCode,
+                Detail = clientResponse.Detail
+            };
+        }
+        var client = clientResponse.Response;
+
+        if (!client.allowedgranttypes.Any(g => g.GrantType == tokenRequest.grant_type))
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "Client Has No Authorize To Use Requested Grant Type"
+            };
+        }
+
+        var requestedScopes = tokenRequest.scopes.ToList();
+
+        if (!requestedScopes.All(client.allowedscopetags.Contains))
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 473,
+                Detail = "Client is Not Authorized For Requested Scopes"
+            };
+        }
+
+        var userResponse = await _userService.GetUserById(refreshTokenInfo.UserId);
+
+        if (userResponse.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = userResponse.StatusCode,
+                Detail = userResponse.Detail
+            };
+        }
+
+        var user = userResponse.Response;
+
+        if (user?.State.ToLower() != "active" && user?.State.ToLower() != "new")
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 470,
+                Detail = "User is disabled"
+            };
+        }
+        
+        var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.clientsecret));
+        JwtSecurityToken refreshTokenValidated;
+        if(JwtHelper.ValidateToken(relatedToken.Jwt,"BurganIam",client.returnuri,secretKey,out refreshTokenValidated))
+        {
+            
+            TokenResponse tokenResponse = new();
+            tokenResponse.token_type = "Bearer";
+            tokenResponse.access_token = await CreateAccessToken(tokenRequest,client,user);
+            tokenResponse.expires_in = _tokenInfoDetail.AccessTokenDuration;
+            tokenResponse.refresh_token = CreateRefreshToken(client,user);
+
+            refreshTokenInfo.IsActive = false;
+
+            await PersistTokenInfo();
+
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 200,
+                Response = tokenResponse
+            };
+        }
+        else
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 401,
+                Detail = "Token Validation Error",
+                Response = null
+            };
+        }
+
+    }
+
     public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithPasswordFromWorkflow(TokenRequest tokenRequest, ClientResponse client, LoginResponse user)
     {
         TokenResponse tokenResponse = new();
@@ -124,86 +398,15 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         //openId Section
         if (tokenRequest.scopes.Contains("openId") || tokenRequest.scopes.Contains("profile"))
         {
-            int iat = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
-            var claims = new List<Claim>()
-            {
-                new Claim("iat", iat.ToString(), ClaimValueTypes.Integer),
-            };
-
-            var identityInfo = client.tokens.FirstOrDefault(t => t.type == 2);
-            if (identityInfo != null)
-            {
-                var populatedClaims = await PopulateClaims(identityInfo.claims, user);
-                claims.AddRange(populatedClaims);
-            }
-
-            int idDuration = 0;
-            try
-            {
-                idDuration = TimeHelper.ConvertStrDurationToSeconds(identityInfo.duration);
-            }
-            catch (FormatException ex)
-            {
-                Logger.LogError(ex.Message);
-            }
-
-
-            var idToken = JwtHelper.GenerateJwt("BurganIam", client.returnuri, claims,
-            expires: DateTime.UtcNow.AddSeconds(idDuration));
-            tokenResponse.id_token = idToken;
+            tokenResponse.id_token = await CreateIdToken(client,user);
         }
-
-        var tokenClaims = new List<Claim>();
-        var excludedScopes = new string[] { "openId", "profile" };
-        foreach (var scope in tokenRequest.scopes.ToArray().Except(excludedScopes))
-            tokenClaims.Add(new Claim("scope", scope));
-
-
-        var accessInfo = client.tokens.FirstOrDefault(t => t.type == 0);
-
-        int accessDuration = 0;
-        try
-        {
-            accessDuration = TimeHelper.ConvertStrDurationToSeconds(accessInfo.duration);
-        }
-        catch (FormatException ex)
-        {
-            Logger.LogError(ex.Message);
-        }
-
-
-        if (accessInfo != null)
-        {
-            foreach (var accessClaim in accessInfo.claims)
-            {
-                var populatedClaims = await PopulateClaims(accessInfo.claims, user);
-                tokenClaims.AddRange(populatedClaims);
-                tokenClaims.Add(new Claim("jti", jti.ToString()));
-            }
-        }
-
-
-        var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration["JwtSecretKey"]));
-        var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha384);
-
-        var expires = DateTime.UtcNow.AddSeconds(accessDuration);
-        string access_token = JwtHelper.GenerateJwt("BurganIam", client.returnuri, tokenClaims,
-            expires: expires, signingCredentials: signinCredentials);
 
         tokenResponse.token_type = "Bearer";
-        tokenResponse.access_token = access_token;
-        tokenResponse.expires = accessDuration;
+        tokenResponse.access_token = await CreateAccessToken(tokenRequest,client,user);
+        tokenResponse.expires_in = _tokenInfoDetail.AccessTokenDuration;
+        tokenResponse.refresh_token = CreateRefreshToken(client,user);
 
-        var tokenInfo = JwtHelper.CreateTokenInfo(jti, tokenRequest.client_id, expires, true, access_token, user.Reference
-        , tokenRequest.scopes.ToList().ToList(), user.Id);
-
-        var ttl = ((int)(DateTime.Now - tokenInfo.ExpiredAt).TotalSeconds) + 5;
-        await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"], tokenInfo.Jwt, tokenInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", ttl.ToString() } });
-
-        await _databaseContext.Tokens.AddAsync(tokenInfo);
-        await _databaseContext.SaveChangesAsync();
-
-
+        await PersistTokenInfo();
 
         return new ServiceResponse<TokenResponse>()
         {
@@ -272,84 +475,16 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         //openId Section
         if (tokenRequest.scopes.Contains("openId") || tokenRequest.scopes.Contains("profile"))
         {
-            int iat = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
-            var claims = new List<Claim>()
-            {
-                new Claim("iat", iat.ToString(), ClaimValueTypes.Integer),
-            };
-
-            var identityInfo = client.tokens.FirstOrDefault(t => t.type == 2);
-            if (identityInfo != null)
-            {
-                var populatedClaims = await PopulateClaims(identityInfo.claims, user);
-                claims.AddRange(populatedClaims);
-            }
-
-            int idDuration = 0;
-            try
-            {
-                idDuration = TimeHelper.ConvertStrDurationToSeconds(identityInfo.duration);
-            }
-            catch (FormatException ex)
-            {
-                Logger.LogError(ex.Message);
-            }
-
-
-            var idToken = JwtHelper.GenerateJwt("BurganIam", client.returnuri, claims,
-            expires: DateTime.UtcNow.AddSeconds(idDuration));
-            tokenResponse.id_token = idToken;
+            tokenResponse.id_token = await CreateIdToken(client,user);
         }
-
-        var tokenClaims = new List<Claim>();
-        var excludedScopes = new string[] { "openId", "profile" };
-        foreach (var scope in tokenRequest.scopes.ToArray().Except(excludedScopes))
-            tokenClaims.Add(new Claim("scope", scope));
-
-
-        var accessInfo = client.tokens.FirstOrDefault(t => t.type == 0);
-
-        int accessDuration = 0;
-        try
-        {
-            accessDuration = TimeHelper.ConvertStrDurationToSeconds(accessInfo.duration);
-        }
-        catch (FormatException ex)
-        {
-            Logger.LogError(ex.Message);
-        }
-
-
-        if (accessInfo != null)
-        {
-            foreach (var accessClaim in accessInfo.claims)
-            {
-                var populatedClaims = await PopulateClaims(accessInfo.claims, user);
-                tokenClaims.AddRange(populatedClaims);
-                tokenClaims.Add(new Claim("jti", jti.ToString()));
-            }
-        }
-
-
-        var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration["JwtSecretKey"]));
-        var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha384);
-
-        var expires = DateTime.UtcNow.AddSeconds(accessDuration);
-        string access_token = JwtHelper.GenerateJwt("BurganIam", client.returnuri, tokenClaims,
-            expires: expires, signingCredentials: signinCredentials);
 
         tokenResponse.token_type = "Bearer";
-        tokenResponse.access_token = access_token;
-        tokenResponse.expires = accessDuration;
+        tokenResponse.access_token = await CreateAccessToken(tokenRequest,client,user);
+        tokenResponse.expires_in = _tokenInfoDetail.AccessTokenDuration;
+        tokenResponse.refresh_token = CreateRefreshToken(client,user);
 
-        var tokenInfo = JwtHelper.CreateTokenInfo(jti, tokenRequest.client_id, expires, true, access_token, user.Reference
-        , requestedScopes.ToList(), user.Id);
-
-        var ttl = ((int)(DateTime.Now - tokenInfo.ExpiredAt).TotalSeconds) + 5;
-        await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"], tokenInfo.Jwt, tokenInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", ttl.ToString() } });
-
-        await _databaseContext.Tokens.AddAsync(tokenInfo);
-        await _databaseContext.SaveChangesAsync();
+        await PersistTokenInfo();
+          
         return new ServiceResponse<TokenResponse>()
         {
             StatusCode = 200,
@@ -415,92 +550,25 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         }
 
         //openId Section
-        if (authorizationCodeInfo.RequestedScopes.Contains("openId") || authorizationCodeInfo.RequestedScopes.Contains("profile"))
+        if (tokenRequest.scopes.Contains("openId") || tokenRequest.scopes.Contains("profile"))
         {
-            int iat = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
-            var claims = new List<Claim>()
-            {
-                new Claim("iat", iat.ToString(), ClaimValueTypes.Integer),
-                new Claim("nonce", authorizationCodeInfo.Nonce)
-            };
-
-            var identityInfo = client.tokens.FirstOrDefault(t => t.type == 2);
-            if (identityInfo != null)
-            {
-                var populatedClaims = await PopulateClaims(identityInfo.claims, authorizationCodeInfo.Subject);
-                claims.AddRange(populatedClaims);
-            }
-
-            int idDuration = 0;
-            try
-            {
-                idDuration = TimeHelper.ConvertStrDurationToSeconds(identityInfo.duration);
-            }
-            catch (FormatException ex)
-            {
-                Logger.LogError(ex.Message);
-            }
-
-
-            var idToken = JwtHelper.GenerateJwt("Test", client.returnuri, claims,
-            expires: DateTime.UtcNow.AddSeconds(idDuration));
-            tokenResponse.id_token = idToken;
+            tokenResponse.id_token = await CreateIdToken(client,authorizationCodeInfo.Subject);
         }
-
-        var tokenClaims = new List<Claim>();
-        var excludedScopes = new string[] { "openId", "profile" };
-        foreach (var scope in tokenRequest.scopes.ToArray().Except(excludedScopes))
-            tokenClaims.Add(new Claim("scope", scope));
-
-
-        var accessInfo = client.tokens.FirstOrDefault(t => t.type == 0);
-
-        int accessDuration = 0;
-        try
-        {
-            accessDuration = TimeHelper.ConvertStrDurationToSeconds(accessInfo.duration);
-        }
-        catch (FormatException ex)
-        {
-            Logger.LogError(ex.Message);
-        }
-
-        if (accessInfo != null)
-        {
-            foreach (var accessClaim in accessInfo.claims)
-            {
-                var populatedClaims = await PopulateClaims(accessInfo.claims, authorizationCodeInfo.Subject);
-                tokenClaims.AddRange(populatedClaims);
-                tokenClaims.Add(new Claim("jti", jti.ToString()));
-            }
-        }
-
-
-        var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration["JwtSecretKey"]));
-        var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha384);
-
-        var expires = DateTime.UtcNow.AddSeconds(accessDuration);
-        string access_token = JwtHelper.GenerateJwt("BurganIam", client.returnuri, tokenClaims,
-            expires: expires, signingCredentials: signinCredentials);
 
         tokenResponse.token_type = "Bearer";
-        tokenResponse.access_token = access_token;
-        tokenResponse.expires = accessDuration;
+        tokenResponse.access_token = await CreateAccessToken(tokenRequest,client,authorizationCodeInfo.Subject);
+        tokenResponse.expires_in = _tokenInfoDetail.AccessTokenDuration;
+        tokenResponse.refresh_token = CreateRefreshToken(client,authorizationCodeInfo.Subject);
 
-        var tokenInfo = JwtHelper.CreateTokenInfo(jti, authorizationCodeInfo.ClientId, expires, true, access_token, authorizationCodeInfo.Subject.Reference
-        , authorizationCodeInfo.RequestedScopes.ToList(), authorizationCodeInfo.Subject.Id);
-
-        var ttl = ((int)(DateTime.Now - tokenInfo.ExpiredAt).TotalSeconds) + 5;
-        await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"], tokenInfo.Jwt, tokenInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", ttl.ToString() } });
-
-        await _databaseContext.Tokens.AddAsync(tokenInfo);
-        await _databaseContext.SaveChangesAsync();
+        await PersistTokenInfo();
         return new ServiceResponse<TokenResponse>()
         {
             StatusCode = 200,
             Response = tokenResponse
         };
     }
+
+    
 
     public async Task AssignUserToAuthorizationCode(LoginResponse user, string authorizationCode)
     {
@@ -608,4 +676,11 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         return hashedCodeVerifier;
     }
 
+    public async Task<ServiceResponse<OpenBankingAuthorizationResponse>> OpenBankingAuthorize(OpenBankingAuthorizationRequest request)
+    {
+        
+            await Task.CompletedTask;
+            return null;
+
+    }
 }

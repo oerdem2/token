@@ -1,0 +1,88 @@
+﻿
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Burgan Bank OAuth2</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row m-4">
+            <div class="col-sm-6">
+                <form id="callAuthorizedUrl">
+                    <div class="mb-3">
+                        <label for="exampleInputEmail1" class="form-label">Jwt</label>
+                        <input type="text" class="form-control" id="jwt">
+                        <div id="emailHelp" class="form-text">Enter Your Access Token.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleInputEmail1" class="form-label">Status Code</label>
+                        <input type="text" class="form-control" id="statusCode" disabled>
+                    </div>
+                    <button id="callUrl" type="submit" class="btn btn-primary">Call Url</button>
+                </form>
+                <form id="reqres" style="display:none;">
+                    <div class="mb-3">
+                        <label for="exampleInputEmail1" class="form-label">Url</label>
+                        <input type="text" class="form-control" id="url" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleInputEmail1" class="form-label">Request</label>
+                        <textarea class="form-control" id="request" disabled></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleInputEmail1" class="form-label">Response</label>
+                        <textarea class="form-control" id="response" disabled></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="col-sm-6">
+                <form id="generateToken">
+                    <div class="mb-3">
+                        <label for="exampleInputEmail1" class="form-label">Client Id</label>
+                        <input type="text" class="form-control" value="3fa85f64-5717-4562-b3fc-2c963f66afa6" id="clientId">
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleInputEmail1" class="form-label">Client Secret</label>
+                        <input type="text" class="form-control" value="sercan" id="clientSecret">
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleInputEmail1" class="form-label">Username</label>
+                        <input type="text" class="form-control" value="19985693572" id="username">
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleInputEmail1" class="form-label">Password</label>
+                        <input type="text" class="form-control" value="sercan" id="password">
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleInputEmail1" class="form-label">Scopes</label>
+                        <input type="text" class="form-control" value="retail-customer,openId"  id="scopes">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="exampleInputEmail1" class="form-label">Access Token</label>
+                        <input type="text" class="form-control" disabled id="accessToken">
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleInputEmail1" class="form-label">Refresh Token</label>
+                        <input type="text" class="form-control" disabled id="refreshToken">
+                    </div>
+                    <button id="genToken" class="btn btn-primary">Generate Token</button>
+                    <button id="refToken"  class="btn btn-primary">Generate With Refresh Token</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        let securedUrl = "@ViewBag.callUrl";
+        let tokenUrl = "@ViewBag.tokenUrl";
+    </script>
+    <script src="/js/demo.js"></script>
+</body>
+
+</html>

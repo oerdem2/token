@@ -74,7 +74,20 @@ services:
     restart: unless-stopped
     networks:
       - bbt-development
-
+  pgadmin:
+    container_name: bbt-consent-pgadmin
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "info@info.com"
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    ports:
+      - "5502:80"
+    restart: unless-stopped
+    networks:
+      - bbt-development
   elastic:
     container_name: bbt_elastic
     image: elasticsearch:7.17.9
@@ -125,7 +138,9 @@ services:
     - vault 
     volumes: 
     - ./vault.sh:/usr/local/bin/prepopulate_vault.sh 
-    command: ["sh", "-c", "/usr/local/bin/prepopulate_vault.sh"] 
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      ./usr/local/bin/prepopulate_vault.sh
     networks: 
     - bbt-development
 
@@ -137,3 +152,4 @@ volumes:
   redis:
   postgres:
   redisinsight:
+  pgadmin:

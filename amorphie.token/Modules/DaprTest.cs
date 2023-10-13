@@ -15,8 +15,8 @@ public static class DaprTest
         app.MapPost("/start-workflow", startWorkflow)
         .Produces(StatusCodes.Status200OK);
 
-        app.MapPost("/introspect",introspect)
-        .Produces(StatusCodes.Status200OK);
+        // app.MapPost("/introspect",introspect)
+        // .Produces(StatusCodes.Status200OK);
 
         app.MapGet("/secured",secured)
         .Produces(StatusCodes.Status200OK);
@@ -50,16 +50,16 @@ public static class DaprTest
 
  
 
-        static async Task<IResult> introspect(
-        HttpRequest request
-        )
-        {
-            foreach (var header in request.Headers)
-            {
-                Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
-            }
-            return Results.Json(new{active = true,name="sercan"});
-        }
+        // static async Task<IResult> introspect(
+        // HttpRequest request
+        // )
+        // {
+        //     foreach (var header in request.Headers)
+        //     {
+        //         Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
+        //     }
+        //     return Results.Json(new{active = true,name="sercan"});
+        // }
 
         static async Task<IResult> startWorkflow(
         [FromServices] DaprClient daprClient,

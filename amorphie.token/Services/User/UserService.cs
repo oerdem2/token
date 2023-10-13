@@ -122,4 +122,63 @@ public class UserService : ServiceBase, IUserService
         }
         return null;
     }
+
+    public async Task<ServiceResponse<LoginResponse>> GetUserById(Guid userId)
+    {
+        try
+        {
+            var user = await _daprClient.InvokeMethodAsync<LoginResponse>(Configuration["UserServiceAppName"], "/user/"+userId);
+            if (user == null)
+            {
+                return new ServiceResponse<LoginResponse>()
+                {
+                    StatusCode = 460,
+                    Detail = "User Not Found"
+                };
+            }
+            return new ServiceResponse<LoginResponse>()
+            {
+                StatusCode = 200,
+                Detail = "",
+                Response = user
+            };
+        }
+        catch (InvocationException ex)
+        {
+
+            if ((int)ex.Response.StatusCode >= 400 && (int)ex.Response.StatusCode < 500)
+            {
+                if ((int)ex.Response.StatusCode == 460)
+                {
+                    return new ServiceResponse<LoginResponse>()
+                    {
+                        StatusCode = 460,
+                        Detail = "User Not Found"
+                    };
+                }
+                if ((int)ex.Response.StatusCode == 461)
+                {
+                    return new ServiceResponse<LoginResponse>()
+                    {
+                        StatusCode = 461,
+                        Detail = "Invalid Reference or Password"
+                    };
+                }
+            }
+            else
+            {
+                Logger.LogError("An Error Occured At User Invocation | Detail:" + ex.ToString());
+                return new ServiceResponse<LoginResponse>()
+                {
+                    StatusCode = 500,
+                    Detail = "Server Error"
+                };
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Logger.LogError("An Error Occured At User Invocation | Detail:" + ex.ToString());
+        }
+        return null;
+    }
 }
