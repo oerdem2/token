@@ -185,10 +185,17 @@ public class TokenController : Controller
             {
                 return Ok("Hata");
             }
-            else
+
+            var user = result.Response;
+            var passwordResult = await _ibUserService.GetPassword(user.Id);
+            if(passwordResult.StatusCode != 200)
             {
-                return Json(result.Response);
+                return Ok("Hata Password");
             }
+
+            var password = passwordResult.Response;
+
+            return Ok(_ibUserService.VerifyPassword(password.HashedPassword,openBankingLoginRequest.Password,password.Id.ToString()));
         }
         catch (System.Exception ex)
         {
