@@ -18,7 +18,7 @@ public static class DaprTest
         // app.MapPost("/introspect",introspect)
         // .Produces(StatusCodes.Status200OK);
 
-        app.MapGet("/secured",secured)
+        app.MapPost("/secured",secured)
         .Produces(StatusCodes.Status200OK);
 
         app.MapPost("/checkOtp",confirmOtp)

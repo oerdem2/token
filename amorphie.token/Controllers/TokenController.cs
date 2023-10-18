@@ -10,6 +10,7 @@ using amorphie.token.data;
 using Login = amorphie.token.core.Models.Account.Login;
 using amorphie.token.core.Models.Workflow;
 using System.Runtime.CompilerServices;
+using amorphie.token.Services.InternetBanking;
 
 namespace amorphie.token.core.Controllers;
 
@@ -19,11 +20,12 @@ public class TokenController : Controller
     private readonly IAuthorizationService _authorizationService;
     private readonly IUserService _userService;
     private readonly IClientService _clientService;
+    private readonly IInternetBankingUserService _ibUserService;
     private readonly DatabaseContext _databaseContext;
     private readonly IConfiguration _configuration;
     private readonly DaprClient _daprClient;
     public TokenController(ILogger<TokenController> logger, IAuthorizationService authorizationService, IUserService userService, DatabaseContext databaseContext
-    , IConfiguration configuration, DaprClient daprClient, IClientService clientService)
+    , IConfiguration configuration, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService)
     {
         _logger = logger;
         _authorizationService = authorizationService;
@@ -32,6 +34,7 @@ public class TokenController : Controller
         _configuration = configuration;
         _daprClient = daprClient;
         _clientService = clientService;
+        _ibUserService = ibUserService;
     }
 
 
@@ -176,27 +179,15 @@ public class TokenController : Controller
                 ViewBag.HasError = true;
                 ViewBag.ErrorDetail = "Reference and Password Can Not Be Empty";
             }
-            var userResponse = await _userService.Login(new LoginRequest() { Reference = openBankingLoginRequest.UserName, Password = openBankingLoginRequest.Password });
-            if (userResponse.StatusCode != 200)
-            {
-                ViewBag.HasError = true;
-                ViewBag.ErrorDetail = userResponse.Detail;
-                
-                return View("OpenBankingLogin", openBankingLoginRequest);
-            }
-            var user = userResponse.Response;
 
-            if (user?.State.ToLower() == "active" || user?.State.ToLower() == "new")
+            var result = await _ibUserService.GetUser(openBankingLoginRequest.UserName);
+            if(result.StatusCode != 200)
             {
-                
-                return Redirect($"");
+                return Ok("Hata");
             }
             else
             {
-                ViewBag.HasError = true;
-                ViewBag.ErrorDetail = "User Is Disabled";
-                
-                return View("Login", openBankingLoginRequest);
+                return Json(result.Response);
             }
         }
         catch (System.Exception ex)
@@ -264,7 +255,14 @@ public class TokenController : Controller
     [Consumes("application/x-www-form-urlencoded")]
     public async Task<IResult> Introspect([FromForm] string token)
     {   
+        foreach (var header in Request.Headers)
+        {
+            Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
+        }
         var jti = JwtHelper.GetClaim(token,"jti");
+        return Results.Json(new{active = false,error="expired",error_description="hata"});
+        if(jti == null)
+            return Results.Json(new{active = false,reason="expired"});
         if(jti == null)
             return Results.Json(new{active = false});
 

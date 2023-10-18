@@ -13,7 +13,7 @@ submitButton.addEventListener('click',function(e){
 
 //SignalR
 const connection = new signalR.HubConnectionBuilder()
-    .withUrl("https://test-amorphie-workflow-hub.burgan.com.tr/hubs/workflow",{
+    .withUrl("",{
         skipNegotiation: true,
         transport: signalR.HttpTransportType.WebSockets
     })

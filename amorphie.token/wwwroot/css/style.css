@@ -317,3 +317,7 @@ html, body {
     max-width: 1110px;
   } 
 }
+
+.show-cursor{
+  cursor:pointer;
+}
