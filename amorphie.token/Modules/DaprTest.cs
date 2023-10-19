@@ -15,16 +15,16 @@ public static class DaprTest
         app.MapPost("/start-workflow", startWorkflow)
         .Produces(StatusCodes.Status200OK);
 
-        app.MapPost("/introspect",introspect)
+        // app.MapPost("/introspect",introspect)
+        // .Produces(StatusCodes.Status200OK);
+
+        app.MapPost("/secured", secured)
         .Produces(StatusCodes.Status200OK);
 
-        app.MapGet("/secured",secured)
+        app.MapPost("/checkOtp", confirmOtp)
         .Produces(StatusCodes.Status200OK);
 
-        app.MapPost("/checkOtp",confirmOtp)
-        .Produces(StatusCodes.Status200OK);
-
-        app.MapGet("/oidc",oidc)
+        app.MapGet("/oidc", oidc)
         .Produces(StatusCodes.Status200OK);
 
         static async Task<IResult> oidc(
@@ -40,56 +40,56 @@ public static class DaprTest
             HttpRequest request
         )
         {
-           
+
             foreach (var header in request.Headers)
             {
                 Console.WriteLine($"Secured header {header.Key}:{header.Value} ");
             }
-            return Results.Ok(new{token="valid"});
+            return Results.Ok(new { token = "valid" });
         }
 
- 
 
-        static async Task<IResult> introspect(
-        HttpRequest request
-        )
-        {
-            foreach (var header in request.Headers)
-            {
-                Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
-            }
-            return Results.Json(new{active = true,name="sercan"});
-        }
+
+        // static async Task<IResult> introspect(
+        // HttpRequest request
+        // )
+        // {
+        //     foreach (var header in request.Headers)
+        //     {
+        //         Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
+        //     }
+        //     return Results.Json(new{active = true,name="sercan"});
+        // }
 
         static async Task<IResult> startWorkflow(
         [FromServices] DaprClient daprClient,
         [FromBody] dynamic body,
-        [FromServices] IUserService  userService
+        [FromServices] IUserService userService
         )
         {
             var client = new HttpClient();
             var res = await client.GetAsync("http://localhost:3000/test");
 
-            dynamic dynoObject = JsonSerializer.Deserialize<dynamic>(await res.Content.ReadAsStringAsync()); 
+            dynamic dynoObject = JsonSerializer.Deserialize<dynamic>(await res.Content.ReadAsStringAsync());
             dynamic dynoData = body.GetProperty("TRX-start-password-flow").GetProperty("Data");
-            
 
-            var userResponse = await userService.Login(new LoginRequest(){Reference = "123",Password = "21125"});
+
+            var userResponse = await userService.Login(new LoginRequest() { Reference = "123", Password = "21125" });
 
             dynamic messageData = new ExpandoObject();
 
-            dynamic data = new Dictionary<string,dynamic>();
+            dynamic data = new Dictionary<string, dynamic>();
             dynamic targetObj = new ExpandoObject();
 
-            data.Add("transactionId","12312512512616161");
-            data.Add("LastTransition","send-otp-login-flow");
-            data.Add("InstanceId","121321321");
+            data.Add("transactionId", "12312512512616161");
+            data.Add("LastTransition", "send-otp-login-flow");
+            data.Add("InstanceId", "121321321");
             targetObj.Data = new ExpandoObject();
             targetObj.Data.entityData = body;
-            data.Add("TRX-send-otp-login-flow",targetObj);
-            messageData.messageName  = "start-password-flow";
+            data.Add("TRX-send-otp-login-flow", targetObj);
+            messageData.messageName = "start-password-flow";
             messageData.variables = data;
-            await daprClient.InvokeBindingAsync<dynamic,dynamic>("zeebe-local","publish-message",messageData);
+            await daprClient.InvokeBindingAsync<dynamic, dynamic>("zeebe-local", "publish-message", messageData);
             return Results.Ok();
         }
 
@@ -101,14 +101,14 @@ public static class DaprTest
             dynamic messageData = new ExpandoObject();
 
             dynamic data = new ExpandoObject();
-            
-            data.otpValue = body.GetProperty("otpValue").ToString();;
 
-            messageData.messageName  = "send-otp-login-flow";
+            data.otpValue = body.GetProperty("otpValue").ToString(); ;
+
+            messageData.messageName = "send-otp-login-flow";
             messageData.variables = data;
             messageData.correlationKey = "12312512512616161";
-            
-            await daprClient.InvokeBindingAsync<dynamic,dynamic>("zeebe-local","publish-message",messageData);
+
+            await daprClient.InvokeBindingAsync<dynamic, dynamic>("zeebe-local", "publish-message", messageData);
             return Results.Ok();
         }
 

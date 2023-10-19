@@ -10,6 +10,7 @@ using amorphie.token.data;
 using Login = amorphie.token.core.Models.Account.Login;
 using amorphie.token.core.Models.Workflow;
 using System.Runtime.CompilerServices;
+using amorphie.token.Services.InternetBanking;
 
 namespace amorphie.token.core.Controllers;
 
@@ -19,11 +20,12 @@ public class TokenController : Controller
     private readonly IAuthorizationService _authorizationService;
     private readonly IUserService _userService;
     private readonly IClientService _clientService;
+    private readonly IInternetBankingUserService _ibUserService;
     private readonly DatabaseContext _databaseContext;
     private readonly IConfiguration _configuration;
     private readonly DaprClient _daprClient;
     public TokenController(ILogger<TokenController> logger, IAuthorizationService authorizationService, IUserService userService, DatabaseContext databaseContext
-    , IConfiguration configuration, DaprClient daprClient, IClientService clientService)
+    , IConfiguration configuration, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService)
     {
         _logger = logger;
         _authorizationService = authorizationService;
@@ -32,6 +34,7 @@ public class TokenController : Controller
         _configuration = configuration;
         _daprClient = daprClient;
         _clientService = clientService;
+        _ibUserService = ibUserService;
     }
 
 
@@ -69,6 +72,32 @@ public class TokenController : Controller
         using var sha256 = SHA256.Create();
         var hashedCodeVerifier = Base64UrlEncoder.Encode(sha256.ComputeHash(codeVerifierAsByte));
         return Content(hashedCodeVerifier);
+    }
+
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> Demo()
+    {
+        ViewBag.tokenUrl = _configuration["tokenUrl"];
+        ViewBag.callUrl = _configuration["callUrl"];
+        return View();
+    }
+
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> OpenBankingAuthorize(OpenBankingAuthorizationRequest authorizationRequest)
+    {
+        // var authorizationResponse = await _authorizationService.OpenBankingAuthorize(authorizationRequest);
+
+        // if (authorizationResponse.StatusCode != 200)
+        // {
+        //     return Content($"An Error Occured. Detail : " + authorizationResponse.Detail);
+        // }
+
+        // var authorizationResult = authorizationResponse.Response;
+
+        var loginModel = new OpenBankingLogin();
+        ViewBag.HasError = false;
+        return View("OpenBankingLogin", loginModel);
+
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
@@ -141,9 +170,44 @@ public class TokenController : Controller
 
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost]
+    public async Task<IActionResult> OpenBankingLogin(OpenBankingLogin openBankingLoginRequest)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(openBankingLoginRequest.UserName) || string.IsNullOrWhiteSpace(openBankingLoginRequest.Password))
+            {
+                ViewBag.HasError = true;
+                ViewBag.ErrorDetail = "Reference and Password Can Not Be Empty";
+            }
+
+            var result = await _ibUserService.GetUser(openBankingLoginRequest.UserName);
+            if (result.StatusCode != 200)
+            {
+                return Ok("Hata");
+            }
+
+            var user = result.Response;
+            var passwordResult = await _ibUserService.GetPassword(user.Id);
+            if (passwordResult.StatusCode != 200)
+            {
+                return Ok("Hata Password");
+            }
+
+            var password = passwordResult.Response;
+
+            return Ok(_ibUserService.VerifyPassword(password.HashedPassword, openBankingLoginRequest.Password, password.Id.ToString()));
+        }
+        catch (System.Exception ex)
+        {
+
+            throw;
+        }
+    }
+
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [HttpPost]
     public async Task<IActionResult> Login(Login loginRequest)
     {
-
         try
         {
             if (string.IsNullOrWhiteSpace(loginRequest.UserName) || string.IsNullOrWhiteSpace(loginRequest.Password))
@@ -194,6 +258,51 @@ public class TokenController : Controller
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
+    [HttpPost("token/introspect")]
+    [Consumes("application/x-www-form-urlencoded")]
+    public async Task<IResult> Introspect([FromForm] string token)
+    {
+        foreach (var header in Request.Headers)
+        {
+            Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
+        }
+        var jti = JwtHelper.GetClaim(token, "jti");
+        return Results.Json(new { active = false, error = "expired", error_description = "hata" });
+        if (jti == null)
+            return Results.Json(new { active = false, reason = "expired" });
+        if (jti == null)
+            return Results.Json(new { active = false });
+
+        Guid checkedJti;
+        if (!Guid.TryParse(jti, out checkedJti))
+            return Results.Json(new { active = false });
+
+        var accessTokenInfo = _databaseContext.Tokens.FirstOrDefault(t => t.Id == Guid.Parse(jti));
+        if (accessTokenInfo == null)
+            return Results.Json(new { active = false });
+        if (!accessTokenInfo.IsActive)
+            return Results.Json(new { active = false });
+
+        var clientInfo = await _clientService.CheckClient(accessTokenInfo.ClientId);
+        var client = clientInfo.Response;
+
+        if (client == null)
+        {
+            return Results.Json(new { active = false });
+        }
+
+        var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.clientsecret));
+        JwtSecurityToken validatedToken;
+
+        if (!JwtHelper.ValidateToken(token, "BurganIam", client.returnuri, secretKey, out validatedToken))
+        {
+            return Results.Json(new { active = false });
+        }
+
+        return Results.Json(new { active = true });
+    }
+
+    [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("Token")]
     public async Task<IActionResult> Token([FromBody] TokenRequest tokenRequest)
     {
@@ -212,6 +321,19 @@ public class TokenController : Controller
         if (tokenRequest.grant_type == "password")
         {
             var token = await _authorizationService.GenerateTokenWithPassword(tokenRequest);
+            if (token.StatusCode == 200)
+            {
+                return Json(token.Response);
+            }
+            else
+            {
+                return Problem(detail: token.Detail, statusCode: token.StatusCode);
+            }
+        }
+
+        if (tokenRequest.grant_type == "refresh_token")
+        {
+            var token = await _authorizationService.GenerateTokenWithRefreshToken(tokenRequest);
             if (token.StatusCode == 200)
             {
                 return Json(token.Response);
