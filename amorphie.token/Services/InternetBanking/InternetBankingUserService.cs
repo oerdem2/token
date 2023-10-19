@@ -13,7 +13,7 @@ namespace amorphie.token.Services.InternetBanking
         private readonly IbDatabaseContext _ibDatabaseContext;
         public InternetBankingUserService(IbDatabaseContext ibDatabaseContext)
         {
-            _ibDatabaseContext = ibDatabaseContext;            
+            _ibDatabaseContext = ibDatabaseContext;
         }
 
         public async Task<ServiceResponse<IBPassword>> GetPassword(Guid userId)
@@ -22,7 +22,7 @@ namespace amorphie.token.Services.InternetBanking
             try
             {
                 var password = await _ibDatabaseContext.Password.Where(p => p.UserId == userId).OrderByDescending(p => p.CreatedAt).FirstOrDefaultAsync();
-                if(password == null)
+                if (password == null)
                 {
                     response.StatusCode = 404;
                     response.Detail = "User Not Found";
@@ -39,7 +39,7 @@ namespace amorphie.token.Services.InternetBanking
                 response.StatusCode = 500;
                 response.Detail = ex.ToString();
             }
-            
+
             return response;
         }
 
@@ -49,7 +49,7 @@ namespace amorphie.token.Services.InternetBanking
             try
             {
                 var user = await _ibDatabaseContext.User.AsNoTracking().FirstOrDefaultAsync(u => u.UserName == username);
-                if(user == null)
+                if (user == null)
                 {
                     response.StatusCode = 404;
                     response.Detail = "User Not Found";
@@ -66,14 +66,14 @@ namespace amorphie.token.Services.InternetBanking
                 response.StatusCode = 500;
                 response.Detail = ex.ToString();
             }
-            
+
             return response;
         }
 
-        public PasswordVerificationResult VerifyPassword(string hashedPassword, string providedPassword,string salt)
+        public PasswordVerificationResult VerifyPassword(string hashedPassword, string providedPassword, string salt)
         {
             PasswordHasher hasher = new();
-            return hasher.VerifyHashedPassword(hashedPassword,providedPassword,salt);
+            return hasher.VerifyHashedPassword(hashedPassword, providedPassword, salt);
         }
     }
 }

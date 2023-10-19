@@ -12,5 +12,5 @@ public class Login
     public string RedirectUri { get; set; }
     public string Code { get; set; }
     public IList<string> RequestedScopes { get; set; }
-    public string OpenBanking{get;set;}
+    public string OpenBanking { get; set; }
 }

@@ -49,7 +49,7 @@ public class UserServiceLocal : IUserService
     {
         var httpClient = _httpClientFactory.CreateClient("User");
         var httpResponseMessage = await httpClient.GetAsync(
-            "user/"+userId.ToString());
+            "user/" + userId.ToString());
 
         if (httpResponseMessage.IsSuccessStatusCode)
         {

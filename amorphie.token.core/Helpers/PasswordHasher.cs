@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 
 namespace amorphie.token.core.Helpers
 {
-    
+
     public class PasswordHasherOptions
     {
 
- 
+
 
         private static readonly RandomNumberGenerator _defaultRng = RandomNumberGenerator.Create(); // secure PRNG
         public int IterationCount { get; set; } = 10000;
@@ -19,7 +19,7 @@ namespace amorphie.token.core.Helpers
         string HashPassword(string password, string salt = "");
         PasswordVerificationResult VerifyHashedPassword(string hashedPassword, string providedPassword, string salt = "");
 
- 
+
 
     }
     public class PasswordHasher : IPasswordHasher
@@ -27,7 +27,7 @@ namespace amorphie.token.core.Helpers
         private readonly int _iterCount;
         private readonly RandomNumberGenerator _rng;
 
- 
+
 
         public PasswordHasher(PasswordHasherOptions options = null)
         {
@@ -40,7 +40,7 @@ namespace amorphie.token.core.Helpers
             }
         }
 
- 
+
 
         private static bool ByteArraysEqual(byte[] a, byte[] b)
         {
@@ -72,11 +72,11 @@ namespace amorphie.token.core.Helpers
             }
             return Convert.ToBase64String(HashPassword(passToHash, _rng));
 
- 
+
 
         }
 
- 
+
 
         private byte[] HashPassword(string password, RandomNumberGenerator rng)
         {
@@ -94,7 +94,7 @@ namespace amorphie.token.core.Helpers
             rng.GetBytes(salt);
             byte[] subkey = KeyDerivation.Pbkdf2(password, salt, prf, iterCount, numBytesRequested);
 
- 
+
 
             var outputBytes = new byte[13 + salt.Length + subkey.Length];
             outputBytes[0] = 0x01; // format marker
@@ -136,7 +136,7 @@ namespace amorphie.token.core.Helpers
             }
             byte[] decodedHashedPassword = Convert.FromBase64String(hashedPassword);
 
- 
+
 
             // read the format marker from the hashed password
             if (decodedHashedPassword.Length == 0)
@@ -159,7 +159,7 @@ namespace amorphie.token.core.Helpers
                         return PasswordVerificationResult.Failed;
                     }
 
- 
+
 
                 default:
                     return PasswordVerificationResult.Failed;
@@ -169,7 +169,7 @@ namespace amorphie.token.core.Helpers
         {
             iterCount = default(int);
 
- 
+
 
             try
             {
@@ -178,7 +178,7 @@ namespace amorphie.token.core.Helpers
                 iterCount = (int)ReadNetworkByteOrder(hashedPassword, 5);
                 int saltLength = (int)ReadNetworkByteOrder(hashedPassword, 9);
 
- 
+
 
                 // Read the salt: must be >= 128 bits
                 if (saltLength < 128 / 8)
@@ -188,7 +188,7 @@ namespace amorphie.token.core.Helpers
                 byte[] salt = new byte[saltLength];
                 Buffer.BlockCopy(hashedPassword, 13, salt, 0, salt.Length);
 
- 
+
 
                 // Read the subkey (the rest of the payload): must be >= 128 bits
                 int subkeyLength = hashedPassword.Length - 13 - salt.Length;
@@ -199,7 +199,7 @@ namespace amorphie.token.core.Helpers
                 byte[] expectedSubkey = new byte[subkeyLength];
                 Buffer.BlockCopy(hashedPassword, 13 + salt.Length, expectedSubkey, 0, expectedSubkey.Length);
 
- 
+
 
                 // Hash the incoming password and verify it
                 byte[] actualSubkey = KeyDerivation.Pbkdf2(password, salt, prf, iterCount, subkeyLength);

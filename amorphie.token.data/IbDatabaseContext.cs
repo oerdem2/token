@@ -8,13 +8,13 @@ namespace amorphie.token.data
 
     public class IbDatabaseContext : DbContext
     {
-        public DbSet<IBUser> User{get;set;}
-        public DbSet<IBPassword> Password{get;set;}
+        public DbSet<IBUser> User { get; set; }
+        public DbSet<IBPassword> Password { get; set; }
         public IbDatabaseContext(DbContextOptions<IbDatabaseContext> options) : base(options)
         {
-            
+
         }
     }
 
-    
+
 }

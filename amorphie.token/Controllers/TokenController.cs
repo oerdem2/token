@@ -181,21 +181,21 @@ public class TokenController : Controller
             }
 
             var result = await _ibUserService.GetUser(openBankingLoginRequest.UserName);
-            if(result.StatusCode != 200)
+            if (result.StatusCode != 200)
             {
                 return Ok("Hata");
             }
 
             var user = result.Response;
             var passwordResult = await _ibUserService.GetPassword(user.Id);
-            if(passwordResult.StatusCode != 200)
+            if (passwordResult.StatusCode != 200)
             {
                 return Ok("Hata Password");
             }
 
             var password = passwordResult.Response;
 
-            return Ok(_ibUserService.VerifyPassword(password.HashedPassword,openBankingLoginRequest.Password,password.Id.ToString()));
+            return Ok(_ibUserService.VerifyPassword(password.HashedPassword, openBankingLoginRequest.Password, password.Id.ToString()));
         }
         catch (System.Exception ex)
         {
@@ -261,45 +261,45 @@ public class TokenController : Controller
     [HttpPost("token/introspect")]
     [Consumes("application/x-www-form-urlencoded")]
     public async Task<IResult> Introspect([FromForm] string token)
-    {   
+    {
         foreach (var header in Request.Headers)
         {
             Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
         }
-        var jti = JwtHelper.GetClaim(token,"jti");
-        return Results.Json(new{active = false,error="expired",error_description="hata"});
-        if(jti == null)
-            return Results.Json(new{active = false,reason="expired"});
-        if(jti == null)
-            return Results.Json(new{active = false});
+        var jti = JwtHelper.GetClaim(token, "jti");
+        return Results.Json(new { active = false, error = "expired", error_description = "hata" });
+        if (jti == null)
+            return Results.Json(new { active = false, reason = "expired" });
+        if (jti == null)
+            return Results.Json(new { active = false });
 
         Guid checkedJti;
-        if(!Guid.TryParse(jti,out checkedJti))
-            return Results.Json(new{active = false});
+        if (!Guid.TryParse(jti, out checkedJti))
+            return Results.Json(new { active = false });
 
         var accessTokenInfo = _databaseContext.Tokens.FirstOrDefault(t => t.Id == Guid.Parse(jti));
-        if(accessTokenInfo == null)
-            return Results.Json(new{active = false});
-        if(!accessTokenInfo.IsActive)
-            return Results.Json(new{active = false});
-        
+        if (accessTokenInfo == null)
+            return Results.Json(new { active = false });
+        if (!accessTokenInfo.IsActive)
+            return Results.Json(new { active = false });
+
         var clientInfo = await _clientService.CheckClient(accessTokenInfo.ClientId);
         var client = clientInfo.Response;
 
-        if(client == null)
+        if (client == null)
         {
-            return Results.Json(new{active = false});
+            return Results.Json(new { active = false });
         }
 
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.clientsecret));
         JwtSecurityToken validatedToken;
 
-        if(!JwtHelper.ValidateToken(token,"BurganIam",client.returnuri,secretKey,out validatedToken))
+        if (!JwtHelper.ValidateToken(token, "BurganIam", client.returnuri, secretKey, out validatedToken))
         {
-            return Results.Json(new{active = false});
+            return Results.Json(new { active = false });
         }
 
-        return Results.Json(new{active = true});
+        return Results.Json(new { active = true });
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
@@ -331,7 +331,7 @@ public class TokenController : Controller
             }
         }
 
-        if(tokenRequest.grant_type == "refresh_token")
+        if (tokenRequest.grant_type == "refresh_token")
         {
             var token = await _authorizationService.GenerateTokenWithRefreshToken(tokenRequest);
             if (token.StatusCode == 200)

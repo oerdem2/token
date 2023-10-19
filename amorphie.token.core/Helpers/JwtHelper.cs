@@ -10,14 +10,14 @@ namespace amorphie.token.core.Helpers;
 
 public class JwtHelper
 {
-    public static string GenerateJwt(string? issuer = null,string? audience = null,List<Claim>? claims = null,DateTime? notBefore = null,DateTime? expires = null,
+    public static string GenerateJwt(string? issuer = null, string? audience = null, List<Claim>? claims = null, DateTime? notBefore = null, DateTime? expires = null,
     SigningCredentials signingCredentials = null)
     {
         JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
         var token = new JwtSecurityToken(issuer, audience, claims,
-            expires: expires, signingCredentials:signingCredentials);
-        
-        
+            expires: expires, signingCredentials: signingCredentials);
+
+
         string jwt = handler.WriteToken(token);
         return jwt;
     }
@@ -26,21 +26,21 @@ public class JwtHelper
     {
         JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
         JwtSecurityToken jwt = handler.ReadJwtToken(token);
-        
+
         return jwt;
     }
 
-    public static string? GetClaim(string token,string claimName)
+    public static string? GetClaim(string token, string claimName)
     {
         JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
         JwtSecurityToken jwt = handler.ReadJwtToken(token);
-        
+
         var claim = jwt.Claims.FirstOrDefault(c => c.Type == claimName);
 
         return claim?.Value;
     }
 
-    public static TokenInfo CreateTokenInfo(TokenType tokenType,Guid jti,string clientId,DateTime expiredAt,bool isActive,string jwt,string reference,List<string> scopes,Guid userId,Guid? relatedTokenId)
+    public static TokenInfo CreateTokenInfo(TokenType tokenType, Guid jti, string clientId, DateTime expiredAt, bool isActive, string jwt, string reference, List<string> scopes, Guid userId, Guid? relatedTokenId)
     {
         var tokenInfo = new TokenInfo();
         tokenInfo.Id = jti;
@@ -58,21 +58,22 @@ public class JwtHelper
     }
 
     public static bool ValidateToken(
-    string token, 
-    string issuer, 
-    string audience, 
+    string token,
+    string issuer,
+    string audience,
     SecurityKey signingKey,
     out JwtSecurityToken jwt
     )
     {
-        var validationParameters = new TokenValidationParameters {
-                ValidateIssuer = true,
-                ValidIssuer = issuer,
-                ValidateAudience = true,
-                ValidAudience = audience,
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = signingKey,
-                ValidateLifetime = true
+        var validationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = issuer,
+            ValidateAudience = true,
+            ValidAudience = audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = signingKey,
+            ValidateLifetime = true
         };
 
         try
@@ -80,9 +81,9 @@ public class JwtHelper
             var tokenHandler = new JwtSecurityTokenHandler();
             tokenHandler.ValidateToken(token, validationParameters, out SecurityToken validatedToken);
             jwt = (JwtSecurityToken)validatedToken;
-            
+
             return true;
-        } 
+        }
         catch (SecurityTokenValidationException ex)
         {
             jwt = null;

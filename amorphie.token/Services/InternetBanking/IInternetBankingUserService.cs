@@ -8,8 +8,8 @@ namespace amorphie.token.Services.InternetBanking
 {
     public interface IInternetBankingUserService
     {
-        public PasswordVerificationResult VerifyPassword(string username,string password,string salt);
-        public Task<ServiceResponse<IBUser>> GetUser(string username); 
+        public PasswordVerificationResult VerifyPassword(string username, string password, string salt);
+        public Task<ServiceResponse<IBUser>> GetUser(string username);
         public Task<ServiceResponse<IBPassword>> GetPassword(Guid Id);
     }
 }

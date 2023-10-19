@@ -17,7 +17,7 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
     private readonly DaprClient _daprClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly DatabaseContext _databaseContext;
-    
+
     private TokenInfoDetail _tokenInfoDetail;
 
     public AuthorizationService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, ITagService tagService,
@@ -41,9 +41,9 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
 
     private async Task WriteToDb()
     {
-        foreach(var tokenInfo in _tokenInfoDetail.TokenList)
+        foreach (var tokenInfo in _tokenInfoDetail.TokenList)
         {
-            if(tokenInfo != null)
+            if (tokenInfo != null)
                 _databaseContext.Tokens.Add(tokenInfo);
         }
         await _databaseContext.SaveChangesAsync();
@@ -54,11 +54,11 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         var accessTokenInfo = _tokenInfoDetail.TokenList.FirstOrDefault(t => t.TokenType == TokenType.AccessToken);
         var refreshTokenInfo = _tokenInfoDetail.TokenList.FirstOrDefault(t => t.TokenType == TokenType.RefreshToken);
 
-        await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"], "access_token_"+accessTokenInfo.Jwt, accessTokenInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", _tokenInfoDetail.AccessTokenDuration.ToString() } });
-        await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"], "refresh_token_"+refreshTokenInfo.Jwt, refreshTokenInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", _tokenInfoDetail.RefreshTokenDuration.ToString() } });
+        await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"], "access_token_" + accessTokenInfo.Jwt, accessTokenInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", _tokenInfoDetail.AccessTokenDuration.ToString() } });
+        await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"], "refresh_token_" + refreshTokenInfo.Jwt, refreshTokenInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", _tokenInfoDetail.RefreshTokenDuration.ToString() } });
     }
 
-    private async Task<string> CreateIdToken(ClientResponse client,LoginResponse user)
+    private async Task<string> CreateIdToken(ClientResponse client, LoginResponse user)
     {
         int iat = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
         var claims = new List<Claim>()
@@ -87,13 +87,13 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         expires: DateTime.UtcNow.AddSeconds(idDuration));
 
         _tokenInfoDetail.IdTokenId = Guid.NewGuid();
-        _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.IdToken,_tokenInfoDetail.IdTokenId, client.id, DateTime.UtcNow.AddSeconds(idDuration), true, idToken, user.Reference
-        , new List<string>() , user.Id,_tokenInfoDetail.AccessTokenId));
+        _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.IdToken, _tokenInfoDetail.IdTokenId, client.id, DateTime.UtcNow.AddSeconds(idDuration), true, idToken, user.Reference
+        , new List<string>(), user.Id, _tokenInfoDetail.AccessTokenId));
 
         return idToken;
     }
 
-    private async Task<string> CreateAccessToken(TokenRequest tokenRequest,ClientResponse client,LoginResponse user)
+    private async Task<string> CreateAccessToken(TokenRequest tokenRequest, ClientResponse client, LoginResponse user)
     {
         _tokenInfoDetail.AccessTokenId = Guid.NewGuid();
 
@@ -136,13 +136,13 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         string access_token = JwtHelper.GenerateJwt("BurganIam", client.returnuri, tokenClaims,
             expires: expires, signingCredentials: signinCredentials);
 
-        _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.AccessToken,_tokenInfoDetail.AccessTokenId, client.id, DateTime.UtcNow.AddSeconds(accessDuration), true, access_token, user.Reference
+        _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.AccessToken, _tokenInfoDetail.AccessTokenId, client.id, DateTime.UtcNow.AddSeconds(accessDuration), true, access_token, user.Reference
         , tokenRequest.scopes.ToArray().Except(excludedScopes).ToList(), user.Id, null));
 
         return access_token;
-    }    
+    }
 
-    private string CreateRefreshToken(ClientResponse client,LoginResponse user)
+    private string CreateRefreshToken(ClientResponse client, LoginResponse user)
     {
         _tokenInfoDetail.RefreshTokenId = Guid.NewGuid();
         var refreshInfo = client.tokens.FirstOrDefault(t => t.type == 1);
@@ -171,9 +171,9 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         var refreshExpires = DateTime.UtcNow.AddSeconds(refreshDuration);
         string refresh_token = JwtHelper.GenerateJwt("BurganIam", client.returnuri, tokenClaims,
             expires: refreshExpires, signingCredentials: signinCredentials);
-        
-        _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.RefreshToken,_tokenInfoDetail.RefreshTokenId, client.id, DateTime.UtcNow.AddSeconds(refreshDuration), true, refresh_token, user.Reference
-        , new List<string>()  , user.Id, _tokenInfoDetail.AccessTokenId));
+
+        _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.RefreshToken, _tokenInfoDetail.RefreshTokenId, client.id, DateTime.UtcNow.AddSeconds(refreshDuration), true, refresh_token, user.Reference
+        , new List<string>(), user.Id, _tokenInfoDetail.AccessTokenId));
 
         return refresh_token;
     }
@@ -265,12 +265,12 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
 
     public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithRefreshToken(TokenRequest tokenRequest)
     {
-        
+
         var refreshToken = tokenRequest.refresh_token;
-        var refreshTokenInfo = _databaseContext.Tokens.FirstOrDefault(t => 
+        var refreshTokenInfo = _databaseContext.Tokens.FirstOrDefault(t =>
         t.TokenType == TokenType.RefreshToken && t.Jwt == refreshToken);
 
-        if(refreshToken == null)
+        if (refreshToken == null)
         {
             return new ServiceResponse<TokenResponse>()
             {
@@ -280,7 +280,7 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
             };
         }
 
-        if(!refreshTokenInfo.IsActive)
+        if (!refreshTokenInfo.IsActive)
         {
             return new ServiceResponse<TokenResponse>()
             {
@@ -290,9 +290,9 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
             };
         }
 
-        var relatedToken = _databaseContext.Tokens.FirstOrDefault(t => 
+        var relatedToken = _databaseContext.Tokens.FirstOrDefault(t =>
         t.TokenType == TokenType.AccessToken && t.Id == refreshTokenInfo.RelatedTokenId);
-        if(relatedToken == null)
+        if (relatedToken == null)
         {
             return new ServiceResponse<TokenResponse>()
             {
@@ -357,17 +357,17 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
                 Detail = "User is disabled"
             };
         }
-        
+
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.clientsecret));
         JwtSecurityToken refreshTokenValidated;
-        if(JwtHelper.ValidateToken(relatedToken.Jwt,"BurganIam",client.returnuri,secretKey,out refreshTokenValidated))
+        if (JwtHelper.ValidateToken(relatedToken.Jwt, "BurganIam", client.returnuri, secretKey, out refreshTokenValidated))
         {
-            
+
             TokenResponse tokenResponse = new();
             tokenResponse.token_type = "Bearer";
-            tokenResponse.access_token = await CreateAccessToken(tokenRequest,client,user);
+            tokenResponse.access_token = await CreateAccessToken(tokenRequest, client, user);
             tokenResponse.expires_in = _tokenInfoDetail.AccessTokenDuration;
-            tokenResponse.refresh_token = CreateRefreshToken(client,user);
+            tokenResponse.refresh_token = CreateRefreshToken(client, user);
 
             refreshTokenInfo.IsActive = false;
 
@@ -398,13 +398,13 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         //openId Section
         if (tokenRequest.scopes.Contains("openId") || tokenRequest.scopes.Contains("profile"))
         {
-            tokenResponse.id_token = await CreateIdToken(client,user);
+            tokenResponse.id_token = await CreateIdToken(client, user);
         }
 
         tokenResponse.token_type = "Bearer";
-        tokenResponse.access_token = await CreateAccessToken(tokenRequest,client,user);
+        tokenResponse.access_token = await CreateAccessToken(tokenRequest, client, user);
         tokenResponse.expires_in = _tokenInfoDetail.AccessTokenDuration;
-        tokenResponse.refresh_token = CreateRefreshToken(client,user);
+        tokenResponse.refresh_token = CreateRefreshToken(client, user);
 
         await PersistTokenInfo();
 
@@ -475,16 +475,16 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         //openId Section
         if (tokenRequest.scopes.Contains("openId") || tokenRequest.scopes.Contains("profile"))
         {
-            tokenResponse.id_token = await CreateIdToken(client,user);
+            tokenResponse.id_token = await CreateIdToken(client, user);
         }
 
         tokenResponse.token_type = "Bearer";
-        tokenResponse.access_token = await CreateAccessToken(tokenRequest,client,user);
+        tokenResponse.access_token = await CreateAccessToken(tokenRequest, client, user);
         tokenResponse.expires_in = _tokenInfoDetail.AccessTokenDuration;
-        tokenResponse.refresh_token = CreateRefreshToken(client,user);
+        tokenResponse.refresh_token = CreateRefreshToken(client, user);
 
         await PersistTokenInfo();
-          
+
         return new ServiceResponse<TokenResponse>()
         {
             StatusCode = 200,
@@ -552,13 +552,13 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         //openId Section
         if (tokenRequest.scopes.Contains("openId") || tokenRequest.scopes.Contains("profile"))
         {
-            tokenResponse.id_token = await CreateIdToken(client,authorizationCodeInfo.Subject);
+            tokenResponse.id_token = await CreateIdToken(client, authorizationCodeInfo.Subject);
         }
 
         tokenResponse.token_type = "Bearer";
-        tokenResponse.access_token = await CreateAccessToken(tokenRequest,client,authorizationCodeInfo.Subject);
+        tokenResponse.access_token = await CreateAccessToken(tokenRequest, client, authorizationCodeInfo.Subject);
         tokenResponse.expires_in = _tokenInfoDetail.AccessTokenDuration;
-        tokenResponse.refresh_token = CreateRefreshToken(client,authorizationCodeInfo.Subject);
+        tokenResponse.refresh_token = CreateRefreshToken(client, authorizationCodeInfo.Subject);
 
         await PersistTokenInfo();
         return new ServiceResponse<TokenResponse>()
@@ -568,7 +568,7 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         };
     }
 
-    
+
 
     public async Task AssignUserToAuthorizationCode(LoginResponse user, string authorizationCode)
     {
@@ -678,9 +678,9 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
 
     public async Task<ServiceResponse<OpenBankingAuthorizationResponse>> OpenBankingAuthorize(OpenBankingAuthorizationRequest request)
     {
-        
-            await Task.CompletedTask;
-            return null;
+
+        await Task.CompletedTask;
+        return null;
 
     }
 }
