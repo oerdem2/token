@@ -11,6 +11,7 @@ using Login = amorphie.token.core.Models.Account.Login;
 using amorphie.token.core.Models.Workflow;
 using System.Runtime.CompilerServices;
 using amorphie.token.Services.InternetBanking;
+using amorphie.token.Services.Profile;
 
 namespace amorphie.token.core.Controllers;
 
@@ -39,7 +40,7 @@ public class TokenController : Controller
 
 
 
-    [HttpPut("Token/Revoke/{reference}")]
+    [HttpPut("Private/Token/Revoke/{reference}")]
     public async Task<IActionResult> Revoke(string reference)
     {
         try
@@ -82,17 +83,18 @@ public class TokenController : Controller
         return View();
     }
 
+    [HttpGet("OpenBankingAuthorize")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> OpenBankingAuthorize(OpenBankingAuthorizationRequest authorizationRequest)
     {
-        // var authorizationResponse = await _authorizationService.OpenBankingAuthorize(authorizationRequest);
+        var authorizationResponse = await _authorizationService.OpenBankingAuthorize(authorizationRequest);
 
-        // if (authorizationResponse.StatusCode != 200)
-        // {
-        //     return Content($"An Error Occured. Detail : " + authorizationResponse.Detail);
-        // }
+        if (authorizationResponse.StatusCode != 200)
+        {
+            return Content($"An Error Occured. Detail : " + authorizationResponse.Detail);
+        }
 
-        // var authorizationResult = authorizationResponse.Response;
+        var authorizationResult = authorizationResponse.Response;
 
         var loginModel = new OpenBankingLogin();
         ViewBag.HasError = false;
@@ -100,6 +102,7 @@ public class TokenController : Controller
 
     }
 
+    [HttpGet("Authorize")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> Authorize(AuthorizationRequest authorizationRequest)
     {
@@ -134,7 +137,7 @@ public class TokenController : Controller
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpPost("/Token/Flow")]
+    [HttpPost("Flow")]
     public async Task<IActionResult> TokenWorkflow([FromBody] TokenRequest tokenRequest)
     {
         var clientReponse = await _clientService.ValidateClient(tokenRequest.client_id, tokenRequest.client_secret);
@@ -169,7 +172,7 @@ public class TokenController : Controller
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpPost]
+    [HttpPost("OpenBankingLogin")]
     public async Task<IActionResult> OpenBankingLogin(OpenBankingLogin openBankingLoginRequest)
     {
         try
@@ -195,17 +198,27 @@ public class TokenController : Controller
 
             var password = passwordResult.Response;
 
-            return Ok(_ibUserService.VerifyPassword(password.HashedPassword, openBankingLoginRequest.Password, password.Id.ToString()));
+            var passwordCheck = _ibUserService.VerifyPassword(password.HashedPassword, openBankingLoginRequest.Password, password.Id.ToString());
+
+            if(passwordCheck == PasswordVerificationResult.Success)
+            {
+                HttpContext.Response.Headers.Add("X-Jws-Signature","12312321");
+                return Redirect("https://test-accountlisting.burgan.com.tr/Home/Index?id=c6a55861-8df2-4ed7-ab00-158a660eeee9");
+            }
+            else
+            {
+                return Forbid();
+            }
+
         }
         catch (System.Exception ex)
         {
-
-            throw;
+            return StatusCode(500);
         }
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpPost]
+    [HttpPost("Login")]
     public async Task<IActionResult> Login(Login loginRequest)
     {
         try
@@ -258,18 +271,12 @@ public class TokenController : Controller
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpPost("token/introspect")]
+    [HttpPost("Private/Token/Introspect")]
     [Consumes("application/x-www-form-urlencoded")]
     public async Task<IResult> Introspect([FromForm] string token)
     {
-        foreach (var header in Request.Headers)
-        {
-            Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
-        }
         var jti = JwtHelper.GetClaim(token, "jti");
-        return Results.Json(new { active = false, error = "expired", error_description = "hata" });
-        if (jti == null)
-            return Results.Json(new { active = false, reason = "expired" });
+
         if (jti == null)
             return Results.Json(new { active = false });
 
@@ -347,7 +354,7 @@ public class TokenController : Controller
     }
 
 
-    [HttpGet("Tokens/User/{UserId}")]
+    [HttpGet("Private/Token/User/{UserId}")]
     [SwaggerResponse(200, "Sms was sent successfully", typeof(List<TokenInfoDto>))]
     public async Task<IActionResult> GetTokensBelongToUser(Guid UserId)
     {

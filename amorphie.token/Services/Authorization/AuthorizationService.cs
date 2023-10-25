@@ -6,6 +6,7 @@ using amorphie.token.core.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using amorphie.token.data;
 using System.IdentityModel.Tokens.Jwt;
+using amorphie.token.Services.Profile;
 
 namespace amorphie.token.Services.Authorization;
 
@@ -17,11 +18,13 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
     private readonly DaprClient _daprClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly DatabaseContext _databaseContext;
+    private readonly IProfile _profile;
+
 
     private TokenInfoDetail _tokenInfoDetail;
 
     public AuthorizationService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, ITagService tagService,
-    IUserService userService, DaprClient daprClient, IHttpContextAccessor httpContextAccessor, DatabaseContext databaseContext)
+    IUserService userService, DaprClient daprClient, IHttpContextAccessor httpContextAccessor, DatabaseContext databaseContext,IProfile profile)
     : base(logger, configuration)
     {
         _clientService = clientService;
@@ -30,6 +33,7 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         _httpContextAccessor = httpContextAccessor;
         _databaseContext = databaseContext;
         _userService = userService;
+        _profile = profile;
         _tokenInfoDetail = new();
     }
 
@@ -678,9 +682,14 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
 
     public async Task<ServiceResponse<OpenBankingAuthorizationResponse>> OpenBankingAuthorize(OpenBankingAuthorizationRequest request)
     {
+                
+        var res = await _profile.GetProfile("11981329554",Configuration["ProfileUser"],Configuration["ProfileChannel"],Configuration["ProfileBranch"]);
 
         await Task.CompletedTask;
-        return null;
+        
+        return new ServiceResponse<OpenBankingAuthorizationResponse>(){
+            StatusCode = 200
+        };
 
     }
 }

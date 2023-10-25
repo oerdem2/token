@@ -1,14 +1,17 @@
 
+using System.Diagnostics;
+using System.Reflection.Metadata.Ecma335;
 using amorphie.core.security.Extensions;
 using amorphie.token.data;
+using amorphie.token.Services.InternetBanking;
+using amorphie.token.Services.Profile;
 using Microsoft.EntityFrameworkCore;
+using Refit;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
 
 await builder.Configuration.AddVaultSecrets(builder.Configuration["DAPR_SECRET_STORE_NAME"], new string[] { "ServiceConnections" });
-
-var tt = builder.Configuration["DatabaseConnection"];
 
 // Add services to the container.
 builder.Services.AddCors(options =>
@@ -63,8 +66,13 @@ else
     builder.Services.AddScoped<IUserService, UserService>();
     builder.Services.AddScoped<ITagService, TagService>();
 
-
 }
+
+builder.Services.AddScoped<IInternetBankingUserService,InternetBankingUserService>();
+
+builder.Services.AddRefitClient<IProfile>()
+.ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["ProfileBaseAddress"]))
+.ConfigurePrimaryHttpMessageHandler(() => {return new HttpClientHandler(){ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }};});
 
 var app = builder.Build();
 
