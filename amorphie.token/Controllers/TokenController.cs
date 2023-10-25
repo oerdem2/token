@@ -83,7 +83,7 @@ public class TokenController : Controller
         return View();
     }
 
-    [HttpGet("OpenBankingAuthorize")]
+    [HttpGet("public/OpenBankingAuthorize")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> OpenBankingAuthorize(OpenBankingAuthorizationRequest authorizationRequest)
     {
