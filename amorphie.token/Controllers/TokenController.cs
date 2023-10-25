@@ -40,7 +40,7 @@ public class TokenController : Controller
 
 
 
-    [HttpPut("Private/Token/Revoke/{reference}")]
+    [HttpPut("private/Revoke/{reference}")]
     public async Task<IActionResult> Revoke(string reference)
     {
         try
@@ -102,7 +102,7 @@ public class TokenController : Controller
 
     }
 
-    [HttpGet("Authorize")]
+    [HttpGet("public/Authorize")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> Authorize(AuthorizationRequest authorizationRequest)
     {
@@ -137,7 +137,7 @@ public class TokenController : Controller
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpPost("Flow")]
+    [HttpPost("public/Flow")]
     public async Task<IActionResult> TokenWorkflow([FromBody] TokenRequest tokenRequest)
     {
         var clientReponse = await _clientService.ValidateClient(tokenRequest.client_id, tokenRequest.client_secret);
@@ -172,7 +172,7 @@ public class TokenController : Controller
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpPost("OpenBankingLogin")]
+    [HttpPost("public/OpenBankingLogin")]
     public async Task<IActionResult> OpenBankingLogin(OpenBankingLogin openBankingLoginRequest)
     {
         try
@@ -218,7 +218,7 @@ public class TokenController : Controller
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpPost("Login")]
+    [HttpPost("public/Login")]
     public async Task<IActionResult> Login(Login loginRequest)
     {
         try
@@ -271,7 +271,7 @@ public class TokenController : Controller
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpPost("Private/Token/Introspect")]
+    [HttpPost("private/Introspect")]
     [Consumes("application/x-www-form-urlencoded")]
     public async Task<IResult> Introspect([FromForm] string token)
     {
@@ -310,7 +310,7 @@ public class TokenController : Controller
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpPost("Token")]
+    [HttpPost("public/Token")]
     public async Task<IActionResult> Token([FromBody] TokenRequest tokenRequest)
     {
         if (tokenRequest.grant_type == "authorization_code")
@@ -354,7 +354,7 @@ public class TokenController : Controller
     }
 
 
-    [HttpGet("Private/Token/User/{UserId}")]
+    [HttpGet("private/Token/User/{UserId}")]
     [SwaggerResponse(200, "Sms was sent successfully", typeof(List<TokenInfoDto>))]
     public async Task<IActionResult> GetTokensBelongToUser(Guid UserId)
     {
