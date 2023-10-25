@@ -683,7 +683,7 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
     public async Task<ServiceResponse<OpenBankingAuthorizationResponse>> OpenBankingAuthorize(OpenBankingAuthorizationRequest request)
     {
                 
-        var res = await _profile.GetProfile("11981329554",Configuration["ProfileUser"],Configuration["ProfileChannel"],Configuration["ProfileBranch"]);
+        //var res = await _profile.GetProfile("11981329554",Configuration["ProfileUser"],Configuration["ProfileChannel"],Configuration["ProfileBranch"]);
 
         await Task.CompletedTask;
         
