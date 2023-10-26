@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Asap:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="~/css/style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>
 
 </head>
@@ -20,7 +20,7 @@
     <div class="wrapper">
       <div class="header mb-1">
         <div class="header-icon">
-          <img src="/assets/burgan.svg" />
+          <img src="~/assets/burgan.svg" />
         </div>
         <div class="header-language">
           English
@@ -36,7 +36,7 @@
             <div class="login-form mb-4">
                 <label class="input mb-2">
                 <div class="icon">
-                    <img src="/assets/person.svg" />
+                    <img src="~/assets/person.svg" />
                 </div>
 
                 <input type="text" asp-for="UserName" placeholder="Kimlik/Vergi Numarası" />
@@ -44,7 +44,7 @@
 
                 <label class="input mb-2">
                 <div class="icon">
-                    <img src="/assets/lock.svg" />
+                    <img src="~/assets/lock.svg" />
                 </div>
 
                 <input type="text" asp-for="Password" size="12" class="flex-1" placeholder="Şifre" type="password" />
@@ -56,7 +56,7 @@
 
                 <div class="flex gap-1">
                 <div class="button qr-button items-center justify-center">
-                    <img src="/assets/qr.svg" />
+                    <img src="~/assets/qr.svg" />
                 </div>
 
                 <div id="submit-login" class="button login-button flex-1 flex items-center justify-center show-cursor">
@@ -72,7 +72,7 @@
 
             <div class="content-inner">
             <div class="content-title flex items-center gap-1 mb-4">
-                <img src="/assets/security.svg" /> İnternet Bankacılığı Güvenlik
+                <img src="~/assets/security.svg" /> İnternet Bankacılığı Güvenlik
             </div>
 
             <p>Burgan Bank İnternet Bankacılığı ortamında donanım, yazılım, network ve erişim platformları günümüz teknolojisine uygun olarak kurulmuş olup güncel tutulmaktadır.</p>
@@ -108,7 +108,7 @@
       </div>
     </div>
   </div>
-  <script src="/js/site.js"></script>
+  <script src="~/js/site.js"></script>
 </body>
 
 </html>
