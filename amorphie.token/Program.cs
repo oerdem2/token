@@ -68,11 +68,11 @@ else
 
 }
 
-builder.Services.AddScoped<IInternetBankingUserService,InternetBankingUserService>();
+builder.Services.AddScoped<IInternetBankingUserService, InternetBankingUserService>();
 
 builder.Services.AddRefitClient<IProfile>()
 .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["ProfileBaseAddress"]))
-.ConfigurePrimaryHttpMessageHandler(() => {return new HttpClientHandler(){ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }};});
+.ConfigurePrimaryHttpMessageHandler(() => { return new HttpClientHandler() { ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; } }; });
 
 var app = builder.Build();
 

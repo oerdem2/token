@@ -11,6 +11,6 @@ namespace amorphie.token.Services.Profile
     public interface IProfile
     {
         [Get("/fullprofile/{reference}")]
-        Task<ProfileResponse> GetProfile(string reference,[Header("User")] string user,[Header("Channel")] string channel,[Header("Branch")] string branch);
+        Task<ProfileResponse> GetProfile(string reference, [Header("User")] string user, [Header("Channel")] string channel, [Header("Branch")] string branch);
     }
 }
