@@ -24,7 +24,7 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
     private TokenInfoDetail _tokenInfoDetail;
 
     public AuthorizationService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, ITagService tagService,
-    IUserService userService, DaprClient daprClient, IHttpContextAccessor httpContextAccessor, DatabaseContext databaseContext,IProfile profile)
+    IUserService userService, DaprClient daprClient, IHttpContextAccessor httpContextAccessor, DatabaseContext databaseContext, IProfile profile)
     : base(logger, configuration)
     {
         _clientService = clientService;
@@ -682,12 +682,13 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
 
     public async Task<ServiceResponse<OpenBankingAuthorizationResponse>> OpenBankingAuthorize(OpenBankingAuthorizationRequest request)
     {
-                
+
         //var res = await _profile.GetProfile("11981329554",Configuration["ProfileUser"],Configuration["ProfileChannel"],Configuration["ProfileBranch"]);
 
         await Task.CompletedTask;
-        
-        return new ServiceResponse<OpenBankingAuthorizationResponse>(){
+
+        return new ServiceResponse<OpenBankingAuthorizationResponse>()
+        {
             StatusCode = 200
         };
 

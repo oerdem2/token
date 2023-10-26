@@ -8,10 +8,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace amorphie.token.Services.InternetBanking
 {
-    public class InternetBankingUserService : ServiceBase,IInternetBankingUserService
+    public class InternetBankingUserService : ServiceBase, IInternetBankingUserService
     {
         private readonly IbDatabaseContext _ibDatabaseContext;
-        public InternetBankingUserService(IbDatabaseContext ibDatabaseContext,ILogger<InternetBankingUserService> logger,IConfiguration configuration):base(logger,configuration)
+        public InternetBankingUserService(IbDatabaseContext ibDatabaseContext, ILogger<InternetBankingUserService> logger, IConfiguration configuration) : base(logger, configuration)
         {
             _ibDatabaseContext = ibDatabaseContext;
         }

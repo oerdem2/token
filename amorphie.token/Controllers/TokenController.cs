@@ -200,9 +200,9 @@ public class TokenController : Controller
 
             var passwordCheck = _ibUserService.VerifyPassword(password.HashedPassword, openBankingLoginRequest.Password, password.Id.ToString());
 
-            if(passwordCheck == PasswordVerificationResult.Success)
+            if (passwordCheck == PasswordVerificationResult.Success)
             {
-                HttpContext.Response.Headers.Add("X-Jws-Signature","12312321");
+                HttpContext.Response.Headers.Add("X-Jws-Signature", "12312321");
                 return Redirect("https://test-accountlisting.burgan.com.tr/Home/Index?id=c6a55861-8df2-4ed7-ab00-158a660eeee9");
             }
             else
