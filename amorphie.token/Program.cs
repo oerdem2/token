@@ -70,6 +70,7 @@ else
 }
 
 builder.Services.AddScoped<IInternetBankingUserService, InternetBankingUserService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
 
 builder.Services.AddRefitClient<IProfile>()
 .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["ProfileBaseAddress"]))
