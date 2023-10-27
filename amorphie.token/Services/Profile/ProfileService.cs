@@ -1,5 +1,4 @@
 
-using amorphie.core.Base;
 using amorphie.token.core.Models.Profile;
 using Refit;
 
@@ -9,7 +8,7 @@ namespace amorphie.token.Services.Profile
     {
         private readonly IProfile _profile;
         private ServiceResponse<ProfileResponse> _profileResponse;
-        public ProfileService(ILogger logger, IConfiguration configuration,IProfile profile) : base(logger, configuration)
+        public ProfileService(ILogger<ProfileService> logger, IConfiguration configuration,IProfile profile) : base(logger, configuration)
         {
             _profile = profile;
             _profileResponse = null;
