@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.Reflection.Metadata.Ecma335;
 using amorphie.core.security.Extensions;
-using amorphie.token.Attributes;
 using amorphie.token.data;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
