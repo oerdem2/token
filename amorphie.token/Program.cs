@@ -2,9 +2,11 @@
 using System.Diagnostics;
 using System.Reflection.Metadata.Ecma335;
 using amorphie.core.security.Extensions;
+using amorphie.token.Attributes;
 using amorphie.token.data;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Refit;
 
@@ -102,6 +104,7 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
 
 app.UseCors();
 

@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using amorphie.token.data;
 using System.IdentityModel.Tokens.Jwt;
 using amorphie.token.Services.Profile;
+using Microsoft.AspNetCore.Http;
 
 namespace amorphie.token.Services.Authorization;
 
@@ -18,13 +19,13 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
     private readonly DaprClient _daprClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly DatabaseContext _databaseContext;
-    private readonly IProfile _profile;
+    private readonly IProfileService _profileService;
 
 
     private TokenInfoDetail _tokenInfoDetail;
 
     public AuthorizationService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, ITagService tagService,
-    IUserService userService, DaprClient daprClient, IHttpContextAccessor httpContextAccessor, DatabaseContext databaseContext, IProfile profile)
+    IUserService userService, DaprClient daprClient, IHttpContextAccessor httpContextAccessor, DatabaseContext databaseContext, IProfileService profileService)
     : base(logger, configuration)
     {
         _clientService = clientService;
@@ -33,7 +34,7 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         _httpContextAccessor = httpContextAccessor;
         _databaseContext = databaseContext;
         _userService = userService;
-        _profile = profile;
+        _profileService = profileService;
         _tokenInfoDetail = new();
     }
 

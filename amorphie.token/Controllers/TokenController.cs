@@ -202,7 +202,6 @@ public class TokenController : Controller
 
             if (passwordCheck == PasswordVerificationResult.Success)
             {
-                HttpContext.Response.Headers.Add("X-Jws-Signature", "12312321");
                 return Redirect("https://test-accountlisting.burgan.com.tr/Home/Index?id=c6a55861-8df2-4ed7-ab00-158a660eeee9");
             }
             else
@@ -287,7 +286,7 @@ public class TokenController : Controller
         var accessTokenInfo = _databaseContext.Tokens.FirstOrDefault(t => t.Id == Guid.Parse(jti));
         if (accessTokenInfo == null)
             return Results.Json(new { active = false });
-        if (!accessTokenInfo.IsActive)
+        if (accessTokenInfo.TokenType != TokenType.AccessToken || !accessTokenInfo.IsActive)
             return Results.Json(new { active = false });
 
         var clientInfo = await _clientService.CheckClient(accessTokenInfo.ClientId);
@@ -306,7 +305,7 @@ public class TokenController : Controller
             return Results.Json(new { active = false });
         }
 
-        return Results.Json(new { active = true });
+        return Results.Json(new { active = true ,client_id=client.id});
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]

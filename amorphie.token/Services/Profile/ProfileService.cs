@@ -8,13 +8,18 @@ namespace amorphie.token.Services.Profile
     public class ProfileService : ServiceBase,IProfileService
     {
         private readonly IProfile _profile;
+        private ServiceResponse<ProfileResponse> _profileResponse;
         public ProfileService(ILogger logger, IConfiguration configuration,IProfile profile) : base(logger, configuration)
         {
             _profile = profile;
+            _profileResponse = null;
         }
 
         public async Task<ServiceResponse<ProfileResponse>> GetCustomerProfile(string reference)
         {
+            if(_profileResponse != null)
+                return _profileResponse;
+
             var result = new ServiceResponse<ProfileResponse>();
             try
             {
@@ -33,6 +38,8 @@ namespace amorphie.token.Services.Profile
                 result.StatusCode = 500;
                 result.Detail = ex.ToString();
             }
+
+            _profileResponse = result;
             return result;
         }
     }
