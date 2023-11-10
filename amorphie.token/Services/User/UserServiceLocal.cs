@@ -1,4 +1,7 @@
 
+using System.Text;
+using System.Text.Json;
+
 namespace amorphie.token.Services.User;
 
 public class UserServiceLocal : IUserService
@@ -59,6 +62,23 @@ public class UserServiceLocal : IUserService
                 throw new ServiceException((int)Errors.InvalidUser, "User not found with provided info");
             }
             return new ServiceResponse<LoginResponse>() { StatusCode = 200, Response = user };
+        }
+        else
+        {
+            throw new ServiceException((int)Errors.InvalidUser, "User Endpoint Did Not Response Successfully");
+        }
+    }
+
+    public async Task<ServiceResponse> SaveUser(UserInfo userInfo)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var request = new StringContent(JsonSerializer.Serialize(userInfo),Encoding.UTF8,"application/json");
+        var httpResponseMessage = await httpClient.PostAsync(
+            "user",request);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            return new ServiceResponse() { StatusCode = 200 };
         }
         else
         {

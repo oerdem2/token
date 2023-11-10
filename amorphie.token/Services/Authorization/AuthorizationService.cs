@@ -133,7 +133,7 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         }
 
 
-        var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.clientsecret));
+        var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.jwtSalt));
         var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha384);
 
         var expires = DateTime.UtcNow.AddSeconds(accessDuration);
@@ -170,7 +170,7 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
             Logger.LogError(ex.Message);
         }
 
-        var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.clientsecret));
+        var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.jwtSalt));
         var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha384);
 
         var refreshExpires = DateTime.UtcNow.AddSeconds(refreshDuration);
@@ -363,7 +363,7 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
             };
         }
 
-        var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.clientsecret));
+        var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.jwtSalt));
         JwtSecurityToken refreshTokenValidated;
         if (JwtHelper.ValidateToken(relatedToken.Jwt, "BurganIam", client.returnuri, secretKey, out refreshTokenValidated))
         {
@@ -671,6 +671,15 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         return code;
     }
 
+    private string GenerateRawAuthorizationCode()
+    {
+        var rand = RandomNumberGenerator.Create();
+        byte[] bytes = new byte[32];
+        rand.GetBytes(bytes);
+        var code = Base64UrlEncoder.Encode(bytes);
+        return code;
+    }
+
     private string GetHashedCodeVerifier(string codeVerifier)
     {
         var codeVerifierAsByte = System.Text.Encoding.ASCII.GetBytes(codeVerifier);
@@ -683,15 +692,13 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
 
     public async Task<ServiceResponse<OpenBankingAuthorizationResponse>> OpenBankingAuthorize(OpenBankingAuthorizationRequest request)
     {
+        var response = new ServiceResponse<OpenBankingAuthorizationResponse>();
 
-        //var res = await _profile.GetProfile("11981329554",Configuration["ProfileUser"],Configuration["ProfileChannel"],Configuration["ProfileBranch"]);
-
-        await Task.CompletedTask;
-
-        return new ServiceResponse<OpenBankingAuthorizationResponse>()
-        {
-            StatusCode = 200
+        response.Response = new OpenBankingAuthorizationResponse(){
+            Code = GenerateRawAuthorizationCode()
         };
+        response.StatusCode = 200;
 
+        return response;
     }
 }

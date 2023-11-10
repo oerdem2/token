@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_02lrk9a" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.13.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.2.0">
+  <bpmn:process id="login" name="login" isExecutable="true">
+    <bpmn:startEvent id="Event_0hfziom">
+      <bpmn:outgoing>Flow_0vbvnkn</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1kznkvm" messageRef="Message_069bnbk" />
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Activity_0ujcvn4" name="display-login-screen">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="amorphie-http-worker" />
+        <zeebe:ioMapping>
+          <zeebe:input source="=&#34;https://test-amorphie-token.burgan.com.tr/private/amorphie-token-display-login-screen&#34;" target="url" />
+        </zeebe:ioMapping>
+        <zeebe:taskHeaders>
+          <zeebe:header key="method" value="post" />
+        </zeebe:taskHeaders>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0vbvnkn</bpmn:incoming>
+      <bpmn:outgoing>Flow_05nn8s8</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:intermediateCatchEvent id="Event_1jv1ajl">
+      <bpmn:incoming>Flow_05nn8s8</bpmn:incoming>
+      <bpmn:outgoing>Flow_1jw3gcv</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1t0vmrz" messageRef="Message_05dfcjm" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_0vbvnkn" sourceRef="Event_0hfziom" targetRef="Activity_0ujcvn4" />
+    <bpmn:sequenceFlow id="Flow_05nn8s8" sourceRef="Activity_0ujcvn4" targetRef="Event_1jv1ajl" />
+    <bpmn:endEvent id="Event_0r31kbe">
+      <bpmn:incoming>Flow_1jw3gcv</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1jw3gcv" sourceRef="Event_1jv1ajl" targetRef="Event_0r31kbe" />
+  </bpmn:process>
+  <bpmn:message id="Message_287iu8d" name="start-password-flow" />
+  <bpmn:message id="Message_32a91dl" name="check-otp-login-flow" />
+  <bpmn:message id="Message_18f9q5u" name="send-otp-login-flow">
+    <bpmn:extensionElements>
+      <zeebe:subscription correlationKey="=InstanceId" />
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmn:message id="Message_0h7dnh7" name="start-password-flow-web" />
+  <bpmn:message id="Message_1h4mlat" name="send-push-login-flow">
+    <bpmn:extensionElements>
+      <zeebe:subscription correlationKey="=InstanceId" />
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmn:message id="Message_069bnbk" name="start-openbanking-login" />
+  <bpmn:message id="Message_05dfcjm" name="amorphie-token-login">
+    <bpmn:extensionElements>
+      <zeebe:subscription correlationKey="=InstanceId" />
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="login">
+      <bpmndi:BPMNShape id="Event_18ah8y0_di" bpmnElement="Event_0hfziom">
+        <dc:Bounds x="152" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1yamnzd_di" bpmnElement="Activity_0ujcvn4">
+        <dc:Bounds x="310" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0awqwyt_di" bpmnElement="Event_1jv1ajl">
+        <dc:Bounds x="542" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0r31kbe_di" bpmnElement="Event_0r31kbe">
+        <dc:Bounds x="712" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0vbvnkn_di" bpmnElement="Flow_0vbvnkn">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="310" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_05nn8s8_di" bpmnElement="Flow_05nn8s8">
+        <di:waypoint x="410" y="120" />
+        <di:waypoint x="542" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1jw3gcv_di" bpmnElement="Flow_1jw3gcv">
+        <di:waypoint x="578" y="120" />
+        <di:waypoint x="712" y="120" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

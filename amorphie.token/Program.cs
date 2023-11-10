@@ -1,10 +1,16 @@
 
 using System.Diagnostics;
 using System.Reflection.Metadata.Ecma335;
+using System.Text.Json;
 using amorphie.core.security.Extensions;
 using amorphie.token.data;
+using amorphie.token.Middlewares;
+using amorphie.token.Services.Consent;
+using amorphie.token.Services.FlowHandler;
 using amorphie.token.Services.InternetBanking;
+using amorphie.token.Services.MessagingGateway;
 using amorphie.token.Services.Profile;
+using amorphie.token.Services.Transaction;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Refit;
@@ -47,6 +53,7 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddScoped<IClientService, ClientServiceLocal>();
     builder.Services.AddScoped<IUserService, UserServiceLocal>();
     builder.Services.AddScoped<ITagService, TagServiceLocal>();
+    builder.Services.AddScoped<IConsentService, ConsentServiceLocal>();
 
     builder.Services.AddHttpClient("Client", httpClient =>
     {
@@ -60,21 +67,30 @@ if (builder.Environment.IsDevelopment())
     {
         httpClient.BaseAddress = new Uri(builder.Configuration["TagBaseAddress"]);
     });
+    builder.Services.AddHttpClient("Consent", httpClient =>
+    {
+        httpClient.BaseAddress = new Uri(builder.Configuration["ConsentBaseAddress"]);
+    });
 }
 else
 {
     builder.Services.AddScoped<IClientService, ClientService>();
     builder.Services.AddScoped<IUserService, UserService>();
     builder.Services.AddScoped<ITagService, TagService>();
-
+    builder.Services.AddScoped<IConsentService, ConsentService>();
 }
 
 builder.Services.AddScoped<IInternetBankingUserService, InternetBankingUserService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<IFlowHandler,FlowHandler>();
 
 builder.Services.AddRefitClient<IProfile>()
 .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["ProfileBaseAddress"]))
 .ConfigurePrimaryHttpMessageHandler(() => { return new HttpClientHandler() { ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; } }; });
+
+builder.Services.AddRefitClient<IMessagingGateway>()
+.ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["MessagingGatewayBaseAddress"]));
 
 var app = builder.Build();
 
@@ -97,6 +113,7 @@ app.MapCheckPushControlEndpoints();
 app.MapSetLoginTypeControlEndpoints();
 app.MapLoginPushFlowControlEndpoints();
 
+//app.UseTransactionMiddleware();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

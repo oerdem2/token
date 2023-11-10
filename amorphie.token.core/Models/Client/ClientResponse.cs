@@ -32,4 +32,6 @@ public class ClientResponse
     public Session session { get; set; }
     public Location location { get; set; }
     public List<Token> tokens { get; set; }
+    [JsonPropertyName("jwtSecretSalt")]
+    public string jwtSalt { get; set; }
 }

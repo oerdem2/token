@@ -181,4 +181,35 @@ public class UserService : ServiceBase, IUserService
         }
         return null;
     }
+
+    public async Task<ServiceResponse> SaveUser(UserInfo userInfo)
+    {
+        try
+        {
+            await _daprClient.InvokeMethodAsync(Configuration["UserServiceAppName"], "/user",userInfo);
+            return new ServiceResponse()
+                    {
+                        StatusCode = 200,
+                        Detail = "Success"
+                    };
+        }
+        catch (InvocationException ex)
+        {
+            Logger.LogError("An Error Occured At User Invocation | Detail:" + ex.ToString());
+            return new ServiceResponse()
+                    {
+                        StatusCode = (int)ex.Response.StatusCode,
+                        Detail = await ex.Response.Content.ReadAsStringAsync()
+                    };
+        }
+        catch (System.Exception ex)
+        {
+            Logger.LogError("An Error Occured At User Invocation | Detail:" + ex.ToString());
+            return new ServiceResponse()
+                    {
+                        StatusCode = 500,
+                        Detail = "Dapr Invoke Method Error"
+                    };
+        }
+    }
 }

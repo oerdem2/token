@@ -12,6 +12,9 @@ using amorphie.token.core.Models.Workflow;
 using System.Runtime.CompilerServices;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
+using amorphie.token.Services.Transaction;
+using amorphie.token.Services.FlowHandler;
+using amorphie.token.Services.Consent;
 
 namespace amorphie.token.core.Controllers;
 
@@ -24,21 +27,76 @@ public class TokenController : Controller
     private readonly IInternetBankingUserService _ibUserService;
     private readonly DatabaseContext _databaseContext;
     private readonly IConfiguration _configuration;
+    private readonly IFlowHandler _flowHandler;
     private readonly DaprClient _daprClient;
+    private readonly ITransactionService _transcationService;
+    private readonly IConsentService _consentService;
     public TokenController(ILogger<TokenController> logger, IAuthorizationService authorizationService, IUserService userService, DatabaseContext databaseContext
-    , IConfiguration configuration, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService)
+    , IConfiguration configuration, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService,ITransactionService transactionService,
+    IFlowHandler flowHandler,IConsentService consentService)
     {
         _logger = logger;
         _authorizationService = authorizationService;
         _userService = userService;
         _databaseContext = databaseContext;
         _configuration = configuration;
-        _daprClient = daprClient;
+        _flowHandler = flowHandler;
         _clientService = clientService;
         _ibUserService = ibUserService;
+        _transcationService = transactionService;
+        _daprClient = daprClient;
+        _consentService = consentService;
     }
 
+    [HttpGet("/public/OpenBankingAuthCode")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> OpenBankingAuthCode(Guid consentId)
+    {
+        var consentResponse = await _consentService.GetConsent(consentId);
+        if(consentResponse.StatusCode == 200)
+        {
+            var consent = consentResponse.Response;
+            var deserializedData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent.additionalData);
+            var redirectUri = deserializedData.gkd.yonAdr;
+            var authResponse = await _authorizationService.OpenBankingAuthorize(new OpenBankingAuthorizationRequest(){
+                riza_no = consentId
+            });
+            var authCode = authResponse.Response.Code;
+            return Redirect($"{redirectUri}&rizaDrm=Y&yetKod={authCode}&rizaNo=yy&rizaTip=H");
+        }
 
+        return Forbid();
+    }
+
+    [HttpGet("public/ValidateOtp")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> ValidateOtp(string transactionId)
+    {
+        
+        var otpModel = new Otp
+        {
+            Phone = _transcationService.Transaction.User.MobilePhone.Number,
+            transactionId = transactionId
+        };
+        ViewBag.HasError = false;
+        return View("Otp", otpModel);
+
+    }
+
+    [HttpPost("public/ValidateOtp")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> ValidateOtp(Otp otpRequest)
+    {
+        var response = await _flowHandler.CheckOtp(otpRequest.OtpValue);
+        if(response.StatusCode == 200)
+        {
+            return Redirect("http://localhost:5105/Home/Test?id="+_transcationService.Transaction.ConsentId);
+        }
+        else
+        {
+            return Forbid();
+        }
+    }
 
     [HttpPut("private/Revoke/{reference}")]
     public async Task<IActionResult> Revoke(string reference)
@@ -96,10 +154,55 @@ public class TokenController : Controller
 
         var authorizationResult = authorizationResponse.Response;
 
-        var loginModel = new OpenBankingLogin();
+        var loginModel = new OpenBankingLogin
+        {
+            transactionId = _transcationService.Transaction.Id.ToString()
+        };
         ViewBag.HasError = false;
-        return View("OpenBankingLogin", loginModel);
 
+        var transaction = _transcationService.Transaction;
+        transaction.ConsentId = authorizationRequest.riza_no;
+        await _transcationService.SaveTransaction(transaction);
+
+        return View("OpenBankingLogin", loginModel);
+    }
+
+    [HttpGet("public/OpenBankingAuthorizeTest")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> OpenBankingAuthorizeTest(OpenBankingAuthorizationRequest authorizationRequest)
+    {
+        ViewBag.HasError = false;
+        ViewBag.HubUrl = _configuration["HubUrl"];
+        ViewBag.ConsentNo = authorizationRequest.riza_no;
+        ViewBag.TransactionId = Guid.NewGuid().ToString();
+        return View("OpenBankingLoginTest");
+    }
+
+    [HttpPost("public/StartWorkflow")]
+    public async Task<IActionResult> StartWorkflow([FromBody]dynamic loginRequest)
+    {
+        var transactionId = Guid.NewGuid();
+
+        using var httpClient = new HttpClient();
+        var workflowRequest = new WorkflowPostTransitionRequest();
+        workflowRequest.EntityData = JsonSerializer.Serialize(loginRequest);
+        workflowRequest.GetSignalRHub = true;
+
+        StringContent request = new(JsonSerializer.Serialize(workflowRequest), Encoding.UTF8, "application/json");
+        request.Headers.Add("User", Guid.NewGuid().ToString());
+        request.Headers.Add("Behalf-Of-User", Guid.NewGuid().ToString());
+
+        var httpResponse = await httpClient.PostAsync(_configuration["workflowPostTransitionUri"].Replace("{{recordId}}", loginRequest.GetProperty("transaction_id").ToString()), request);
+
+        if (httpResponse.IsSuccessStatusCode)
+        {
+            var workflowResponse = await httpResponse.Content.ReadFromJsonAsync<WorkflowPostTransitionResponse>();
+            return Ok(workflowResponse.Result);
+        }
+        else
+        {
+            return Problem(detail: "Workflow Error", statusCode: 500);
+        }
     }
 
     [HttpGet("public/Authorize")]
@@ -177,32 +280,23 @@ public class TokenController : Controller
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(openBankingLoginRequest.UserName) || string.IsNullOrWhiteSpace(openBankingLoginRequest.Password))
+            if (string.IsNullOrWhiteSpace(openBankingLoginRequest.username) || string.IsNullOrWhiteSpace(openBankingLoginRequest.password))
             {
                 ViewBag.HasError = true;
                 ViewBag.ErrorDetail = "Reference and Password Can Not Be Empty";
             }
 
-            var result = await _ibUserService.GetUser(openBankingLoginRequest.UserName);
-            if (result.StatusCode != 200)
+            var userCheck = await _userService.Login(new LoginRequest(){ Reference =openBankingLoginRequest.username,Password = openBankingLoginRequest.password});
+            
+            if (userCheck.StatusCode == 200)
             {
-                return Ok("Hata");
-            }
-
-            var user = result.Response;
-            var passwordResult = await _ibUserService.GetPassword(user.Id);
-            if (passwordResult.StatusCode != 200)
-            {
-                return Ok("Hata Password");
-            }
-
-            var password = passwordResult.Response;
-
-            var passwordCheck = _ibUserService.VerifyPassword(password.HashedPassword, openBankingLoginRequest.Password, password.Id.ToString());
-
-            if (passwordCheck == PasswordVerificationResult.Success)
-            {
-                return Redirect("https://test-accountlisting.burgan.com.tr/Home/Index?id=c6a55861-8df2-4ed7-ab00-158a660eeee9");
+                var user = userCheck.Response;
+                var transaction = _transcationService.Transaction;
+                transaction.User = user;
+                
+                var response = await _flowHandler.StartOtpFlow(transaction);
+                
+                return Redirect("/public/ValidateOtp?transactionId="+transaction.Id);
             }
             else
             {
@@ -297,7 +391,7 @@ public class TokenController : Controller
             return Results.Json(new { active = false });
         }
 
-        var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.clientsecret));
+        var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.jwtSalt));
         JwtSecurityToken validatedToken;
 
         if (!JwtHelper.ValidateToken(token, "BurganIam", client.returnuri, secretKey, out validatedToken))

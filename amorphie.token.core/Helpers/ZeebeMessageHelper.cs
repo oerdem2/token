@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -30,5 +31,14 @@ public static class ZeebeMessageHelper
 
         variables.Add($"TRX-{_transitionName}", targetObject);
         return variables;
+    }
+
+    public static dynamic createDynamicVariable(bool status, string message = "", string lastTransition = "")
+    {
+        dynamic dynamicObject = new ExpandoObject();
+        dynamicObject.status = status;
+        dynamicObject.message = message;
+        dynamicObject.LastTransition = lastTransition;
+        return dynamicObject;
     }
 }
