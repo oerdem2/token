@@ -7,7 +7,7 @@ namespace amorphie.token.Services.Profile
     public class ProfileService : ServiceBase,IProfileService
     {
         private readonly IProfile _profile;
-        private ServiceResponse<ProfileResponse> _profileResponse;
+        private ServiceResponse<ProfileResponse>? _profileResponse;
         public ProfileService(ILogger<ProfileService> logger, IConfiguration configuration,IProfile profile) : base(logger, configuration)
         {
             _profile = profile;
@@ -22,7 +22,7 @@ namespace amorphie.token.Services.Profile
             var result = new ServiceResponse<ProfileResponse>();
             try
             {
-                var apiResponse = await _profile.GetProfile(reference,Configuration["ProfileUser"],Configuration["ProfileChannel"],Configuration["ProfileBranch"]);
+                var apiResponse = await _profile.GetProfile(reference,Configuration["ProfileUser"]!,Configuration["ProfileChannel"]!,Configuration["ProfileBranch"]!);
 
                 result.Response = apiResponse;
                 result.StatusCode = 200;

@@ -1,18 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using amorphie.token.core.Models.Consent;
+using amorphie.token.Services.TransactionHandler;
 
 namespace amorphie.token.Services.Consent
 {
     public class ConsentServiceLocal : ServiceBase,IConsentService
     {
-        private readonly DaprClient _daprClient;
         private readonly IHttpClientFactory _httpClientFactory;
-        public ConsentServiceLocal(ILogger<ConsentService> logger,IConfiguration configuration,DaprClient daprClient,IHttpClientFactory httpClientFactory) : base(logger,configuration)
+        public ConsentServiceLocal(ILogger<ConsentService> logger,IConfiguration configuration, IHttpClientFactory httpClientFactory) : base(logger,configuration)
         {
-            _daprClient = daprClient;
             _httpClientFactory = httpClientFactory;
         }
 
@@ -34,6 +34,27 @@ namespace amorphie.token.Services.Consent
             else
             {
                 throw new ServiceException((int)Errors.InvalidUser, "Consent Endpoint Did Not Response Successfully");
+            }
+        }
+
+        public async Task<ServiceResponse> UpdateConsentForUsage(Guid consentId)
+        {
+            var httpClient = _httpClientFactory.CreateClient("Consent");
+            StringContent req = new StringContent(JsonSerializer.Serialize(new{
+                id = consentId,
+                state = "K"
+            }),System.Text.Encoding.UTF8,"application/json");
+
+            var httpResponseMessage = await httpClient.PostAsync(
+                "OpenBankingConsentHHS/UpdatePaymentConsentStatusForUsage",req);
+
+            if (httpResponseMessage.IsSuccessStatusCode)
+            {
+                return new ServiceResponse() { StatusCode = 200};
+            }
+            else
+            {
+                return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode};          
             }
         }
     }

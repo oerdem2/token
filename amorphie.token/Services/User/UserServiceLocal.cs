@@ -1,6 +1,7 @@
 
 using System.Text;
 using System.Text.Json;
+using amorphie.token.Services.TransactionHandler;
 
 namespace amorphie.token.Services.User;
 
@@ -15,7 +16,7 @@ public class UserServiceLocal : IUserService
     public async Task<ServiceResponse<object>> CheckDevice(Guid userId, Guid clientId)
     {
         var httpClient = _httpClientFactory.CreateClient("User");
-        var httpResponseMessage = await httpClient.GetAsync("user/device");
+        var httpResponseMessage = await httpClient.GetAsync($"userDevice/search?Page=0&PageSize=50&Keyword={userId}&&{clientId}");
 
         if (httpResponseMessage.IsSuccessStatusCode)
         {
@@ -23,7 +24,7 @@ public class UserServiceLocal : IUserService
         }
         else
         {
-            throw new ServiceException(404, "Device Not Found");
+            return new ServiceResponse<object>() { StatusCode = 404, Response = "Device Not Found" };
         }
     }
 

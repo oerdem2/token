@@ -9,5 +9,6 @@ namespace amorphie.token.Services.Consent
     public interface IConsentService
     {
         public Task<ServiceResponse<ConsentResponse>> GetConsent(Guid consentId);
+        public Task<ServiceResponse> UpdateConsentForUsage(Guid consentId);
     }
 }

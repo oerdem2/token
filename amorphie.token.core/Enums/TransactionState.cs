@@ -2,7 +2,9 @@ namespace amorphie.token.core.Enums
 {
     public enum TransactionState
     {
-        Active = 0,
-        Completed = 1
+        Active ,
+        Completed ,
+        Error ,
+        OtpMissMatch
     }
 }

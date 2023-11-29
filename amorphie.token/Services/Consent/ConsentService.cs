@@ -45,5 +45,9 @@ namespace amorphie.token.Services.Consent
             }
         }
 
+        public Task<ServiceResponse> UpdateConsentForUsage(Guid consentId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

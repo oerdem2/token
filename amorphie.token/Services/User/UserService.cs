@@ -56,7 +56,11 @@ public class UserService : ServiceBase, IUserService
         {
             Logger.LogError("An Error Occured At User Device Invocation | Detail:" + ex.ToString());
         }
-        return null;
+        return new ServiceResponse<object>()
+        {
+            StatusCode = 500,
+            Detail = "Server Error"
+        };
     }
 
     public async Task<ServiceResponse<LoginResponse>> Login(LoginRequest loginRequest)
@@ -120,7 +124,11 @@ public class UserService : ServiceBase, IUserService
         {
             Logger.LogError("An Error Occured At User Invocation | Detail:" + ex.ToString());
         }
-        return null;
+        return new ServiceResponse<LoginResponse>()
+        {
+            StatusCode = 500,
+            Detail = "Server Error"
+        };
     }
 
     public async Task<ServiceResponse<LoginResponse>> GetUserById(Guid userId)
@@ -179,8 +187,13 @@ public class UserService : ServiceBase, IUserService
         {
             Logger.LogError("An Error Occured At User Invocation | Detail:" + ex.ToString());
         }
-        return null;
+        return new ServiceResponse<LoginResponse>()
+        {
+            StatusCode = 500,
+            Detail = "Server Error"
+        };
     }
+    
 
     public async Task<ServiceResponse> SaveUser(UserInfo userInfo)
     {

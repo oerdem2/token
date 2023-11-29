@@ -1,8 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+
 using System.Reflection;
-using System.Threading.Tasks;
 
 namespace amorphie.token.core.Extensions;
 
@@ -19,7 +16,7 @@ public static class MapperExtension
 
                 foreach (PropertyInfo sourceProperty in sourceProperties)
                 {
-                    PropertyInfo destinationProperty = destinationProperties.Find(item => item.Name == sourceProperty.Name);
+                    PropertyInfo? destinationProperty = destinationProperties.Find(item => item.Name == sourceProperty.Name);
 
                     if (destinationProperty != null)
                     {
@@ -29,7 +26,7 @@ public static class MapperExtension
                         }
                         catch (Exception ex)
                         {
-
+                            Console.WriteLine(ex.ToString());
                         }
                     }
                 }

@@ -6,6 +6,7 @@ using amorphie.token.Services.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using amorphie.token.core.Helpers;
 using System.Dynamic;
+using amorphie.token.core.Extensions;
 
 namespace amorphie.token.Modules;
 
@@ -18,7 +19,7 @@ public static class GenerateTokens
 
         static async Task<IResult> generateTokens(
         [FromBody] dynamic body,
-        [FromServices] IAuthorizationService authorizationService
+        [FromServices] ITokenService tokenService
         )
         {
             Console.WriteLine("GenerateTokens called");
@@ -53,7 +54,7 @@ public static class GenerateTokens
                 PropertyNameCaseInsensitive = true
             });
 
-            ServiceResponse<TokenResponse> result = await authorizationService.GenerateTokenWithPasswordFromWorkflow(requestBody, clientInfo, userInfo);
+            ServiceResponse<TokenResponse> result = await tokenService.GenerateTokenWithPasswordFromWorkflow(requestBody.MapTo<GenerateTokenRequest>(), clientInfo, userInfo);
 
             if (result.StatusCode == 200)
             {

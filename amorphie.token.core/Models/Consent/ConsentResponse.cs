@@ -9,8 +9,8 @@ namespace amorphie.token.core.Models.Consent
     {
         public Guid id{get;set;}
         public Guid userId{get;set;}
-        public string state{get;set;}
-        public string consentType{get;set;}
-        public string additionalData{get;set;}
+        public string? state{get;set;}
+        public string? consentType{get;set;}
+        public string? additionalData{get;set;}
     }
 }

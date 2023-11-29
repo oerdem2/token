@@ -1,11 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using amorphie.token.core.Enums.MessagingGateway;
 using amorphie.token.core.Models.MessagingGateway;
 using amorphie.token.Services.MessagingGateway;
-using amorphie.token.Services.Transaction;
+using amorphie.token.Services.TransactionHandler;
 using Refit;
 
 namespace amorphie.token.Services.FlowHandler
@@ -69,9 +65,9 @@ namespace amorphie.token.Services.FlowHandler
                 SmsType = SmsTypes.Otp,
                 Phone = new PhoneString()
                 {
-                    CountryCode = transaction.UserInfo.phone.countryCode.ToString(),
-                    Prefix = transaction.UserInfo.phone.prefix.ToString(),
-                    Number = transaction.UserInfo.phone.number
+                    CountryCode = transaction.User!.MobilePhone!.CountryCode.ToString(),
+                    Prefix = transaction.User!.MobilePhone!.Prefix.ToString(),
+                    Number = transaction.User!.MobilePhone!.Number
                 },
                 Content = $"{code} şifresi ile giriş yapabilirsiniz",
                 Process = new Process()

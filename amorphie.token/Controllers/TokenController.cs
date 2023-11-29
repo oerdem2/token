@@ -1,27 +1,27 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
-using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.Annotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using amorphie.token.data;
-using Login = amorphie.token.core.Models.Account.Login;
 using amorphie.token.core.Models.Workflow;
-using System.Runtime.CompilerServices;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
-using amorphie.token.Services.Transaction;
 using amorphie.token.Services.FlowHandler;
 using amorphie.token.Services.Consent;
+using amorphie.token.Services.TransactionHandler;
+using amorphie.token.core.Extensions;
+using System.Dynamic;
+using System.Security.Claims;
 
 namespace amorphie.token.core.Controllers;
 
 public class TokenController : Controller
 {
     private readonly ILogger<TokenController> _logger;
-    private readonly IAuthorizationService _authorizationService;
+    private readonly ITokenService _tokenService;
     private readonly IUserService _userService;
     private readonly IClientService _clientService;
     private readonly IInternetBankingUserService _ibUserService;
@@ -29,75 +29,33 @@ public class TokenController : Controller
     private readonly IConfiguration _configuration;
     private readonly IFlowHandler _flowHandler;
     private readonly DaprClient _daprClient;
-    private readonly ITransactionService _transcationService;
+    private readonly ITransactionService _transactionService;
     private readonly IConsentService _consentService;
-    public TokenController(ILogger<TokenController> logger, IAuthorizationService authorizationService, IUserService userService, DatabaseContext databaseContext
+    private readonly IProfileService _profileService;
+    public TokenController(ILogger<TokenController> logger, ITokenService tokenService, IUserService userService, DatabaseContext databaseContext
     , IConfiguration configuration, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService,ITransactionService transactionService,
-    IFlowHandler flowHandler,IConsentService consentService)
+    IFlowHandler flowHandler,IConsentService consentService,IProfileService profileService)
     {
         _logger = logger;
-        _authorizationService = authorizationService;
+        _tokenService = tokenService;
         _userService = userService;
         _databaseContext = databaseContext;
         _configuration = configuration;
         _flowHandler = flowHandler;
         _clientService = clientService;
         _ibUserService = ibUserService;
-        _transcationService = transactionService;
+        _transactionService = transactionService;
         _daprClient = daprClient;
         _consentService = consentService;
+        _profileService = profileService;
     }
 
-    [HttpGet("/public/OpenBankingAuthCode")]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    public async Task<IActionResult> OpenBankingAuthCode(Guid consentId)
+    [HttpGet("private/signalr")]
+    public async Task<IActionResult> SignalR(string reference)
     {
-        var consentResponse = await _consentService.GetConsent(consentId);
-        if(consentResponse.StatusCode == 200)
-        {
-            var consent = consentResponse.Response;
-            var deserializedData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent.additionalData);
-            var redirectUri = deserializedData.gkd.yonAdr;
-            var authResponse = await _authorizationService.OpenBankingAuthorize(new OpenBankingAuthorizationRequest(){
-                riza_no = consentId
-            });
-            var authCode = authResponse.Response.Code;
-            return Redirect($"{redirectUri}&rizaDrm=Y&yetKod={authCode}&rizaNo=yy&rizaTip=H");
-        }
-
-        return Forbid();
+        await Task.CompletedTask;
+        return View("SignalR");
     }
-
-    [HttpGet("public/ValidateOtp")]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    public async Task<IActionResult> ValidateOtp(string transactionId)
-    {
-        
-        var otpModel = new Otp
-        {
-            Phone = _transcationService.Transaction.User.MobilePhone.Number,
-            transactionId = transactionId
-        };
-        ViewBag.HasError = false;
-        return View("Otp", otpModel);
-
-    }
-
-    [HttpPost("public/ValidateOtp")]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    public async Task<IActionResult> ValidateOtp(Otp otpRequest)
-    {
-        var response = await _flowHandler.CheckOtp(otpRequest.OtpValue);
-        if(response.StatusCode == 200)
-        {
-            return Redirect("http://localhost:5105/Home/Test?id="+_transcationService.Transaction.ConsentId);
-        }
-        else
-        {
-            return Forbid();
-        }
-    }
-
     [HttpPut("private/Revoke/{reference}")]
     public async Task<IActionResult> Revoke(string reference)
     {
@@ -107,7 +65,7 @@ public class TokenController : Controller
 
             foreach (var token in tokenBelongsTouser)
             {
-                await _daprClient.DeleteStateAsync(_configuration["DAPR_STATE_STORE_NAME"], token.Jwt);
+                await _daprClient.DeleteStateAsync(_configuration["DAPR_STATE_STORE_NAME"], token.Id.ToString());
             }
 
             await _databaseContext.Tokens.Where(t => t.Reference == reference).ExecuteUpdateAsync(s => s.SetProperty(t => t.IsActive, false));
@@ -123,60 +81,16 @@ public class TokenController : Controller
         return StatusCode(500);
     }
 
-    [HttpGet("GenerateCodeChallenge")]
-    public IActionResult CodeChallange(string code_verifier)
-    {
-        var codeVerifierAsByte = System.Text.Encoding.ASCII.GetBytes(code_verifier);
-
-        using var sha256 = SHA256.Create();
-        var hashedCodeVerifier = Base64UrlEncoder.Encode(sha256.ComputeHash(codeVerifierAsByte));
-        return Content(hashedCodeVerifier);
-    }
-
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> Demo()
     {
+        await Task.CompletedTask;
         ViewBag.tokenUrl = _configuration["tokenUrl"];
         ViewBag.callUrl = _configuration["callUrl"];
         return View();
     }
 
-    [HttpGet("public/OpenBankingAuthorize")]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    public async Task<IActionResult> OpenBankingAuthorize(OpenBankingAuthorizationRequest authorizationRequest)
-    {
-        var authorizationResponse = await _authorizationService.OpenBankingAuthorize(authorizationRequest);
-
-        if (authorizationResponse.StatusCode != 200)
-        {
-            return Content($"An Error Occured. Detail : " + authorizationResponse.Detail);
-        }
-
-        var authorizationResult = authorizationResponse.Response;
-
-        var loginModel = new OpenBankingLogin
-        {
-            transactionId = _transcationService.Transaction.Id.ToString()
-        };
-        ViewBag.HasError = false;
-
-        var transaction = _transcationService.Transaction;
-        transaction.ConsentId = authorizationRequest.riza_no;
-        await _transcationService.SaveTransaction(transaction);
-
-        return View("OpenBankingLogin", loginModel);
-    }
-
-    [HttpGet("public/OpenBankingAuthorizeTest")]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    public async Task<IActionResult> OpenBankingAuthorizeTest(OpenBankingAuthorizationRequest authorizationRequest)
-    {
-        ViewBag.HasError = false;
-        ViewBag.HubUrl = _configuration["HubUrl"];
-        ViewBag.ConsentNo = authorizationRequest.riza_no;
-        ViewBag.TransactionId = Guid.NewGuid().ToString();
-        return View("OpenBankingLoginTest");
-    }
+   
 
     [HttpPost("public/StartWorkflow")]
     public async Task<IActionResult> StartWorkflow([FromBody]dynamic loginRequest)
@@ -184,15 +98,17 @@ public class TokenController : Controller
         var transactionId = Guid.NewGuid();
 
         using var httpClient = new HttpClient();
-        var workflowRequest = new WorkflowPostTransitionRequest();
-        workflowRequest.EntityData = JsonSerializer.Serialize(loginRequest);
-        workflowRequest.GetSignalRHub = true;
+        var workflowRequest = new WorkflowPostTransitionRequest
+        {
+            EntityData = JsonSerializer.Serialize(loginRequest),
+            GetSignalRHub = true
+        };
 
         StringContent request = new(JsonSerializer.Serialize(workflowRequest), Encoding.UTF8, "application/json");
         request.Headers.Add("User", Guid.NewGuid().ToString());
         request.Headers.Add("Behalf-Of-User", Guid.NewGuid().ToString());
 
-        var httpResponse = await httpClient.PostAsync(_configuration["workflowPostTransitionUri"].Replace("{{recordId}}", loginRequest.GetProperty("transaction_id").ToString()), request);
+        var httpResponse = await httpClient.PostAsync(_configuration["workflowPostTransitionUri"]!.Replace("{{recordId}}", loginRequest.GetProperty("transaction_id").ToString()), request);
 
         if (httpResponse.IsSuccessStatusCode)
         {
@@ -205,161 +121,40 @@ public class TokenController : Controller
         }
     }
 
-    [HttpGet("public/Authorize")]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    public async Task<IActionResult> Authorize(AuthorizationRequest authorizationRequest)
-    {
-
-        var authorizationResponse = await _authorizationService.Authorize(authorizationRequest);
-
-        if (authorizationResponse.StatusCode != 200)
-        {
-            return Content($"An Error Occured. Detail : " + authorizationResponse.Detail);
-        }
-
-        var authorizationResult = authorizationResponse.Response;
-
-        if (HttpContext.Session.Get("LoggedUser") == null)
-        {
-            var loginModel = new Login()
-            {
-                Code = authorizationResult.Code,
-                RedirectUri = authorizationResult.RedirectUri,
-                RequestedScopes = authorizationResult.RequestedScopes
-            };
-            ViewBag.HasError = false;
-            return View("Login", loginModel);
-        }
-
-        var loggedUser = JsonSerializer.Deserialize<LoginResponse>(HttpContext.Session.GetString("LoggedUser"));
-
-        await _authorizationService.AssignUserToAuthorizationCode(loggedUser, authorizationResult.Code);
-
-        return Redirect($"{authorizationResult.RedirectUri}&code={authorizationResult.Code}");
-
-    }
-
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("public/Flow")]
     public async Task<IActionResult> TokenWorkflow([FromBody] TokenRequest tokenRequest)
     {
-        var clientReponse = await _clientService.ValidateClient(tokenRequest.client_id, tokenRequest.client_secret);
+        var clientReponse = await _clientService.ValidateClient(tokenRequest.ClientId!, tokenRequest.ClientSecret!);
         if (clientReponse.StatusCode != 200)
         {
             return Problem(detail: clientReponse.Detail, statusCode: clientReponse.StatusCode);
         }
 
         var client = clientReponse.Response;
-        var flowType = client.flows.FirstOrDefault(f => f.type.ToLower().Equals("login"));
+        var flowType = client!.flows!.FirstOrDefault(f => f.type.ToLower().Equals("login"));
 
         using var httpClient = new HttpClient();
-        var workflowRequest = new WorkflowPostTransitionRequest();
-        workflowRequest.EntityData = JsonSerializer.Serialize(tokenRequest);
-        workflowRequest.GetSignalRHub = true;
+        var workflowRequest = new WorkflowPostTransitionRequest
+        {
+            EntityData = JsonSerializer.Serialize(tokenRequest),
+            GetSignalRHub = true
+        };
 
         StringContent request = new(JsonSerializer.Serialize(workflowRequest), Encoding.UTF8, "application/json");
         request.Headers.Add("User", Guid.NewGuid().ToString());
         request.Headers.Add("Behalf-Of-User", Guid.NewGuid().ToString());
 
-        var httpResponse = await httpClient.PostAsync(_configuration["workflowPostTransitionUri"].Replace("{{recordId}}", tokenRequest.record_id), request);
+        var httpResponse = await httpClient.PostAsync(_configuration["workflowPostTransitionUri"]!.Replace("{{recordId}}", tokenRequest.RecordId), request);
 
         if (httpResponse.IsSuccessStatusCode)
         {
             var workflowResponse = await httpResponse.Content.ReadFromJsonAsync<WorkflowPostTransitionResponse>();
-            return Ok(workflowResponse.Result);
+            return Ok(workflowResponse!.Result);
         }
         else
         {
             return Problem(detail: "Workflow Error", statusCode: clientReponse.StatusCode);
-        }
-    }
-
-    [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpPost("public/OpenBankingLogin")]
-    public async Task<IActionResult> OpenBankingLogin(OpenBankingLogin openBankingLoginRequest)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(openBankingLoginRequest.username) || string.IsNullOrWhiteSpace(openBankingLoginRequest.password))
-            {
-                ViewBag.HasError = true;
-                ViewBag.ErrorDetail = "Reference and Password Can Not Be Empty";
-            }
-
-            var userCheck = await _userService.Login(new LoginRequest(){ Reference =openBankingLoginRequest.username,Password = openBankingLoginRequest.password});
-            
-            if (userCheck.StatusCode == 200)
-            {
-                var user = userCheck.Response;
-                var transaction = _transcationService.Transaction;
-                transaction.User = user;
-                
-                var response = await _flowHandler.StartOtpFlow(transaction);
-                
-                return Redirect("/public/ValidateOtp?transactionId="+transaction.Id);
-            }
-            else
-            {
-                return Forbid();
-            }
-
-        }
-        catch (System.Exception ex)
-        {
-            return StatusCode(500);
-        }
-    }
-
-    [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpPost("public/Login")]
-    public async Task<IActionResult> Login(Login loginRequest)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(loginRequest.UserName) || string.IsNullOrWhiteSpace(loginRequest.Password))
-            {
-                ViewBag.HasError = true;
-                ViewBag.ErrorDetail = "Reference and Password Can Not Be Empty";
-            }
-            var userResponse = await _userService.Login(new LoginRequest() { Reference = loginRequest.UserName, Password = loginRequest.Password });
-            if (userResponse.StatusCode != 200)
-            {
-                ViewBag.HasError = true;
-                ViewBag.ErrorDetail = userResponse.Detail;
-                var loginModel = new Login()
-                {
-                    Code = loginRequest.Code,
-                    RedirectUri = loginRequest.RedirectUri,
-                    RequestedScopes = loginRequest.RequestedScopes
-                };
-                return View("Login", loginModel);
-            }
-            var user = userResponse.Response;
-
-            if (user?.State.ToLower() == "active" || user?.State.ToLower() == "new")
-            {
-                HttpContext.Session.SetString("LoggedUser", JsonSerializer.Serialize(user));
-                await _authorizationService.AssignUserToAuthorizationCode(user, loginRequest.Code);
-
-                return Redirect($"{loginRequest.RedirectUri}&code={loginRequest.Code}");
-            }
-            else
-            {
-                ViewBag.HasError = true;
-                ViewBag.ErrorDetail = "User Is Disabled";
-                var loginModel = new Login()
-                {
-                    Code = loginRequest.Code,
-                    RedirectUri = loginRequest.RedirectUri,
-                    RequestedScopes = loginRequest.RequestedScopes
-                };
-                return View("Login", loginModel);
-            }
-        }
-        catch (System.Exception ex)
-        {
-
-            throw;
         }
     }
 
@@ -373,8 +168,7 @@ public class TokenController : Controller
         if (jti == null)
             return Results.Json(new { active = false });
 
-        Guid checkedJti;
-        if (!Guid.TryParse(jti, out checkedJti))
+        if (!Guid.TryParse(jti, out Guid checkedJti))
             return Results.Json(new { active = false });
 
         var accessTokenInfo = _databaseContext.Tokens.FirstOrDefault(t => t.Id == Guid.Parse(jti));
@@ -391,24 +185,29 @@ public class TokenController : Controller
             return Results.Json(new { active = false });
         }
 
-        var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.jwtSalt));
-        JwtSecurityToken validatedToken;
+        var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.jwtSalt!));
 
-        if (!JwtHelper.ValidateToken(token, "BurganIam", client.returnuri, secretKey, out validatedToken))
+        if (!JwtHelper.ValidateToken(token, "BurganIam", client!.returnuri, secretKey, out JwtSecurityToken? validatedToken))
         {
             return Results.Json(new { active = false });
         }
-
-        return Results.Json(new { active = true ,client_id=client.id});
+        
+        Dictionary<string,object> claimValues = new();
+        foreach(Claim claim in validatedToken!.Claims)
+        {
+            claimValues.Add(claim.Type,claim.Value);
+        }
+        return Results.Json(claimValues);
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("public/Token")]
     public async Task<IActionResult> Token([FromBody] TokenRequest tokenRequest)
     {
-        if (tokenRequest.grant_type == "authorization_code")
+        var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
+        if (tokenRequest.GrantType == "authorization_code")
         {
-            var token = await _authorizationService.GenerateToken(tokenRequest);
+            var token = await _tokenService.GenerateToken(generateTokenRequest);
             if (token.StatusCode == 200)
             {
                 return Json(token.Response);
@@ -418,9 +217,9 @@ public class TokenController : Controller
                 return Problem(detail: token.Detail, statusCode: token.StatusCode);
             }
         }
-        if (tokenRequest.grant_type == "password")
+        if (tokenRequest.GrantType == "password")
         {
-            var token = await _authorizationService.GenerateTokenWithPassword(tokenRequest);
+            var token = await _tokenService.GenerateTokenWithPassword(generateTokenRequest);
             if (token.StatusCode == 200)
             {
                 return Json(token.Response);
@@ -431,9 +230,9 @@ public class TokenController : Controller
             }
         }
 
-        if (tokenRequest.grant_type == "refresh_token")
+        if (tokenRequest.GrantType == "refresh_token")
         {
-            var token = await _authorizationService.GenerateTokenWithRefreshToken(tokenRequest);
+            var token = await _tokenService.GenerateTokenWithRefreshToken(generateTokenRequest);
             if (token.StatusCode == 200)
             {
                 return Json(token.Response);
@@ -443,6 +242,7 @@ public class TokenController : Controller
                 return Problem(detail: token.Detail, statusCode: token.StatusCode);
             }
         }
+
         return Problem(detail: "Invalid Grant Type", statusCode: 480);
     }
 
@@ -452,7 +252,7 @@ public class TokenController : Controller
     public async Task<IActionResult> GetTokensBelongToUser(Guid UserId)
     {
         List<TokenInfoDto> tokensBelongToUser = new List<TokenInfoDto>();
-        var tokens = _databaseContext.Tokens.Where(t => t.UserId == UserId).OrderByDescending(t => t.IssuedAt);
+        var tokens = await _databaseContext.Tokens.Where(t => t.UserId == UserId).OrderByDescending(t => t.IssuedAt).ToListAsync();
         foreach (var token in tokens)
         {
             tokensBelongToUser.Add(new()
@@ -470,53 +270,70 @@ public class TokenController : Controller
         return Json(tokens);
     }
 
-    [HttpPost("TokenInfo")]
-    [SwaggerResponse(200, "Token is Valid", typeof(List<TokenInfoResponse>))]
-    public async Task<IActionResult> GetTokenInfo([FromBody] TokenInfoRequest request)
+
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [HttpPost("public/OpenBankingToken")]
+    public async Task<IActionResult> OpenBankingToken([FromBody] OpenBankingTokenRequest openBankingTokenRequest)
     {
-        TokenInfoResponse response = new();
-
-        JwtSecurityTokenHandler handler = new();
-        SecurityToken validatedToken;
-        try
+        var generateTokenRequest = new GenerateTokenRequest();
+        
+        var clientResult = await _clientService.CheckClient(_configuration["OpenBankingClientId"]!);
+        if(clientResult.StatusCode != 200)
         {
-            handler.ValidateToken(request.token, new TokenValidationParameters
-            {
-                ClockSkew = TimeSpan.Zero,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidateAudience = false,
-                ValidateIssuer = false,
-                ValidIssuers = _configuration.GetSection("ValidIssuers").Get<IEnumerable<string>>(),
-                ValidAudiences = _configuration.GetSection("ValidAudiences").Get<IEnumerable<string>>(),
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSecretKey"]))
-            }, out validatedToken);
+            return BadRequest();
+        }
+        var client = clientResult.Response;
 
-            var tokenInfo = await _databaseContext.Tokens.FirstOrDefaultAsync(t => t.Jwt == request.token);
+        if(openBankingTokenRequest.AuthType!.Equals("yet_kod"))
+        {
+            generateTokenRequest.GrantType = "authorization_code";
+            generateTokenRequest.ClientId = client!.id;
+            generateTokenRequest.ClientSecret = client.clientsecret;
+            generateTokenRequest.GrantType = "authorization_code";
+            generateTokenRequest.Scopes = new List<string>(){"open-banking"};
+            generateTokenRequest.Code = openBankingTokenRequest.AuthCode;
 
-            if (tokenInfo != null && tokenInfo.IsActive)
+            var token = await _tokenService.GenerateToken(generateTokenRequest);
+            if(token.StatusCode != 200)
             {
-                response.Active = true;
-                response.ClientId = tokenInfo.ClientId;
-                response.Scope = string.Join(" ", tokenInfo.Scopes);
-                response.Reference = tokenInfo.Reference;
-                response.ExpiredAt = tokenInfo.ExpiredAt;
-                return Json(response);
-            }
-            else
-            {
-                response.Active = false;
-                return Json(response);
+                return Problem(statusCode:token.StatusCode,detail:token.Detail);
             }
 
+            var openBankingTokenResponse = new OpenBankingTokenResponse
+            {
+                AccessToken = token.Response!.AccessToken,
+                ExpiresIn = token.Response.ExpiresIn,
+                RefreshToken = token.Response.RefreshToken,
+                RefreshTokenExpiresIn = token.Response.RefreshTokenExpiresIn
+            };
+            await _daprClient.DeleteStateAsync(_configuration["DAPR_STATE_STORE_NAME"],openBankingTokenRequest.AuthCode);
+            await _daprClient.DeleteStateAsync(_configuration["DAPR_STATE_STORE_NAME"],"AuthCodeInfo_"+openBankingTokenRequest.ConsentNo);
 
+            await _consentService.UpdateConsentForUsage(Guid.Parse(openBankingTokenRequest.ConsentNo!));
+            return Ok(openBankingTokenResponse);
         }
-        catch (Exception ex)
+        if(openBankingTokenRequest.AuthType.Equals("yenileme_belirteci"))
         {
-            response.Active = false;
-            return Json(response);
+            generateTokenRequest.GrantType = "refresh_token";
+            generateTokenRequest.RefreshToken = openBankingTokenRequest.RefreshToken;
+
+            var token = await _tokenService.GenerateTokenWithRefreshToken(generateTokenRequest);
+            if(token.StatusCode != 200)
+            {
+                return Problem(statusCode:token.StatusCode,detail:token.Detail);
+            }
+
+            var openBankingTokenResponse = new OpenBankingTokenResponse
+            {
+                AccessToken = token.Response!.AccessToken,
+                ExpiresIn = token.Response.ExpiresIn,
+                RefreshToken = token.Response.RefreshToken,
+                RefreshTokenExpiresIn = token.Response.RefreshTokenExpiresIn
+            };
+            return Ok(openBankingTokenResponse);
         }
 
+        return BadRequest();
     }
 
 

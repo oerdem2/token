@@ -1,17 +1,18 @@
 
-using System.Diagnostics;
-using System.Reflection.Metadata.Ecma335;
+using System.Dynamic;
 using System.Text.Json;
 using amorphie.core.security.Extensions;
 using amorphie.token.data;
 using amorphie.token.Middlewares;
+using amorphie.token.Modules.OpenBankingFlows;
+using amorphie.token.Modules.ZeebeJobs;
+using amorphie.token.Services.ClaimHandler;
 using amorphie.token.Services.Consent;
 using amorphie.token.Services.FlowHandler;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.MessagingGateway;
 using amorphie.token.Services.Profile;
-using amorphie.token.Services.Transaction;
-using Microsoft.AspNetCore.Http.Features;
+using amorphie.token.Services.TransactionHandler;
 using Microsoft.EntityFrameworkCore;
 using Refit;
 
@@ -57,19 +58,19 @@ if (builder.Environment.IsDevelopment())
 
     builder.Services.AddHttpClient("Client", httpClient =>
     {
-        httpClient.BaseAddress = new Uri(builder.Configuration["ClientBaseAddress"]);
+        httpClient.BaseAddress = new Uri(builder.Configuration["ClientBaseAddress"]!);
     });
     builder.Services.AddHttpClient("User", httpClient =>
     {
-        httpClient.BaseAddress = new Uri(builder.Configuration["UserBaseAddress"]);
+        httpClient.BaseAddress = new Uri(builder.Configuration["UserBaseAddress"]!);
     });
     builder.Services.AddHttpClient("Tag", httpClient =>
     {
-        httpClient.BaseAddress = new Uri(builder.Configuration["TagBaseAddress"]);
+        httpClient.BaseAddress = new Uri(builder.Configuration["TagBaseAddress"]!);
     });
     builder.Services.AddHttpClient("Consent", httpClient =>
     {
-        httpClient.BaseAddress = new Uri(builder.Configuration["ConsentBaseAddress"]);
+        httpClient.BaseAddress = new Uri(builder.Configuration["ConsentBaseAddress"]!);
     });
 }
 else
@@ -84,14 +85,16 @@ builder.Services.AddScoped<IInternetBankingUserService, InternetBankingUserServi
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IFlowHandler,FlowHandler>();
+builder.Services.AddScoped<ITokenService,TokenService>();
+builder.Services.AddScoped<IClaimHandlerService,ClaimHandlerService>();
 
 builder.Services.AddRefitClient<IProfile>()
-.ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["ProfileBaseAddress"]))
+.ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["ProfileBaseAddress"]!))
 .ConfigurePrimaryHttpMessageHandler(() => { return new HttpClientHandler() { ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; } }; });
 
 builder.Services.AddRefitClient<IMessagingGateway>()
-.ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["MessagingGatewayBaseAddress"]));
-
+.ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["MessagingGatewayBaseAddress"]!));
+builder.Logging.ClearProviders();
 var app = builder.Build();
 
 //Db Migrate
@@ -106,14 +109,21 @@ app.MapCheckScopesControlEndpoints();
 app.MapGenerateTokensControlEndpoints();
 app.MapCheckUserStateControlEndpoints();
 app.MapLoginOtpFlowControlEndpoints();
-app.MapSetStateControlEndpoints();
 app.MapDaprTestControlEndpoints();
 app.MapCheckOtpControlEndpoints();
 app.MapCheckPushControlEndpoints();
 app.MapSetLoginTypeControlEndpoints();
 app.MapLoginPushFlowControlEndpoints();
 
-//app.UseTransactionMiddleware();
+app.MapTokenLoginCheckDevice();
+app.MapTokenLoginCheckSecondFactor();
+app.MapTokenLoginCheckUser();
+app.MapTokenLoginSendOtp();
+app.MapTokenLoginSetTransaction();
+
+app.MapAmorphieOauthCheckClientEndpoint();
+
+app.UseTransactionMiddleware();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

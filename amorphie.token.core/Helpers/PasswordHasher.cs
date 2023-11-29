@@ -29,7 +29,7 @@ namespace amorphie.token.core.Helpers
 
 
 
-        public PasswordHasher(PasswordHasherOptions options = null)
+        public PasswordHasher(PasswordHasherOptions? options = null)
         {
             var opt = options ?? new PasswordHasherOptions();
             _iterCount = opt.IterationCount;
