@@ -3,9 +3,6 @@
 
 // Write your JavaScript code.
 
-
-
-
 // //SignalR
 const connection = new signalR.HubConnectionBuilder()
     .withUrl('',{
@@ -32,8 +29,7 @@ connection.onclose(async () => {
 connection.on('SendMessage', (msg)=>{
     console.log("mesaj geldi");
     console.log(msg);
-        var el = document.getElementById("response");
-        el.value = msg;
+        var parsedMsg = JSON.parse(msg);
     }
   );
 

@@ -265,7 +265,7 @@
   </bpmn:process>
   <bpmn:message id="Message_1egjij6" name="amorphie-oauth-throw-event">
     <bpmn:extensionElements>
-      <zeebe:subscription correlationKey="=TransactionId" />
+      <zeebe:subscription correlationKey="=InstanceId" />
     </bpmn:extensionElements>
   </bpmn:message>
   <bpmn:error id="Error_0olorta" name="Error500" errorCode="Error500" />
@@ -281,7 +281,7 @@
   </bpmn:message>
   <bpmn:message id="Message_0mfo0sm" name="amorphie-oauth-first-factor">
     <bpmn:extensionElements>
-      <zeebe:subscription correlationKey="=TransactionId" />
+      <zeebe:subscription correlationKey="=InstanceId" />
     </bpmn:extensionElements>
   </bpmn:message>
   <bpmn:message id="Message_0pdqlp4" name="amorphie-oauth-assign-user">
@@ -301,7 +301,7 @@
   </bpmn:message>
   <bpmn:message id="Message_3n1avjq" name="amorphie-oauth-second-factor">
     <bpmn:extensionElements>
-      <zeebe:subscription correlationKey="=TransactionId" />
+      <zeebe:subscription correlationKey="=InstanceId" />
     </bpmn:extensionElements>
   </bpmn:message>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">

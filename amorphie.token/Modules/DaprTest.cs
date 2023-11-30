@@ -29,6 +29,10 @@ public static class DaprTest
             HttpRequest request
         )
         {
+            foreach (var header in request.Headers)
+            {
+                 Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
+            }
             Console.WriteLine("geldi oidc");
             await Task.CompletedTask;
             return Results.Content("test");

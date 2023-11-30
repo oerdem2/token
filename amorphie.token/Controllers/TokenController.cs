@@ -195,8 +195,10 @@ public class TokenController : Controller
         Dictionary<string,object> claimValues = new();
         foreach(Claim claim in validatedToken!.Claims)
         {
-            claimValues.Add(claim.Type,claim.Value);
+            claimValues.Add(claim.Type.Replace(".","_"),claim.Value);
         }
+        claimValues.Add("clientId",client.id!);
+        claimValues.Add("active",true);
         return Results.Json(claimValues);
     }
 

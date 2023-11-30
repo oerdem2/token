@@ -12,6 +12,7 @@ using amorphie.token.core.Extensions;
 using System.Dynamic;
 using Azure;
 using amorphie.token.core.Models.Transaction;
+using amorphie.token.core.Models.Workflow;
 
 namespace amorphie.token.core.Controllers;
 
@@ -100,54 +101,19 @@ public class AuthorizeController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> Authorize(AuthorizationRequest authorizationRequest)
     {
-        var transaction = _transactionService.Transaction;
-        transaction!.TransactionNextPage = TransactionNextPage.Otp;
-        transaction!.AuthorizationReqest = authorizationRequest;
-        await _transactionService.SaveTransaction(transaction);
-
-        dynamic zeebeCommand = new ExpandoObject();
-        zeebeCommand.messageName = "authorize-flow-start";
-        dynamic variables = new ExpandoObject();
-        variables.TransactionId = transaction!.Id;
-        variables.AuthorizeRequest = authorizationRequest;
-        var loggedUser = HttpContext.Session.GetString("LoggedUser");
-        if(loggedUser != null)
-            variables.User = JsonSerializer.Deserialize<LoginResponse>(HttpContext.Session.GetString("LoggedUser")!);
-        
-        zeebeCommand.variables = variables;
-        await _daprClient.InvokeBindingAsync("zeebe-local","publish-message",zeebeCommand);
-
-        return await WorkflowProcess();
-
-        zeebeCommand.variables = variables;
-        
-        
-        var authorizationServiceRequest = authorizationRequest.MapTo<AuthorizationServiceRequest>();
-        var authorizationResponse = await _authorizationService.Authorize(authorizationServiceRequest);
-
-        if (authorizationResponse.StatusCode != 200)
+        using var httpClient = new HttpClient();
+        var workflowRequest = new WorkflowPostTransitionRequest
         {
-            return Content($"An Error Occured. Detail : " + authorizationResponse.Detail);
-        }
+            EntityData = JsonSerializer.Serialize(authorizationRequest),
+            GetSignalRHub = true
+        };
 
-        var authorizationResult = authorizationResponse.Response;
+        StringContent request = new(JsonSerializer.Serialize(workflowRequest), Encoding.UTF8, "application/json");
+        request.Headers.Add("User", Guid.NewGuid().ToString());
+        request.Headers.Add("Behalf-Of-User", Guid.NewGuid().ToString());
 
-        if (HttpContext.Session.Get("LoggedUser") == null)
-        {
-            var loginModel = new Login()
-            {
-                Code = authorizationResult!.Code,
-                RedirectUri = authorizationResult.RedirectUri,
-                RequestedScopes = authorizationResult.RequestedScopes
-            };
-            ViewBag.HasError = false;
-            return View("Login", loginModel);
-        }
-
-
-
-        return Redirect($"{authorizationResult.RedirectUri}&code={authorizationResult.Code}");
-
+        var httpResponse = await httpClient.PostAsync(_configuration["workflowAuthorizeUri"]!.Replace("{{recordId}}", Guid.NewGuid().ToString()), request);
+        return View("Waiting");
     }
 
 
