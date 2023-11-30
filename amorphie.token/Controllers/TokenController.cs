@@ -81,6 +81,31 @@ public class TokenController : Controller
         return StatusCode(500);
     }
 
+    [HttpPut("private/Revoke/ConsentId/{consentId}")]
+    public async Task<IActionResult> Revoke(Guid consentId)
+    {
+        try
+        {
+            var tokenBelongsToConsent = _databaseContext.Tokens.Where(t => t.ConsentId == consentId);
+
+            foreach (var token in tokenBelongsToConsent)
+            {
+                await _daprClient.DeleteStateAsync(_configuration["DAPR_STATE_STORE_NAME"], token.Id.ToString());
+            }
+
+            await _databaseContext.Tokens.Where(t => t.ConsentId == consentId).ExecuteUpdateAsync(s => s.SetProperty(t => t.IsActive, false));
+
+
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Revoke Tokens Failed. Detail:" + ex.ToString());
+        }
+
+        return StatusCode(500);
+    }
+
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> Demo()
     {
