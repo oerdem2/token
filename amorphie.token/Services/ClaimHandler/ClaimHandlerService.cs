@@ -115,9 +115,20 @@ namespace amorphie.token.Services.ClaimHandler
             return null;
         }
 
-        public async Task<List<Claim>> PopulateClaims(List<string> clientClaims)
+        public async Task<List<Claim>> PopulateClaims(List<string> clientClaims,LoginResponse? user)
         {
-            SetUser();
+            if(user != null)
+            {
+                SetUser();
+            }
+            else
+            {
+                _user = user;
+                _queryStringForTag = string.Empty;
+                _queryStringForTag += "?reference=" + _user!.Reference;
+                _queryStringForTag += "&mail=" + _user!.EMail;
+                _queryStringForTag += "&phone=" + _user!.MobilePhone!.ToString();
+            }
             SetConsent();
             
             List<Claim> claims = new List<Claim>();

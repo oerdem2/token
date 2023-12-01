@@ -84,7 +84,7 @@ public class TokenService : ServiceBase,ITokenService
 
         if (identityInfo.claims != null && identityInfo.claims.Count() > 0)
         {
-            var populatedClaims = await _claimService.PopulateClaims(identityInfo.claims);
+            var populatedClaims = await _claimService.PopulateClaims(identityInfo.claims,_user);
             claims.AddRange(populatedClaims);
         }
 
@@ -139,7 +139,7 @@ public class TokenService : ServiceBase,ITokenService
         {
             foreach (var accessClaim in accessInfo.claims)
             {
-                var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims);
+                var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims,_user);
                 tokenClaims.AddRange(populatedClaims);
             }   
         }
