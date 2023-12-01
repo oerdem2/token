@@ -117,7 +117,7 @@ namespace amorphie.token.Services.ClaimHandler
 
         public async Task<List<Claim>> PopulateClaims(List<string> clientClaims,LoginResponse? user)
         {
-            if(user != null)
+            if(user == null)
             {
                 SetUser();
             }
