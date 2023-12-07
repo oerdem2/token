@@ -14,7 +14,7 @@ public class UserService : ServiceBase, IUserService
     {
         try
         {
-            await _daprClient.InvokeMethodAsync(HttpMethod.Get, Configuration["UserServiceAppName"], $"/userDevice/search?Page=0&PageSize=50&Keyword={userId}&&{clientId}");
+            await _daprClient.InvokeMethodAsync(HttpMethod.Get, Configuration["UserServiceAppName"], $"/userDevice/search?Page=0&PageSize=50&SortDirection=Asc&Keyword={userId}&&{clientId}");
             Console.WriteLine("Device bulundu");
             return new ServiceResponse<object>()
             {
