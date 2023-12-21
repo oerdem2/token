@@ -1,0 +1,23 @@
+input[type=radio] {
+    display:none;
+    }
+     
+    input[type=radio] + label
+    {
+    border-color: white;
+    border-style: solid;
+    height: 120px;
+    width: 120px;
+    display:inline-block;
+    padding: 0 0 0 0px;
+    }
+   
+    input[type=radio]:checked + label
+    {
+    border-color: red;
+    border-style: solid;
+    height: 120px;
+    width: 120px;
+    display:inline-block;
+    padding: 0 0 0 0px;
+    }

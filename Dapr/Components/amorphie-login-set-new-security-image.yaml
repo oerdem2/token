@@ -1,0 +1,16 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: amorphie-login-set-new-security-image
+spec:
+  type: bindings.zeebe.jobworker
+  version: v1
+  metadata:
+  - name: jobType
+    value: amorphie-login-set-new-security-image
+  - name: gatewayAddr
+    value: localhost:26500
+  - name: gatewayKeepAlive
+    value: 45s
+  - name: usePlainTextConnection
+    value: true

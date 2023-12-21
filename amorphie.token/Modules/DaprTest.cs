@@ -22,9 +22,11 @@ public static class DaprTest
         app.MapPost("/checkOtp", confirmOtp)
         .Produces(StatusCodes.Status200OK);
 
+
         app.MapGet("/oidc", oidc)
         .Produces(StatusCodes.Status200OK);
 
+        
         static async Task<IResult> oidc(
             HttpRequest request
         )

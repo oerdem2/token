@@ -225,4 +225,9 @@ public class UserService : ServiceBase, IUserService
                     };
         }
     }
+
+    public Task<ServiceResponse> SaveDevice(Guid userId, Guid clientId)
+    {
+        throw new NotImplementedException();
+    }
 }

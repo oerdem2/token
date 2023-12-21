@@ -115,6 +115,13 @@ public class TokenController : Controller
         return View();
     }
 
+    [HttpGet("signalR")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> SignalR()
+    {
+        return View("SignalR");
+    }
+
    
 
     [HttpPost("public/StartWorkflow")]
@@ -231,6 +238,12 @@ public class TokenController : Controller
     [HttpPost("public/Token")]
     public async Task<IActionResult> Token([FromBody] TokenRequest tokenRequest)
     {
+        Console.WriteLine(HttpContext.Connection.RemoteIpAddress);
+        Console.WriteLine(HttpContext.Connection.LocalIpAddress);
+        foreach (var item in HttpContext.Request.Headers)
+        {
+            Console.WriteLine($"Key:{item.Key} | Value:{item.Value}");
+        }
         var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
         if (tokenRequest.GrantType == "authorization_code")
         {

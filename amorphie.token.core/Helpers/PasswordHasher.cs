@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 using amorphie.token.core.Enums;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 
@@ -211,6 +212,70 @@ namespace amorphie.token.core.Helpers
                 // we might go off the end of the array. Regardless, a malformed payload
                 // implies verification failed.
                 return false;
+            }
+        }
+
+        public  string EncryptString(string text, string keyString, bool isHexAvailable = false)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return text;
+            }
+ 
+            byte[] bytes = Encoding.UTF8.GetBytes(keyString);
+            using (Aes aes = Aes.Create())
+            {
+                using (ICryptoTransform transform = aes.CreateEncryptor(bytes, aes.IV))
+                {
+                    using (MemoryStream memoryStream = new MemoryStream())
+                    {
+                        using (CryptoStream stream = new CryptoStream(memoryStream, transform, CryptoStreamMode.Write))
+                        {
+                            using (StreamWriter streamWriter = new StreamWriter(stream))
+                            {
+                                streamWriter.Write(text);
+                            }
+                        }
+ 
+                        byte[] ıV = aes.IV;
+                        byte[] array = memoryStream.ToArray();
+                        byte[] array2 = new byte[ıV.Length + array.Length];
+                        Buffer.BlockCopy(ıV, 0, array2, 0, ıV.Length);
+                        Buffer.BlockCopy(array, 0, array2, ıV.Length, array.Length);
+                        return isHexAvailable ? BitConverter.ToString(array2).Replace("-", "") : Convert.ToBase64String(array2);
+                    }
+                }
+            }
+        }
+
+        public  string DecryptString(string cipherText, string keyString)
+        {
+            if (string.IsNullOrWhiteSpace(cipherText))
+            {
+                return cipherText;
+            }
+ 
+            byte[] array = Convert.FromBase64String(cipherText);
+            byte[] array2 = new byte[16];
+            byte[] array3 = new byte[array.Length - array2.Length];
+            Buffer.BlockCopy(array, 0, array2, 0, array2.Length);
+            Buffer.BlockCopy(array, array2.Length, array3, 0, array.Length - array2.Length);
+            byte[] bytes = Encoding.UTF8.GetBytes(keyString);
+            using (Aes aes = Aes.Create())
+            {
+                using (ICryptoTransform transform = aes.CreateDecryptor(bytes, array2))
+                {
+                    using (MemoryStream stream = new MemoryStream(array3))
+                    {
+                        using (CryptoStream stream2 = new CryptoStream(stream, transform, CryptoStreamMode.Read))
+                        {
+                            using (StreamReader streamReader = new StreamReader(stream2))
+                            {
+                                return streamReader.ReadToEnd();
+                            }
+                        }
+                    }
+                }
             }
         }
     }

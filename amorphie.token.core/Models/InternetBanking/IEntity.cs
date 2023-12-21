@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace amorphie.token.core.Models.InternetBanking
 {
-    public class IBUser:IbBaseEntity
+    public abstract class IEntity
     {
-        public string UserName { get; set; }
+        public Guid Id { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
-
 }

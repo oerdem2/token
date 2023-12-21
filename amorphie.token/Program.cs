@@ -4,6 +4,7 @@ using System.Text.Json;
 using amorphie.core.security.Extensions;
 using amorphie.token.data;
 using amorphie.token.Middlewares;
+using amorphie.token.Modules.Login;
 using amorphie.token.Modules.OpenBankingFlows;
 using amorphie.token.Modules.ZeebeJobs;
 using amorphie.token.Services.ClaimHandler;
@@ -92,6 +93,11 @@ builder.Services.AddRefitClient<IProfile>()
 .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["ProfileBaseAddress"]!))
 .ConfigurePrimaryHttpMessageHandler(() => { return new HttpClientHandler() { ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; } }; });
 
+builder.Services.AddRefitClient<ISimpleProfile>()
+.ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["SimpleProfileBaseAddress"]!))
+.ConfigurePrimaryHttpMessageHandler(() => { return new HttpClientHandler() { ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; } }; });
+
+
 builder.Services.AddRefitClient<IMessagingGateway>()
 .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["MessagingGatewayBaseAddress"]!));
 builder.Logging.ClearProviders();
@@ -101,6 +107,8 @@ var app = builder.Build();
 using var scope = app.Services.CreateScope();
 var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 db.Database.Migrate();
+
+app.MapLoginWorkflowEndpoints();
 
 app.MapCheckGrantTypesControlEndpoints();
 app.MapValidateClientControlEndpoints();

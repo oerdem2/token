@@ -86,4 +86,26 @@ public class UserServiceLocal : IUserService
             throw new ServiceException((int)Errors.InvalidUser, "User Endpoint Did Not Response Successfully");
         }
     }
+
+    public async Task<ServiceResponse> SaveDevice(Guid userId, Guid clientId)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var request = new StringContent(JsonSerializer.Serialize(new{
+            clientId = clientId,
+            userId = userId,
+            deviceId = Guid.NewGuid(),
+            installationId = Guid.NewGuid()
+        }),Encoding.UTF8,"application/json");
+        var httpResponseMessage = await httpClient.PostAsync(
+            "userDevice/save-device",request);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            return new ServiceResponse() { StatusCode = 200 };
+        }
+        else
+        {
+            throw new ServiceException((int)Errors.InvalidUser, "User Endpoint Did Not Response Successfully");
+        }
+    }
 }
