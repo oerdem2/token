@@ -37,6 +37,11 @@ namespace amorphie.token.core.Models.Profile
         public string? number { get; set; }
         public string? prefix { get; set; }
         public string? type { get; set; }
+
+        public override string ToString()
+        {
+            return $"{countryCode}{prefix}{number}";
+        }
     }
 
     public class Profile

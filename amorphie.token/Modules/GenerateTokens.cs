@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using amorphie.token.core.Helpers;
 using System.Dynamic;
 using amorphie.token.core.Extensions;
+using amorphie.token.Services.TransactionHandler;
 
 namespace amorphie.token.Modules;
 
@@ -54,7 +55,7 @@ public static class GenerateTokens
                 PropertyNameCaseInsensitive = true
             });
 
-            ServiceResponse<TokenResponse> result = await tokenService.GenerateTokenWithPasswordFromWorkflow(requestBody.MapTo<GenerateTokenRequest>(), clientInfo, userInfo);
+            ServiceResponse<TokenResponse> result = await tokenService.GenerateTokenWithPasswordFromWorkflow(requestBody.MapTo<GenerateTokenRequest>(), clientInfo, userInfo, null);
 
             if (result.StatusCode == 200)
             {

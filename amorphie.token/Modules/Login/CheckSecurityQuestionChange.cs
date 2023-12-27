@@ -53,7 +53,7 @@ namespace amorphie.token.Modules.Login
                     variables.Add("changeSecurityQuestion",false);
                 }
             }
-            
+            variables["changeSecurityQuestion"] = false;
             if(variables["changeSecurityQuestion"] == true)
             {
                 var securityQuestions = await ibContext.QuestionDefinition.Where(q => q.IsActive && q.Type == 10).Select(

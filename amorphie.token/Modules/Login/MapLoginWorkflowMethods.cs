@@ -48,6 +48,9 @@ namespace amorphie.token.Modules.Login
             app.MapPost("/amorphie-login-set-new-security-question", SetNewSecurityQuestion.setNewSecurityQuestion)
             .Produces(StatusCodes.Status200OK);
 
+            app.MapPost("/amorphie-login-check-documents", CheckDocuments.checkDocuments)
+            .Produces(StatusCodes.Status200OK);
+
             app.MapPost("/amorphie-login-generate-tokens", GenerateTokens.generateTokens)
             .Produces(StatusCodes.Status200OK);
 

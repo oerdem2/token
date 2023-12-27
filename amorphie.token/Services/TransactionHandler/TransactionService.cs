@@ -16,6 +16,9 @@ namespace amorphie.token.Services.TransactionHandler
         private Transaction? _transaction;
         public Transaction? Transaction => _transaction;
 
+        private string _ip;
+        public string IpAddress { get => _ip; set => _ip = value; }
+
         public TransactionService(ILogger<TransactionService> logger, IConfiguration configuration,
         IProfileService profileService,IInternetBankingUserService internetBankingUserService,IUserService userService,DaprClient daprClient) : base(logger, configuration)
         {

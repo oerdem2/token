@@ -16,7 +16,7 @@ public class UserServiceLocal : IUserService
     public async Task<ServiceResponse<object>> CheckDevice(Guid userId, Guid clientId)
     {
         var httpClient = _httpClientFactory.CreateClient("User");
-        var httpResponseMessage = await httpClient.GetAsync($"userDevice/search?Page=0&PageSize=50&Keyword={userId}&&{clientId}");
+        var httpResponseMessage = await httpClient.GetAsync($"userDevice/search?Page=0&PageSize=50&Keyword={userId}&&{clientId}&SortColumn=CreatedAt&SortDirection=Desc");
 
         if (httpResponseMessage.IsSuccessStatusCode)
         {

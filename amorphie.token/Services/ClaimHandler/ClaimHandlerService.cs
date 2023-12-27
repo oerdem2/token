@@ -1,5 +1,7 @@
+using System.Reflection;
 using System.Security.Claims;
 using amorphie.token.core.Models.Consent;
+using amorphie.token.core.Models.Profile;
 using amorphie.token.Services.TransactionHandler;
 
 namespace amorphie.token.Services.ClaimHandler
@@ -11,6 +13,7 @@ namespace amorphie.token.Services.ClaimHandler
 
         private  LoginResponse? _user;
         private  ConsentResponse? _consent;
+        private SimpleProfileResponse? _profile;
 
         //Using For Tag Service Query Params
         private  string? _queryStringForTag;
@@ -57,6 +60,20 @@ namespace amorphie.token.Services.ClaimHandler
 
         public async Task<Claim?> GetClaimDetail(string[] claimPath)
         {
+            var claimName = string.Empty;
+            var claimType = string.Empty;
+            if(claimPath.First().Contains("|"))
+            {
+                claimName = claimPath.First().Split("|")[0];
+                claimType = claimPath.First().Split("|")[1];
+                claimPath[0] = claimPath.First().Split("|")[1];
+            }
+            else
+            {
+                claimName = string.Join('.', claimPath);
+                claimType = claimPath.First();
+            }
+
             if (claimPath.First().Equals("tag"))
             {
                 try
@@ -70,7 +87,7 @@ namespace amorphie.token.Services.ClaimHandler
                     if (tagData == null)
                         return null;
 
-                    return new Claim(string.Join('.', claimPath), tagData[fieldName].ToString());
+                    return new Claim(claimName, tagData[fieldName].ToString());
 
                 }
                 catch (Exception ex)
@@ -92,7 +109,7 @@ namespace amorphie.token.Services.ClaimHandler
                 if(property!.GetValue(_user!) == null)
                     return null;
 
-                return new Claim(string.Join('.', claimPath), property!.GetValue(_user!)!.ToString()!);
+                return new Claim(claimName, property!.GetValue(_user!)!.ToString()!);
             }
 
             if (claimPath.First().Equals("openbanking"))
@@ -108,15 +125,52 @@ namespace amorphie.token.Services.ClaimHandler
                 if (property.GetValue(_consent) == null)
                     return null;
 
-                return new Claim(string.Join('.', claimPath), property!.GetValue(_consent)!.ToString()!);
+                return new Claim(claimName, property!.GetValue(_consent)!.ToString()!);
             }
             
+            if(claimPath.First().Equals("profile"))
+            {
+                if(_profile == null)
+                    return null;
+
+                Type t = _profile!.GetType();
+                
+                var propValue = GetPropertyValue(_profile,string.Join('.',claimPath.ToList().Skip(1)));
+
+                if(propValue != null)
+                    return new Claim(claimName, propValue);
+                else
+                    return null;
+            
+            }
 
             return null;
         }
 
-        public async Task<List<Claim>> PopulateClaims(List<string> clientClaims,LoginResponse? user)
+        private string? GetPropertyValue(object src, string propName)
         {
+            if (src == null) throw new ArgumentException("Value cannot be null.", "src");
+            if (propName == null) throw new ArgumentException("Value cannot be null.", "propName");
+
+            if(propName.Contains("."))
+            {
+                var temp = propName.Split(new char[] { '.' }, 2);
+                var property = src.GetType().GetProperties().FirstOrDefault(p => p.Name.ToLower() == temp[0].ToLower());
+                if (property == null)
+                    return null;
+                src = property.GetValue(src);
+                return GetPropertyValue(src, temp[1]);
+            }
+            else
+            {
+                var property = src.GetType().GetProperties().FirstOrDefault(p => p.Name.ToLower() == propName.ToLower());
+                
+                return property != null ? property.GetValue(src, null).ToString() : null;
+            }
+        }
+        public async Task<List<Claim>> PopulateClaims(List<string> clientClaims,LoginResponse? user,SimpleProfileResponse? profile = null)
+        {
+            _profile = profile;
             if(user == null)
             {
                 SetUser();
@@ -166,6 +220,7 @@ namespace amorphie.token.Services.ClaimHandler
                         claims.Add(claimValue);
                     }
                 }
+
             }
 
             return claims;

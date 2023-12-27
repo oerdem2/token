@@ -8,6 +8,7 @@ namespace amorphie.token.Services.TransactionHandler
 {
     public interface ITransactionService
     {
+        public string IpAddress{get;set;}
         public core.Models.Transaction.Transaction? Transaction{get;}
         public Task<ServiceResponse> CheckLogin(string username,string password);
         public Task<ServiceResponse> CheckLoginFromWorkflow(string username,string password);

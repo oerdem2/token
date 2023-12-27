@@ -21,7 +21,7 @@ namespace amorphie.token.Modules.Login
             var ibUserSerialized = body.GetProperty("ibUserSerialized").ToString();
             IBUser ibUser = JsonSerializer.Deserialize<IBUser>(ibUserSerialized);
 
-            var securityQuestionId = body.GetProperty("TRXamorphiemobileloginsetnewsecurityquestion").GetProperty("Data").GetProperty("entityData").GetProperty("securityQuestionId").ToString();
+            var securityQuestionId = body.GetProperty("TRXamorphiemobileloginsetnewsecurityquestion").GetProperty("Data").GetProperty("entityData").GetProperty("questionId").ToString();
             var answer = body.GetProperty("TRXamorphiemobileloginsetnewsecurityquestion").GetProperty("Data").GetProperty("entityData").GetProperty("answer").ToString();
             var instanceId = body.GetProperty("InstanceId").ToString();
 

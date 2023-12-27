@@ -1,13 +1,13 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: amorphie-login-check-document
+  name: amorphie-login-check-documents
 spec:
   type: bindings.zeebe.jobworker
   version: v1
   metadata:
   - name: jobType
-    value: amorphie-login-check-document
+    value: amorphie-login-check-documents
   - name: gatewayAddr
     value: localhost:26500
   - name: gatewayKeepAlive

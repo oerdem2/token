@@ -5,7 +5,9 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using amorphie.token.core.Extensions;
+using amorphie.token.core.Models.Profile;
 using amorphie.token.data;
+using amorphie.token.Services.TransactionHandler;
 using Microsoft.AspNetCore.Mvc;
 
 namespace amorphie.token.Modules.Login
@@ -14,7 +16,8 @@ namespace amorphie.token.Modules.Login
     {
         public static async Task<IResult> generateTokens(
         [FromBody] dynamic body,
-        [FromServices] ITokenService tokenService
+        [FromServices] ITokenService tokenService,
+        [FromServices] ITransactionService transactionService
         )
         {
             Console.WriteLine("GenerateTokens called");
@@ -49,7 +52,18 @@ namespace amorphie.token.Modules.Login
                 PropertyNameCaseInsensitive = true
             });
 
-            ServiceResponse<TokenResponse> result = await tokenService.GenerateTokenWithPasswordFromWorkflow(requestBody.MapTo<GenerateTokenRequest>(), clientInfo, userInfo);
+            var profileSerialized = body.GetProperty("userInfoSerialized").ToString();
+
+            SimpleProfileResponse profile = JsonSerializer.Deserialize<SimpleProfileResponse>(profileSerialized, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            string xforwardedfor = body.GetProperty("Headers").GetProperty("xforwardedfor").ToString();
+            var ipAddress = xforwardedfor.Split(",")[0].Trim();
+
+            transactionService.IpAddress = ipAddress;
+            ServiceResponse<TokenResponse> result = await tokenService.GenerateTokenWithPasswordFromWorkflow(requestBody.MapTo<GenerateTokenRequest>(), clientInfo, userInfo,profile);
 
             if (result.StatusCode == 200)
             {
