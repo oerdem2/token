@@ -241,7 +241,7 @@ public class TokenController : Controller
     [HttpPost("public/Token")]
     public async Task<IActionResult> Token([FromBody] TokenRequest tokenRequest)
     {
-        string? xforwardedfor = HttpContext.Request.Headers.ContainsKey("X-Forwarded-For") ? HttpContext.Request.Headers.FirstOrDefault(h => h.Key.ToLower().Equals("x-forwarded-for")).ToString() : null;
+        string? xforwardedfor = HttpContext.Request.Headers.ContainsKey("X-Forwarded-For") ? HttpContext.Request.Headers.FirstOrDefault(h => h.Key.ToLower().Equals("x-forwarded-for")).Value.ToString() : null;
         var ipAddress = xforwardedfor?.Split(",")[0].Trim() ?? "undefined";
         _transactionService.IpAddress = ipAddress;
         foreach (var item in HttpContext.Request.Headers)
