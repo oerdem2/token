@@ -556,7 +556,6 @@ public class TokenService : ServiceBase,ITokenService
         }
 
         _user = userAmorphieResponse.Response;
-        await _transactionService.SaveUser(_user!);
 
         if (_user?.State.ToLower() != "active" && _user?.State.ToLower() != "new")
         {

@@ -183,7 +183,6 @@ namespace amorphie.token.Services.ClaimHandler
                 _queryStringForTag += "&mail=" + _user!.EMail;
                 _queryStringForTag += "&phone=" + _user!.MobilePhone!.ToString();
             }
-            SetConsent();
             
             List<Claim> claims = new List<Claim>();
             
