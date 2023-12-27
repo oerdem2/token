@@ -50,9 +50,7 @@ public class TokenController : Controller
         _consentService = consentService;
         _profileService = profileService;
         
-        string? xforwardedfor = HttpContext.Request.Headers.ContainsKey("X-Forwarded-For") ? HttpContext.Request.Headers.FirstOrDefault(h => h.Key.ToLower().Equals("x-forwarded-for")).ToString() : null;
-        var ipAddress = xforwardedfor?.Split(",")[0].Trim() ?? "undefined";
-        _transactionService.IpAddress = ipAddress;
+        
     }
 
     [HttpGet("private/signalr")]
@@ -243,8 +241,9 @@ public class TokenController : Controller
     [HttpPost("public/Token")]
     public async Task<IActionResult> Token([FromBody] TokenRequest tokenRequest)
     {
-        Console.WriteLine(HttpContext.Connection.RemoteIpAddress);
-        Console.WriteLine(HttpContext.Connection.LocalIpAddress);
+        string? xforwardedfor = HttpContext.Request.Headers.ContainsKey("X-Forwarded-For") ? HttpContext.Request.Headers.FirstOrDefault(h => h.Key.ToLower().Equals("x-forwarded-for")).ToString() : null;
+        var ipAddress = xforwardedfor?.Split(",")[0].Trim() ?? "undefined";
+        _transactionService.IpAddress = ipAddress;
         foreach (var item in HttpContext.Request.Headers)
         {
             Console.WriteLine($"Key:{item.Key} | Value:{item.Value}");
