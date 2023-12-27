@@ -450,22 +450,22 @@ public class TokenService : ServiceBase,ITokenService
         var userResponse = await _internetBankingUserService.GetUser(_tokenRequest.Username!);
         if(userResponse.StatusCode != 200)
         {
-            dynamic variables = new ExpandoObject();
-            variables.status = false;
-            variables.message = "User Not Found";
-            variables.LastTransition = "amorphie-login-error";
-            return Results.Ok(variables);
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 404,
+                Detail = "User Not Found"
+            };
         }
         var user = userResponse.Response;
 
         var passwordResponse = await _internetBankingUserService.GetPassword(user!.Id);
         if(userResponse.StatusCode != 200)
         {
-            dynamic variables = new ExpandoObject();
-            variables.status = false;
-            variables.message = "Username or password doesn't match";
-            variables.LastTransition = "amorphie-login-error";
-            return Results.Ok(variables);
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 404,
+                Detail = "User Not Found"
+            };
         }
         var passwordRecord = passwordResponse.Response;
 
@@ -473,51 +473,52 @@ public class TokenService : ServiceBase,ITokenService
         //Consider SuccessRehashNeeded
         if(isVerified != PasswordVerificationResult.Success)
         {
-            dynamic variables = new ExpandoObject();
-            variables.status = false;
-            variables.message = "Username or password doesn't match";
-            variables.isPasswordLimitExceed = false;
-            return Results.Ok(variables);
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "Password Doesn't Match"
+            };
         }
 
         var userInfoResult = await _profileService.GetCustomerSimpleProfile(_tokenRequest.Username!);
         if(userInfoResult.StatusCode != 200)
         {
-            dynamic variables = new ExpandoObject();
-            variables.status = false;
-            variables.message = "UserInfo Not Found";
-            return Results.Ok(variables);
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "User Profile Couldn't Be Fetched"
+            };
         }
 
         var userInfo = userInfoResult.Response;
         _profile = userInfo;
         if(userInfo!.data!.profile!.Equals("customer") || !userInfo!.data!.profile!.status!.Equals("active"))
         {
-            dynamic variables = new ExpandoObject();
-            variables.status = false;
-            variables.message = "User is Not Customer Or Not Active";
-            variables.LastTransition = "amorphie-login-error";
-            return Results.Ok(variables);
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "User is Not Customer Or Not Active"
+            };
         }
 
         var mobilePhoneCount = userInfo!.data!.phones!.Count(p => p.type!.Equals("mobile"));
         if(mobilePhoneCount != 1)
         {
-            dynamic variables = new ExpandoObject();
-            variables.status = false;
-            variables.message = "Bad Phone Data";
-            variables.LastTransition = "amorphie-login-error";
-            return Results.Ok(variables);
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "Bad Phone Data"
+            };
         }
 
         var mobilePhone = userInfo!.data!.phones!.FirstOrDefault(p => p.type!.Equals("mobile"));
         if(string.IsNullOrWhiteSpace(mobilePhone!.prefix) || string.IsNullOrWhiteSpace(mobilePhone!.number))
         {
-            dynamic variables = new ExpandoObject();
-            variables.status = false;
-            variables.message = "Bad Phone Format";
-            variables.LastTransition = "amorphie-login-error";
-            return Results.Ok(variables);
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "Bad Phone Format"
+            };
         }
 
         var userRequest = new UserInfo
