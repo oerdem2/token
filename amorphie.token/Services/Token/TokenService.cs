@@ -31,11 +31,11 @@ public class TokenService : ServiceBase,ITokenService
     private ClientResponse? _client;
     private LoginResponse? _user;
     private SimpleProfileResponse? _profile;
-    private InternetBankingUserService? _internetBankingUserService;
-    private ProfileService? _profileService;
+    private IInternetBankingUserService? _internetBankingUserService;
+    private IProfileService? _profileService;
     public TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService,IClaimHandlerService claimService,
     ITransactionService transactionService, IUserService userService ,DaprClient daprClient, DatabaseContext databaseContext
-    ,InternetBankingUserService internetBankingUserService,ProfileService profileService):base(logger,configuration)
+    ,IInternetBankingUserService internetBankingUserService,IProfileService profileService):base(logger,configuration)
     {
         _clientService = clientService;
         _userService = userService;
