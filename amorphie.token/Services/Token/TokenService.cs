@@ -1,5 +1,6 @@
 
 
+using System.Dynamic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -8,6 +9,8 @@ using amorphie.token.core.Models.Profile;
 using amorphie.token.data;
 using amorphie.token.Services.ClaimHandler;
 using amorphie.token.Services.Consent;
+using amorphie.token.Services.InternetBanking;
+using amorphie.token.Services.Profile;
 using amorphie.token.Services.TransactionHandler;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.IdentityModel.Tokens;
@@ -28,8 +31,11 @@ public class TokenService : ServiceBase,ITokenService
     private ClientResponse? _client;
     private LoginResponse? _user;
     private SimpleProfileResponse? _profile;
+    private InternetBankingUserService? _internetBankingUserService;
+    private ProfileService? _profileService;
     public TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService,IClaimHandlerService claimService,
-    ITransactionService transactionService, IUserService userService ,DaprClient daprClient, DatabaseContext databaseContext):base(logger,configuration)
+    ITransactionService transactionService, IUserService userService ,DaprClient daprClient, DatabaseContext databaseContext
+    ,InternetBankingUserService internetBankingUserService,ProfileService profileService):base(logger,configuration)
     {
         _clientService = clientService;
         _userService = userService;
@@ -37,7 +43,8 @@ public class TokenService : ServiceBase,ITokenService
         _databaseContext = databaseContext;
         _transactionService = transactionService;
         _claimService = claimService;
-
+        _internetBankingUserService = internetBankingUserService;
+        _profileService = profileService;
         _tokenInfoDetail = new();
     }
 
@@ -439,10 +446,106 @@ public class TokenService : ServiceBase,ITokenService
                 Detail = "Client is Not Authorized For Requested Scopes"
             };
         }
+        
+        var userResponse = await _internetBankingUserService.GetUser(_tokenRequest.Username!);
+        if(userResponse.StatusCode != 200)
+        {
+            dynamic variables = new ExpandoObject();
+            variables.status = false;
+            variables.message = "User Not Found";
+            variables.LastTransition = "amorphie-login-error";
+            return Results.Ok(variables);
+        }
+        var user = userResponse.Response;
 
-        var userResponse = await _userService.Login(new LoginRequest() { Reference = tokenRequest.Username!, Password = tokenRequest.Password! });
+        var passwordResponse = await _internetBankingUserService.GetPassword(user!.Id);
+        if(userResponse.StatusCode != 200)
+        {
+            dynamic variables = new ExpandoObject();
+            variables.status = false;
+            variables.message = "Username or password doesn't match";
+            variables.LastTransition = "amorphie-login-error";
+            return Results.Ok(variables);
+        }
+        var passwordRecord = passwordResponse.Response;
 
-        if (userResponse.StatusCode != 200)
+        var isVerified = _internetBankingUserService.VerifyPassword(passwordRecord!.HashedPassword!,_tokenRequest.Password!,passwordRecord.Id.ToString());
+        //Consider SuccessRehashNeeded
+        if(isVerified != PasswordVerificationResult.Success)
+        {
+            dynamic variables = new ExpandoObject();
+            variables.status = false;
+            variables.message = "Username or password doesn't match";
+            variables.isPasswordLimitExceed = false;
+            return Results.Ok(variables);
+        }
+
+        var userInfoResult = await _profileService.GetCustomerSimpleProfile(_tokenRequest.Username!);
+        if(userInfoResult.StatusCode != 200)
+        {
+            dynamic variables = new ExpandoObject();
+            variables.status = false;
+            variables.message = "UserInfo Not Found";
+            return Results.Ok(variables);
+        }
+
+        var userInfo = userInfoResult.Response;
+        _profile = userInfo;
+        if(userInfo!.data!.profile!.Equals("customer") || !userInfo!.data!.profile!.status!.Equals("active"))
+        {
+            dynamic variables = new ExpandoObject();
+            variables.status = false;
+            variables.message = "User is Not Customer Or Not Active";
+            variables.LastTransition = "amorphie-login-error";
+            return Results.Ok(variables);
+        }
+
+        var mobilePhoneCount = userInfo!.data!.phones!.Count(p => p.type!.Equals("mobile"));
+        if(mobilePhoneCount != 1)
+        {
+            dynamic variables = new ExpandoObject();
+            variables.status = false;
+            variables.message = "Bad Phone Data";
+            variables.LastTransition = "amorphie-login-error";
+            return Results.Ok(variables);
+        }
+
+        var mobilePhone = userInfo!.data!.phones!.FirstOrDefault(p => p.type!.Equals("mobile"));
+        if(string.IsNullOrWhiteSpace(mobilePhone!.prefix) || string.IsNullOrWhiteSpace(mobilePhone!.number))
+        {
+            dynamic variables = new ExpandoObject();
+            variables.status = false;
+            variables.message = "Bad Phone Format";
+            variables.LastTransition = "amorphie-login-error";
+            return Results.Ok(variables);
+        }
+
+        var userRequest = new UserInfo
+        {
+            firstName = userInfo!.data.profile!.name!,
+            lastName = userInfo!.data.profile!.name!,
+            phone = new core.Models.User.UserPhone()
+            {
+                countryCode = mobilePhone!.countryCode!,
+                prefix = mobilePhone!.prefix,
+                number = mobilePhone!.number
+            },
+            state = "Active",
+            salt = passwordRecord.Id.ToString(),
+            password = _tokenRequest.Password!,
+            explanation = "Migrated From IB",
+            reason = "Amorphie Login",
+            isArgonHash = true
+        };
+        var verifiedMailAddress = userInfo.data.emails!.FirstOrDefault(m => m.isVerified == true);
+        userRequest.eMail = verifiedMailAddress?.address ?? "";
+        userRequest.reference = _tokenRequest.Username!;
+
+        var migrateResult = await _userService.SaveUser(userRequest);
+
+        var userAmorphieResponse = await _userService.Login(new LoginRequest() { Reference = tokenRequest.Username!, Password = tokenRequest.Password! });
+
+        if (userAmorphieResponse.StatusCode != 200)
         {
             return new ServiceResponse<TokenResponse>()
             {
@@ -451,7 +554,7 @@ public class TokenService : ServiceBase,ITokenService
             };
         }
 
-        _user = userResponse.Response;
+        _user = userAmorphieResponse.Response;
         await _transactionService.SaveUser(_user!);
 
         if (_user?.State.ToLower() != "active" && _user?.State.ToLower() != "new")
