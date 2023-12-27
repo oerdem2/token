@@ -15,6 +15,7 @@ using amorphie.token.Services.TransactionHandler;
 using amorphie.token.core.Extensions;
 using System.Dynamic;
 using System.Security.Claims;
+using Google.Api;
 
 namespace amorphie.token.core.Controllers;
 
@@ -48,6 +49,10 @@ public class TokenController : Controller
         _daprClient = daprClient;
         _consentService = consentService;
         _profileService = profileService;
+        
+        string? xforwardedfor = HttpContext.Request.Headers.ContainsKey("X-Forwarded-For") ? HttpContext.Request.Headers.FirstOrDefault(h => h.Key.ToLower().Equals("x-forwarded-for")).ToString() : null;
+        var ipAddress = xforwardedfor?.Split(",")[0].Trim() ?? "undefined";
+        _transactionService.IpAddress = ipAddress;
     }
 
     [HttpGet("private/signalr")]
