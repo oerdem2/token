@@ -99,7 +99,7 @@ public class TokenController : Controller
             await _databaseContext.Tokens.Where(t => t.Reference == reference).ExecuteUpdateAsync(s => s.SetProperty(t => t.IsActive, false));
 
 
-            return NoContent();
+            return Ok();
         }
         catch (Exception ex)
         {
