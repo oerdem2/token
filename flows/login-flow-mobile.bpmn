@@ -408,7 +408,7 @@
     <bpmn:intermediateCatchEvent id="Event_18zacfb">
       <bpmn:incoming>Flow_05bgqt8</bpmn:incoming>
       <bpmn:outgoing>Flow_1b1xalf</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_0iq3hw6" messageRef="Message_2agrb2k" />
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0iq3hw6" messageRef="Message_0llp59a" />
     </bpmn:intermediateCatchEvent>
     <bpmn:serviceTask id="Activity_0nkat8x" name="SetNewSecurityQuestion">
       <bpmn:extensionElements>
@@ -651,6 +651,11 @@
   <bpmn:message id="Message_1mm49fl" name="amorphie-login-send-password">
     <bpmn:extensionElements>
       <zeebe:subscription correlationKey="=InstanceID" />
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmn:message id="Message_0llp59a" name="amorphie-login-set-new-security-question">
+    <bpmn:extensionElements>
+      <zeebe:subscription correlationKey="=InstanceId" />
     </bpmn:extensionElements>
   </bpmn:message>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">

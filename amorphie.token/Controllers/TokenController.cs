@@ -84,6 +84,31 @@ public class TokenController : Controller
         return StatusCode(500);
     }
 
+    [HttpPut("private/Revoke/{clientId}/{reference}")]
+    public async Task<IActionResult> RevokeByClient(string clientId,string reference)
+    {
+        try
+        {
+            var tokenBelongsTouser = _databaseContext.Tokens.Where(t => t.Reference == reference && t.ClientId == clientId);
+
+            foreach (var token in tokenBelongsTouser)
+            {
+                await _daprClient.DeleteStateAsync(_configuration["DAPR_STATE_STORE_NAME"], token.Id.ToString());
+            }
+
+            await _databaseContext.Tokens.Where(t => t.Reference == reference).ExecuteUpdateAsync(s => s.SetProperty(t => t.IsActive, false));
+
+
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Revoke Tokens Failed. Detail:" + ex.ToString());
+        }
+
+        return StatusCode(500);
+    }
+
     [HttpPut("private/Revoke/ConsentId/{consentId}")]
     public async Task<IActionResult> Revoke(Guid consentId)
     {
@@ -196,8 +221,14 @@ public class TokenController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("private/Introspect")]
     [Consumes("application/x-www-form-urlencoded")]
-    public async Task<IResult> Introspect([FromForm] string token)
+    public async Task<IResult> Introspect([FromForm] string token,[FromForm] string authorization_params)
     {
+        Console.WriteLine("Authorization params:"+authorization_params);
+        foreach(var h in HttpContext.Request.Headers)
+        {
+            Console.WriteLine($"Header Key:{h.Key}  Header Value:{h.Value}");
+        }
+
         var jti = JwtHelper.GetClaim(token, "jti");
 
         if (jti == null)

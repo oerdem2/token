@@ -58,7 +58,7 @@ namespace amorphie.token.Modules.Login
                 targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
                 targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
                 variables.Add($"TRX{transitionName.ToString().Replace("-","")}", targetObject);
-                variables.Add("documentsToApprove",false);
+                variables.Add("documentsToApprove",true);
             }
             else
             {
