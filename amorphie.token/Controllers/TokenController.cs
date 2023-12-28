@@ -229,7 +229,7 @@ public class TokenController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("private/Introspect")]
     [Consumes("application/x-www-form-urlencoded")]
-    public async Task<IResult> Introspect([FromForm] string token,[FromQuery] bool isTemporary)
+    public async Task<IResult> Introspect([FromForm] string token,[FromQuery] bool? isTemporary)
     {
         foreach(var q in HttpContext.Request.Query)
         {
