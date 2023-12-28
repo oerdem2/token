@@ -231,7 +231,11 @@ public class TokenController : Controller
     [Consumes("application/x-www-form-urlencoded")]
     public async Task<IResult> Introspect([FromForm] string token,[FromForm] string authorization_params)
     {
-        Console.WriteLine("Authorization params:"+authorization_params);
+        Console.WriteLine("Http Request:"+HttpContext.Request.QueryString.ToString());
+        foreach(var f in HttpContext.Request.Form)
+        {
+            Console.WriteLine($"Header Key:{f.Key}  Header Value:{f.Value}");
+        }
         foreach(var h in HttpContext.Request.Headers)
         {
             Console.WriteLine($"Header Key:{h.Key}  Header Value:{h.Value}");
