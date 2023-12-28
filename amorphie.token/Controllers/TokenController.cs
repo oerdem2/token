@@ -229,7 +229,7 @@ public class TokenController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("private/Introspect")]
     [Consumes("application/x-www-form-urlencoded")]
-    public async Task<IResult> Introspect([FromForm] string token,[FromQuery] bool? isTemporary)
+    public async Task<IResult> Introspect([FromForm] string token,[FromQuery] bool isTemporary = false)
     {
         foreach(var q in HttpContext.Request.Query)
         {
@@ -242,6 +242,16 @@ public class TokenController : Controller
         foreach(var h in HttpContext.Request.Headers)
         {
             Console.WriteLine($"Header Key:{h.Key}  Header Value:{h.Value}");
+        }
+
+        var temporary = JwtHelper.GetClaim(token, "isTemporary");
+        if(temporary != null && temporary.Equals("1"))
+        {
+            if(!isTemporary)
+            {
+                return Results.Json(new { active = false });
+            }
+            return Results.Json(new { active = true });
         }
 
         var jti = JwtHelper.GetClaim(token, "jti");

@@ -106,6 +106,8 @@ public class TokenService : ServiceBase,ITokenService
                 claims.Add(new Claim("logon_ip",_transactionService.IpAddress));
             }   
             claims.AddRange(populatedClaims);
+            if(_tokenRequest.Scopes.Contains("temporary"))
+                claims.Add(new Claim("isTemporary","1"));
         }
 
         int idDuration = 0;
