@@ -16,6 +16,7 @@ using amorphie.token.core.Extensions;
 using System.Dynamic;
 using System.Security.Claims;
 using Google.Api;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 
 namespace amorphie.token.core.Controllers;
 
@@ -245,14 +246,15 @@ public class TokenController : Controller
         }
 
         var temporary = JwtHelper.GetClaim(token, "isTemporary");
+        
         if(temporary != null && temporary.Equals("1"))
         {
             if(!isTemporary)
             {
                 return Results.Json(new { active = false });
             }
-            return Results.Json(new { active = true });
         }
+       
 
         var jti = JwtHelper.GetClaim(token, "jti");
 
