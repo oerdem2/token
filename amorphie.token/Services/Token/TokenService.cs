@@ -106,8 +106,7 @@ public class TokenService : ServiceBase,ITokenService
                 claims.Add(new Claim("logon_ip",_transactionService.IpAddress));
             }   
             claims.AddRange(populatedClaims);
-            if(_tokenRequest.Scopes.Contains("temporary"))
-                claims.Add(new Claim("isTemporary","1"));
+            
         }
 
         int idDuration = 0;
@@ -163,6 +162,8 @@ public class TokenService : ServiceBase,ITokenService
             {
                 var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims,_user);
                 tokenClaims.AddRange(populatedClaims);
+                if(_tokenRequest.Scopes.Contains("temporary"))
+                tokenClaims.Add(new Claim("isTemporary","1"));
             }   
         }
         tokenClaims.Add(new Claim("jti", _tokenInfoDetail.AccessTokenId.ToString()));
