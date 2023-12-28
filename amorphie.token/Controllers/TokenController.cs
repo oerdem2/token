@@ -59,7 +59,14 @@ public class TokenController : Controller
         await Task.CompletedTask;
         return View("SignalR");
     }
-    
+
+    [HttpGet("public/secured")]
+    public async Task<IActionResult> secured()
+    {
+        await Task.CompletedTask;
+        return Ok("secured");
+    }
+
     [HttpPut("private/Revoke/{reference}")]
     public async Task<IActionResult> Revoke(string reference)
     {
