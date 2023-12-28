@@ -59,6 +59,7 @@ public class TokenController : Controller
         await Task.CompletedTask;
         return View("SignalR");
     }
+    
     [HttpPut("private/Revoke/{reference}")]
     public async Task<IActionResult> Revoke(string reference)
     {
