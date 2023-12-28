@@ -84,7 +84,7 @@ public class TokenController : Controller
         return StatusCode(500);
     }
 
-    [HttpPut("private/Revoke/{clientId}/{reference}")]
+    [HttpPut("public/Revoke/{clientId}/{reference}")]
     public async Task<IActionResult> RevokeByClient(string clientId,string reference)
     {
         try
