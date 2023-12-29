@@ -285,6 +285,10 @@ public class TokenController : Controller
             return Results.Json(new { active = false });
         }
         
+        foreach(var c in validatedToken!.Claims)
+        {
+            Console.WriteLine($"C Key : {c.Type} C Value:{c.Value}");
+        }
         Dictionary<string,object> claimValues = new();
         foreach(Claim claim in validatedToken!.Claims)
         {
