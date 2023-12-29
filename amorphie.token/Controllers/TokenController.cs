@@ -293,7 +293,7 @@ public class TokenController : Controller
         foreach(Claim claim in validatedToken!.Claims)
         {
             if(!claimValues.ContainsKey(claim.Type.Replace(".","_")))
-            claimValues.Add(claim.Type.Replace(".","_"),claim.Value);
+                claimValues.Add(claim.Type.Replace(".","_"),claim.Value);
         }
         claimValues.Add("clientId",client.id!);
         claimValues.Add("active",true);
