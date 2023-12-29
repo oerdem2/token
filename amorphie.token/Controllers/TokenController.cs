@@ -292,6 +292,7 @@ public class TokenController : Controller
         Dictionary<string,object> claimValues = new();
         foreach(Claim claim in validatedToken!.Claims)
         {
+            if(!claimValues.ContainsKey(claim.Type.Replace(".","_")))
             claimValues.Add(claim.Type.Replace(".","_"),claim.Value);
         }
         claimValues.Add("clientId",client.id!);
