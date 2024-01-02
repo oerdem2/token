@@ -53,7 +53,7 @@ namespace amorphie.token.Modules.Login
 
             app.MapPost("/amorphie-login-generate-tokens", GenerateTokens.generateTokens)
             .Produces(StatusCodes.Status200OK);
-
+    
             app.MapPost("/post-transition/{recordId}/{transition}",postTransition);
 
             static async Task<IResult> postTransition(Guid recordId,string transition,

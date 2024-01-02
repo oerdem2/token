@@ -12,6 +12,7 @@ using amorphie.token.Services.Consent;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.TransactionHandler;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.IdentityModel.Tokens;
 
@@ -97,13 +98,13 @@ public class TokenService : ServiceBase,ITokenService
             if(_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
             {
                 claims.Add(new Claim("client_id","3fa85f64-5717-4562-b3fc-2c963f66afa6"));
-                claims.Add(new Claim("email",_profile.data.emails.FirstOrDefault(m => m.type.Equals("personal")).address));
-                claims.Add(new Claim("phone_number",_profile.data.phones.FirstOrDefault(p => p.type.Equals("mobile")).ToString()));
+                claims.Add(new Claim("email",_profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address));
+                claims.Add(new Claim("phone_number",_profile.data.phones.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString()));
                 claims.Add(new Claim("role","FullAuthorized"));
                 claims.Add(new Claim("credentials","IsInternetCustomer###1"));
                 claims.Add(new Claim("credentials","IsAnonymous###1"));
                 claims.Add(new Claim("azp","3fa85f64-5717-4562-b3fc-2c963f66afa6"));
-                claims.Add(new Claim("logon_ip",_transactionService.IpAddress));
+                claims.Add(new Claim("logon_ip",_transactionService.IpAddress ?? "undefined"));
             }   
             claims.AddRange(populatedClaims);
             
@@ -163,11 +164,23 @@ public class TokenService : ServiceBase,ITokenService
                 var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims,_user);
                 tokenClaims.AddRange(populatedClaims);
                 if(_tokenRequest.Scopes.Contains("temporary"))
-                tokenClaims.Add(new Claim("isTemporary","1"));
-            }   
+                    tokenClaims.Add(new Claim("isTemporary","1"));
+            } 
+            if(_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
+            {
+                tokenClaims.Add(new Claim("client_id","3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                tokenClaims.Add(new Claim("email",_profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address));
+                tokenClaims.Add(new Claim("phone_number",_profile.data.phones.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString()));
+                tokenClaims.Add(new Claim("role","FullAuthorized"));
+                tokenClaims.Add(new Claim("credentials","IsInternetCustomer###1"));
+                tokenClaims.Add(new Claim("credentials","IsAnonymous###1"));
+                tokenClaims.Add(new Claim("azp","3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                tokenClaims.Add(new Claim("logon_ip",_transactionService.IpAddress ?? "undefined"));
+            }     
         }
         tokenClaims.Add(new Claim("jti", _tokenInfoDetail.AccessTokenId.ToString()));
         tokenClaims.Add(new Claim("userId", _user!.Id.ToString()));
+        tokenClaims.Add(new Claim("iat",DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()));
 
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_client.jwtSalt!));
         var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha384);

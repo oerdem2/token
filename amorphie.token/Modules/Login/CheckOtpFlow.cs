@@ -46,13 +46,15 @@ public static class CheckOtpFlow
                 PropertyNameCaseInsensitive = true
             });
 
-            await userService.SaveDevice(userInfo.Id,Guid.Parse(clientInfo.id));
+            //await userService.SaveDevice(userInfo.Id,Guid.Parse(clientInfo.id));
             return Results.Ok(variables);
         }
         else
         {
+            var otpTryCount = Convert.ToInt32(body.GetProperty("OtpTryCount").ToString());
             dynamic variables = new ExpandoObject();
             variables.otpMatch = false;
+            variables.OtpTryCount = otpTryCount++;
             variables.message = "Otp Check Failed";
             variables.LastTransition = "token-error";
             Console.WriteLine("CheckOtp Error " + JsonSerializer.Serialize(variables));

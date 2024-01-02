@@ -12,9 +12,15 @@ namespace amorphie.token.Modules.Login
     {
         public static async Task<IResult> checkMobileClient(
         [FromBody] dynamic body,
-        [FromServices] IClientService clientService
+        [FromServices] IClientService clientService,
+        HttpContext context
         )
         {
+            foreach(var h in context.Request.Headers)
+            {
+                Console.WriteLine($"{h.Key} : {h.Value}");
+            }
+            
             var requestBodySerialized = body.GetProperty($"TRXamorphiemobilelogin").GetProperty("Data").GetProperty("entityData").ToString();
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
 

@@ -17,7 +17,6 @@ public class JwtHelper
         var token = new JwtSecurityToken(issuer, audience, claims,
             expires: expires, signingCredentials: signingCredentials);
 
-
         string jwt = handler.WriteToken(token);
         return jwt;
     }

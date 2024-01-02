@@ -72,6 +72,7 @@ public static class LoginOtpFlow
                 Console.WriteLine("LoginOtpFlow Success");
                 dynamic variables = new ExpandoObject();
                 variables.status = true;
+                variables.OtpTryCount = 0;
                 return Results.Ok(variables);
             }
             else

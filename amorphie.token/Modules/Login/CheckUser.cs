@@ -4,9 +4,11 @@ using System.Dynamic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using amorphie.token.data;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace amorphie.token.Modules.Login
 {
@@ -16,7 +18,8 @@ namespace amorphie.token.Modules.Login
         [FromBody] dynamic body,
         [FromServices] IInternetBankingUserService internetBankingUserService,
         [FromServices] IProfileService profileService,
-        [FromServices] IUserService userService
+        [FromServices] IUserService userService,
+        [FromServices] IbDatabaseContext ibContext
         )
         {
             await Task.CompletedTask;
@@ -34,7 +37,7 @@ namespace amorphie.token.Modules.Login
             }
             var user = userResponse.Response;
 
-            var passwordResponse = await internetBankingUserService.GetPassword(user!.Id);
+            
             if(userResponse.StatusCode != 200)
             {
                 dynamic variables = new ExpandoObject();
@@ -43,8 +46,9 @@ namespace amorphie.token.Modules.Login
                 variables.LastTransition = "amorphie-login-error";
                 return Results.Ok(variables);
             }
+            var passwordResponse = await internetBankingUserService.GetPassword(user!.Id);
             var passwordRecord = passwordResponse.Response;
-
+            
             var isVerified = internetBankingUserService.VerifyPassword(passwordRecord!.HashedPassword!,request.Password!,passwordRecord.Id.ToString());
             //Consider SuccessRehashNeeded
             if(isVerified != PasswordVerificationResult.Success)
@@ -52,10 +56,15 @@ namespace amorphie.token.Modules.Login
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = "Username or password doesn't match";
-                variables.isPasswordLimitExceed = false;
+
+                await ibContext.Password.Where(p => p.Id == passwordRecord.Id).ExecuteUpdateAsync(setters => setters.SetProperty(p => p.AccessFailedCount,p => p.AccessFailedCount + 1));
+
                 return Results.Ok(variables);
             }
-
+            else
+            {
+                await ibContext.Password.Where(p => p.Id == passwordRecord.Id).ExecuteUpdateAsync(setters => setters.SetProperty(p => p.AccessFailedCount,0));
+            }
             var userInfoResult = await profileService.GetCustomerSimpleProfile(request.Username!);
             if(userInfoResult.StatusCode != 200)
             {

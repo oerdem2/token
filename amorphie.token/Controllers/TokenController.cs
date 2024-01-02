@@ -293,7 +293,12 @@ public class TokenController : Controller
         foreach(Claim claim in validatedToken!.Claims)
         {
             if(!claimValues.ContainsKey(claim.Type.Replace(".","_")))
-                claimValues.Add(claim.Type.Replace(".","_"),claim.Value);
+            {
+                if(!claim.Type.Equals("exp") && !claim.Type.Equals("nbf") && !claim.Type.Equals("iat"))
+                    claimValues.Add(claim.Type.Replace(".","_"),claim.Value);
+                else
+                    claimValues.Add(claim.Type.Replace(".","_"),long.Parse(claim.Value));
+            }
         }
         claimValues.Add("clientId",client.id!);
         claimValues.Add("active",true);
@@ -304,13 +309,10 @@ public class TokenController : Controller
     [HttpPost("public/Token")]
     public async Task<IActionResult> Token([FromBody] TokenRequest tokenRequest)
     {
-        string? xforwardedfor = HttpContext.Request.Headers.ContainsKey("X-Forwarded-For") ? HttpContext.Request.Headers.FirstOrDefault(h => h.Key.ToLower().Equals("x-forwarded-for")).Value.ToString() : null;
-        var ipAddress = xforwardedfor?.Split(",")[0].Trim() ?? "undefined";
+        string? xforwardedfor = HttpContext.Request.Headers.ContainsKey("X-Forwarded-For") ? HttpContext.Request.Headers.FirstOrDefault(h => h.Key.ToLower().Equals("x-forwarded-for")).Value.ToString() : HttpContext.Connection.RemoteIpAddress?.ToString();
+        var ipAddress = xforwardedfor?.Split(",")[0].Trim() ?? xforwardedfor;
         _transactionService.IpAddress = ipAddress;
-        foreach (var item in HttpContext.Request.Headers)
-        {
-            Console.WriteLine($"Key:{item.Key} | Value:{item.Value}");
-        }
+        
         var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
         if (tokenRequest.GrantType == "authorization_code")
         {

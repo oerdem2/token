@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using amorphie.core.Base;
@@ -19,7 +20,8 @@ namespace amorphie.token.Modules.Login
         public static async Task<IResult> checkDocuments(
         [FromBody] dynamic body,
         [FromServices] IConsentService consentService,
-        [FromServices] ITokenService tokenService
+        [FromServices] ITokenService tokenService,
+        [FromServices] IConfiguration configuration
         )
         {
             await Task.CompletedTask;
@@ -63,8 +65,13 @@ namespace amorphie.token.Modules.Login
             });
 
             ServiceResponse<TokenResponse> result = await tokenService.GenerateTokenWithPasswordFromWorkflow(requestBody.MapTo<GenerateTokenRequest>(), clientInfo, userInfo,profile);
-            Console.WriteLine("token: "+result.Response.AccessToken);
+            
+            using var httpClient = new HttpClient();
+            StringContent request = new(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
 
+            var httpResponse = await httpClient.PostAsync(configuration["localAddress"]+"public/Token", request);
+            var resp = await httpResponse.Content.ReadFromJsonAsync<TokenResponse>();
+            Console.WriteLine("resp token:" +resp.AccessToken);
             dynamic variables = new Dictionary<string, dynamic>();
 
             var documentsResponse = await consentService.CheckDocument(clientInfo.id!,"7b19daa2-8793-45d2-9d96-aa7540c9d1ab",userInfo.Reference);
@@ -74,7 +81,7 @@ namespace amorphie.token.Modules.Login
             {
                 dataChanged.additionalData = new ExpandoObject();
                 dataChanged.additionalData.documents = documents.contractDocuments;
-                dataChanged.additionalData.tempToken = result.Response!.AccessToken;
+                dataChanged.additionalData.tempToken = resp!.AccessToken;
                 targetObject.Data = dataChanged;
                 targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
                 targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
