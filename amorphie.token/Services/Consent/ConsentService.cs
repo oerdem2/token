@@ -18,7 +18,7 @@ namespace amorphie.token.Services.Consent
         {
             try
             {
-                var documents = await _daprClient.InvokeMethodAsync<DocumentResponse>(HttpMethod.Get, Configuration["ConsentServiceAppName"],$"Authorization/CheckAuthorizationForLogin/clientId={clientId}&roleId={roleId}&userTCKN={citizenshipNo}?scopeTCKN={citizenshipNo}");
+                var documents = await _daprClient.InvokeMethodAsync<DocumentResponse>(HttpMethod.Post, Configuration["ConsentServiceAppName"],$"Authorization/CheckAuthorizationForLogin/clientId={clientId}&roleId={roleId}&userTCKN={citizenshipNo}?scopeTCKN={citizenshipNo}");
                 
                 return new ServiceResponse<DocumentResponse>()
                 {
