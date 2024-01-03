@@ -56,7 +56,7 @@ namespace amorphie.token.Modules.Login
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = "Username or password doesn't match";
-
+                variables.PasswordTryCount = passwordRecord.AccessFailedCount;
                 await ibContext.Password.Where(p => p.Id == passwordRecord.Id).ExecuteUpdateAsync(setters => setters.SetProperty(p => p.AccessFailedCount,p => p.AccessFailedCount + 1));
 
                 return Results.Ok(variables);
@@ -64,6 +64,7 @@ namespace amorphie.token.Modules.Login
             else
             {
                 await ibContext.Password.Where(p => p.Id == passwordRecord.Id).ExecuteUpdateAsync(setters => setters.SetProperty(p => p.AccessFailedCount,0));
+                
             }
             var userInfoResult = await profileService.GetCustomerSimpleProfile(request.Username!);
             if(userInfoResult.StatusCode != 200)
@@ -71,6 +72,7 @@ namespace amorphie.token.Modules.Login
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = "UserInfo Not Found";
+                variables.PasswordTryCount = passwordRecord.AccessFailedCount;
                 return Results.Ok(variables);
             }
 
@@ -82,6 +84,7 @@ namespace amorphie.token.Modules.Login
                 variables.status = false;
                 variables.message = "User is Not Customer Or Not Active";
                 variables.LastTransition = "amorphie-login-error";
+                variables.PasswordTryCount = passwordRecord.AccessFailedCount;
                 return Results.Ok(variables);
             }
 
@@ -92,6 +95,7 @@ namespace amorphie.token.Modules.Login
                 variables.status = false;
                 variables.message = "Bad Phone Data";
                 variables.LastTransition = "amorphie-login-error";
+                variables.PasswordTryCount = passwordRecord.AccessFailedCount;
                 return Results.Ok(variables);
             }
 
@@ -102,6 +106,7 @@ namespace amorphie.token.Modules.Login
                 variables.status = false;
                 variables.message = "Bad Phone Format";
                 variables.LastTransition = "amorphie-login-error";
+                variables.PasswordTryCount = passwordRecord.AccessFailedCount;
                 return Results.Ok(variables);
             }
 
@@ -133,6 +138,7 @@ namespace amorphie.token.Modules.Login
 
             dynamic variablesSuccess = new ExpandoObject();
             variablesSuccess.status = true;
+            variablesSuccess.PasswordTryCount = passwordRecord.AccessFailedCount;
             variablesSuccess.ibUserSerialized = JsonSerializer.Serialize(user);
             variablesSuccess.userInfoSerialized = JsonSerializer.Serialize(userInfo);
             variablesSuccess.userSerialized = JsonSerializer.Serialize(amorphieUser);
