@@ -1,10 +1,19 @@
 
-using System.Diagnostics;
-using System.Reflection.Metadata.Ecma335;
+using System.Dynamic;
+using System.Text.Json;
 using amorphie.core.security.Extensions;
 using amorphie.token.data;
+using amorphie.token.Middlewares;
+using amorphie.token.Modules.Login;
+using amorphie.token.Modules.OpenBankingFlows;
+using amorphie.token.Modules.ZeebeJobs;
+using amorphie.token.Services.ClaimHandler;
+using amorphie.token.Services.Consent;
+using amorphie.token.Services.FlowHandler;
 using amorphie.token.Services.InternetBanking;
+using amorphie.token.Services.MessagingGateway;
 using amorphie.token.Services.Profile;
+using amorphie.token.Services.TransactionHandler;
 using Microsoft.EntityFrameworkCore;
 using Refit;
 
@@ -46,18 +55,23 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddScoped<IClientService, ClientServiceLocal>();
     builder.Services.AddScoped<IUserService, UserServiceLocal>();
     builder.Services.AddScoped<ITagService, TagServiceLocal>();
+    builder.Services.AddScoped<IConsentService, ConsentServiceLocal>();
 
     builder.Services.AddHttpClient("Client", httpClient =>
     {
-        httpClient.BaseAddress = new Uri(builder.Configuration["ClientBaseAddress"]);
+        httpClient.BaseAddress = new Uri(builder.Configuration["ClientBaseAddress"]!);
     });
     builder.Services.AddHttpClient("User", httpClient =>
     {
-        httpClient.BaseAddress = new Uri(builder.Configuration["UserBaseAddress"]);
+        httpClient.BaseAddress = new Uri(builder.Configuration["UserBaseAddress"]!);
     });
     builder.Services.AddHttpClient("Tag", httpClient =>
     {
-        httpClient.BaseAddress = new Uri(builder.Configuration["TagBaseAddress"]);
+        httpClient.BaseAddress = new Uri(builder.Configuration["TagBaseAddress"]!);
+    });
+    builder.Services.AddHttpClient("Consent", httpClient =>
+    {
+        httpClient.BaseAddress = new Uri(builder.Configuration["ConsentBaseAddress"]!);
     });
 }
 else
@@ -65,21 +79,36 @@ else
     builder.Services.AddScoped<IClientService, ClientService>();
     builder.Services.AddScoped<IUserService, UserService>();
     builder.Services.AddScoped<ITagService, TagService>();
-
+    builder.Services.AddScoped<IConsentService, ConsentService>();
 }
 
 builder.Services.AddScoped<IInternetBankingUserService, InternetBankingUserService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<IFlowHandler, FlowHandler>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IClaimHandlerService, ClaimHandlerService>();
 
 builder.Services.AddRefitClient<IProfile>()
-.ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["ProfileBaseAddress"]))
+.ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["ProfileBaseAddress"]!))
 .ConfigurePrimaryHttpMessageHandler(() => { return new HttpClientHandler() { ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; } }; });
 
+builder.Services.AddRefitClient<ISimpleProfile>()
+.ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["SimpleProfileBaseAddress"]!))
+.ConfigurePrimaryHttpMessageHandler(() => { return new HttpClientHandler() { ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; } }; });
+
+
+builder.Services.AddRefitClient<IMessagingGateway>()
+.ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["MessagingGatewayBaseAddress"]!));
+builder.Logging.ClearProviders();
 var app = builder.Build();
 
 //Db Migrate
 using var scope = app.Services.CreateScope();
 var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 db.Database.Migrate();
+
+app.MapLoginWorkflowEndpoints();
 
 app.MapCheckGrantTypesControlEndpoints();
 app.MapValidateClientControlEndpoints();
@@ -88,13 +117,21 @@ app.MapCheckScopesControlEndpoints();
 app.MapGenerateTokensControlEndpoints();
 app.MapCheckUserStateControlEndpoints();
 app.MapLoginOtpFlowControlEndpoints();
-app.MapSetStateControlEndpoints();
 app.MapDaprTestControlEndpoints();
 app.MapCheckOtpControlEndpoints();
 app.MapCheckPushControlEndpoints();
 app.MapSetLoginTypeControlEndpoints();
 app.MapLoginPushFlowControlEndpoints();
 
+app.MapTokenLoginCheckDevice();
+app.MapTokenLoginCheckSecondFactor();
+app.MapTokenLoginCheckUser();
+app.MapTokenLoginSendOtp();
+app.MapTokenLoginSetTransaction();
+
+app.MapAmorphieOauthCheckClientEndpoint();
+
+app.UseTransactionMiddleware();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -102,6 +139,7 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
 
 app.UseCors();
 

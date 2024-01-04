@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>3aebe289-5ab8-42bd-a7dc-1f9ce0d48e11</UserSecretsId>
+    <ThreadPoolMinThreads>10</ThreadPoolMinThreads>
   </PropertyGroup>
 
   <ItemGroup>

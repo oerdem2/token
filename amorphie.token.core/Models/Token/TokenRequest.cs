@@ -1,22 +1,32 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+
+using System.Text.Json.Serialization;
+
 
 namespace amorphie.token.core.Models.Token;
 
 public class TokenRequest
 {
-    public string username { get; set; }
-    public string password { get; set; }
-    public string client_id { get; set; }
-    public string client_secret { get; set; }
-    public string code { get; set; }
-    public string refresh_token { get; set; }
-    public string grant_type { get; set; }
-    public string redirect_uri { get; set; }
-    public string code_verifier { get; set; }
-    public string record_id { get; set; }
-    public IEnumerable<string> scopes { get; set; }
+    [JsonPropertyName("username")]
+    public string? Username { get; set; }
+    [JsonPropertyName("password")]
+    public string? Password { get; set; }
+    [JsonPropertyName("client_id")]
+    public string? ClientId { get; set; }
+    [JsonPropertyName("client_secret")]
+    public string? ClientSecret { get; set; }
+    [JsonPropertyName("code")]
+    public string? Code { get; set; }
+    [JsonPropertyName("refresh_token")]
+    public string? RefreshToken { get; set; }
+    [JsonPropertyName("grant_type")]
+    public string? GrantType { get; set; }
+    [JsonPropertyName("redirect_uri")]
+    public string? RedirectUri { get; set; }
+    [JsonPropertyName("code_verifier")]
+    public string? CodeVerifier { get; set; }
+    [JsonPropertyName("record_id")]
+    public string? RecordId { get; set; }
+    [JsonPropertyName("scopes")]
+    public IEnumerable<string>? Scopes { get; set; }
 
 }

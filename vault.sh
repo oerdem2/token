@@ -13,14 +13,10 @@ curl -X POST 'http://vault:8200/v1/sys/mounts/token-secretstore' -H "Content-Typ
 curl -X POST 'http://vault:8200/v1/token-secretstore/data/ServiceConnections' -H "Content-Type: application/json" -H "X-Vault-Token: admin" -d '
     {
         "options": {
-            "cas": 0
-        },
-        "data":{
-            "DatabaseConnection":"Host=localhost:5432;Database=token;Username=postgres;Password=postgres;Include Error Detail=true;",
-            "ClientBaseAddress" : "http://localhost:3000/",
-            "UserBaseAddress" : "http://localhost:3000/",
-            "TagBaseAddress" : "http://localhost:3000/",
-            "JwtSecretKey" : "MySuperSecretSuperScretMySuperSecretSuperScretMySuperSecretSuperScretMySuperSecretSuperScretMySuperSecretSuperScret"
+                "cas": 0
+            },
+        "data":  {
+            "DatabaseConnection": "Host=localhost:5432;Database=token;Username=postgres;Password=postgres",
         }
     }
 '

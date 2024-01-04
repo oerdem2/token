@@ -14,7 +14,7 @@ public class UserService : ServiceBase, IUserService
     {
         try
         {
-            await _daprClient.InvokeMethodAsync(HttpMethod.Get, Configuration["UserServiceAppName"], $"/userDevice/search?Page=0&PageSize=50&Keyword={userId}&&{clientId}");
+            await _daprClient.InvokeMethodAsync(HttpMethod.Get, Configuration["UserServiceAppName"], $"/userDevice/search?Page=0&PageSize=50&Keyword={userId}&&{clientId}&SortColumn=CreatedAt&SortDirection=Desc");
             Console.WriteLine("Device bulundu");
             return new ServiceResponse<object>()
             {
@@ -56,7 +56,11 @@ public class UserService : ServiceBase, IUserService
         {
             Logger.LogError("An Error Occured At User Device Invocation | Detail:" + ex.ToString());
         }
-        return null;
+        return new ServiceResponse<object>()
+        {
+            StatusCode = 500,
+            Detail = "Server Error"
+        };
     }
 
     public async Task<ServiceResponse<LoginResponse>> Login(LoginRequest loginRequest)
@@ -120,7 +124,11 @@ public class UserService : ServiceBase, IUserService
         {
             Logger.LogError("An Error Occured At User Invocation | Detail:" + ex.ToString());
         }
-        return null;
+        return new ServiceResponse<LoginResponse>()
+        {
+            StatusCode = 500,
+            Detail = "Server Error"
+        };
     }
 
     public async Task<ServiceResponse<LoginResponse>> GetUserById(Guid userId)
@@ -179,6 +187,47 @@ public class UserService : ServiceBase, IUserService
         {
             Logger.LogError("An Error Occured At User Invocation | Detail:" + ex.ToString());
         }
-        return null;
+        return new ServiceResponse<LoginResponse>()
+        {
+            StatusCode = 500,
+            Detail = "Server Error"
+        };
+    }
+
+
+    public async Task<ServiceResponse> SaveUser(UserInfo userInfo)
+    {
+        try
+        {
+            await _daprClient.InvokeMethodAsync(Configuration["UserServiceAppName"], "/user", userInfo);
+            return new ServiceResponse()
+            {
+                StatusCode = 200,
+                Detail = "Success"
+            };
+        }
+        catch (InvocationException ex)
+        {
+            Logger.LogError("An Error Occured At User Invocation | Detail:" + ex.ToString());
+            return new ServiceResponse()
+            {
+                StatusCode = (int)ex.Response.StatusCode,
+                Detail = await ex.Response.Content.ReadAsStringAsync()
+            };
+        }
+        catch (System.Exception ex)
+        {
+            Logger.LogError("An Error Occured At User Invocation | Detail:" + ex.ToString());
+            return new ServiceResponse()
+            {
+                StatusCode = 500,
+                Detail = "Dapr Invoke Method Error"
+            };
+        }
+    }
+
+    public Task<ServiceResponse> SaveDevice(Guid userId, Guid clientId)
+    {
+        throw new NotImplementedException();
     }
 }

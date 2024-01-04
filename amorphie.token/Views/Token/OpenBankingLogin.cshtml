@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Asap:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="~/css/style.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>
+  @* <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script> *@
 
 </head>
 
@@ -39,7 +39,7 @@
                     <img src="~/assets/person.svg" />
                 </div>
 
-                <input type="text" asp-for="UserName" placeholder="Kimlik/Vergi Numarası" />
+                <input type="text" asp-for="username" placeholder="Kimlik/Vergi Numarası" />
                 </label>
 
                 <label class="input mb-2">
@@ -47,8 +47,8 @@
                     <img src="~/assets/lock.svg" />
                 </div>
 
-                <input type="text" asp-for="Password" size="12" class="flex-1" placeholder="Şifre" type="password" />
-
+                <input asp-for="password" size="12" class="flex-1" placeholder="Şifre" type="password" />
+                <input type="hidden" asp-for="transactionId" size="12" class="flex-1" placeholder="Şifre"  />
                 <div class="forgot-password">
                     Unuttum
                 </div>

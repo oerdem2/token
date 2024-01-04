@@ -18,35 +18,29 @@ public static class DaprTest
         // app.MapPost("/introspect",introspect)
         // .Produces(StatusCodes.Status200OK);
 
-        app.MapPost("/secured", secured)
-        .Produces(StatusCodes.Status200OK);
 
         app.MapPost("/checkOtp", confirmOtp)
         .Produces(StatusCodes.Status200OK);
 
+
         app.MapGet("/oidc", oidc)
         .Produces(StatusCodes.Status200OK);
+
 
         static async Task<IResult> oidc(
             HttpRequest request
         )
         {
+            foreach (var header in request.Headers)
+            {
+                Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
+            }
             Console.WriteLine("geldi oidc");
             await Task.CompletedTask;
             return Results.Content("test");
         }
 
-        static async Task<IResult> secured(
-            HttpRequest request
-        )
-        {
 
-            foreach (var header in request.Headers)
-            {
-                Console.WriteLine($"Secured header {header.Key}:{header.Value} ");
-            }
-            return Results.Ok(new { token = "valid" });
-        }
 
 
 
@@ -70,7 +64,7 @@ public static class DaprTest
             var client = new HttpClient();
             var res = await client.GetAsync("http://localhost:3000/test");
 
-            dynamic dynoObject = JsonSerializer.Deserialize<dynamic>(await res.Content.ReadAsStringAsync());
+            dynamic dynoObject = JsonSerializer.Deserialize<dynamic>(await res.Content.ReadAsStringAsync())!;
             dynamic dynoData = body.GetProperty("TRX-start-password-flow").GetProperty("Data");
 
 

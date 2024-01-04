@@ -1,0 +1,18 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: amorphie-oauth-publish-message
+spec:
+  type: bindings.zeebe.jobworker
+  version: v1
+  metadata:
+  - name: jobType
+    value: amorphie-oauth-publish-message
+  - name: gatewayAddr
+    value: localhost:26500
+  - name: gatewayKeepAlive
+    value: 45s
+  - name: usePlainTextConnection
+    value: true
+  - name: fetchVariables
+    value: "Messages, ValueToCheck, CheckType, TransactionId"

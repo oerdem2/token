@@ -24,18 +24,6 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "build-amorphie-token-zeebe-workers",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/amorphie.token.zeebe.workers/amorphie.token.zeebe.workers.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
             "appId": "amorphie-token",
             "appPort": 4900,
             "httpPort": 49010,
@@ -49,29 +37,13 @@
             "appId": "amorphie-token",
             "label": "daprd-down-amorphie-token",
             "type": "daprd-down"
-        },
-        {
-            "appId": "amorphie-token-zeebe-workers",
-            "appPort": 4901,
-            "httpPort": 49020,
-            "grpcPort": 49021,
-            "label": "dapr-debug-amorphie-token-zeebe-workers",
-            "type": "dapr",
-            "dependsOn": "build-amorphie-token-zeebe-workers",
-            "componentsPath": "Dapr/Components"
-        },
-        {
-            "appId": "amorphie-token-zeebe-workers",
-            "label": "daprd-down-amorphie-token-zeebe-workers",
-            "type": "daprd-down"
         }
     ],
     "compounds": [
         {
             "name": "Halay Mode",
             "configurations": [
-                "amorphie-token",
-                "amorphie-token-zeebe-workers"
+                "amorphie-token"
             ],
             "stopAll": true
         }

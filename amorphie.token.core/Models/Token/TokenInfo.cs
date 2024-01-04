@@ -9,17 +9,19 @@ using Microsoft.EntityFrameworkCore;
 namespace amorphie.token.core.Models.Token;
 
 [Index(nameof(UserId))]
+[Index(nameof(ConsentId))]
+[Index(nameof(Reference))]
 public class TokenInfo
 {
     public Guid Id { get; set; }
     public TokenType TokenType { get; set; }
-    public Guid UserId { get; set; }
+    public Guid? UserId { get; set; }
     public DateTime IssuedAt { get; set; } = DateTime.UtcNow;
-    public string Jwt { get; set; }
     public bool IsActive { get; set; }
-    public List<string> Scopes { get; set; }
-    public string ClientId { get; set; }
-    public string Reference { get; set; }
+    public required List<string> Scopes { get; set; }
+    public required string ClientId { get; set; }
+    public string? Reference { get; set; }
     public DateTime ExpiredAt { get; set; }
     public Guid? RelatedTokenId { get; set; }
+    public Guid? ConsentId { get; set; }
 }

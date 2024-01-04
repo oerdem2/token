@@ -33,6 +33,9 @@ namespace amorphie.token.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("ConsentId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("ExpiredAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -42,12 +45,7 @@ namespace amorphie.token.Migrations
                     b.Property<DateTime>("IssuedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Jwt")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("Reference")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<Guid?>("RelatedTokenId")
@@ -60,10 +58,14 @@ namespace amorphie.token.Migrations
                     b.Property<int>("TokenType")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ConsentId");
+
+                    b.HasIndex("Reference");
 
                     b.HasIndex("UserId");
 

@@ -21,6 +21,7 @@ public static class CheckUserState
         [FromServices] IAuthorizationService authorizationService
         )
         {
+            await Task.CompletedTask;
             Console.WriteLine("CheckUserState called");
             var userInfoSerialized = body.GetProperty("userSerialized").ToString();
 

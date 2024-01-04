@@ -1,4 +1,8 @@
 
+using System.Text;
+using System.Text.Json;
+using amorphie.token.Services.TransactionHandler;
+
 namespace amorphie.token.Services.User;
 
 public class UserServiceLocal : IUserService
@@ -12,7 +16,7 @@ public class UserServiceLocal : IUserService
     public async Task<ServiceResponse<object>> CheckDevice(Guid userId, Guid clientId)
     {
         var httpClient = _httpClientFactory.CreateClient("User");
-        var httpResponseMessage = await httpClient.GetAsync("user/device");
+        var httpResponseMessage = await httpClient.GetAsync($"userDevice/search?Page=0&PageSize=50&Keyword={userId}&&{clientId}&SortColumn=CreatedAt&SortDirection=Desc");
 
         if (httpResponseMessage.IsSuccessStatusCode)
         {
@@ -20,7 +24,7 @@ public class UserServiceLocal : IUserService
         }
         else
         {
-            throw new ServiceException(404, "Device Not Found");
+            return new ServiceResponse<object>() { StatusCode = 404, Response = "Device Not Found" };
         }
     }
 
@@ -59,6 +63,46 @@ public class UserServiceLocal : IUserService
                 throw new ServiceException((int)Errors.InvalidUser, "User not found with provided info");
             }
             return new ServiceResponse<LoginResponse>() { StatusCode = 200, Response = user };
+        }
+        else
+        {
+            throw new ServiceException((int)Errors.InvalidUser, "User Endpoint Did Not Response Successfully");
+        }
+    }
+
+    public async Task<ServiceResponse> SaveUser(UserInfo userInfo)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var request = new StringContent(JsonSerializer.Serialize(userInfo), Encoding.UTF8, "application/json");
+        var httpResponseMessage = await httpClient.PostAsync(
+            "user", request);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            return new ServiceResponse() { StatusCode = 200 };
+        }
+        else
+        {
+            throw new ServiceException((int)Errors.InvalidUser, "User Endpoint Did Not Response Successfully");
+        }
+    }
+
+    public async Task<ServiceResponse> SaveDevice(Guid userId, Guid clientId)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var request = new StringContent(JsonSerializer.Serialize(new
+        {
+            clientId = clientId,
+            userId = userId,
+            deviceId = Guid.NewGuid(),
+            installationId = Guid.NewGuid()
+        }), Encoding.UTF8, "application/json");
+        var httpResponseMessage = await httpClient.PostAsync(
+            "userDevice/save-device", request);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            return new ServiceResponse() { StatusCode = 200 };
         }
         else
         {

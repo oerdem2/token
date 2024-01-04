@@ -10,6 +10,10 @@ namespace amorphie.token.data
     {
         public DbSet<IBUser> User { get; set; }
         public DbSet<IBPassword> Password { get; set; }
+        public DbSet<IBQuestionDefinition> QuestionDefinition { get; set; }
+        public DbSet<IBQuestion> Question { get; set; }
+        public DbSet<IBSecurityImageDefinition> SecurityImageDefinition { get; set; }
+        public DbSet<IBSecurityImage> SecurityImage { get; set; }
         public IbDatabaseContext(DbContextOptions<IbDatabaseContext> options) : base(options)
         {
 

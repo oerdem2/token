@@ -27,12 +27,12 @@
         </div>
       </div>
       <div class="content two-columns mb-2 has-divider">
-        <form id="login-form" asp-action="Login" asp-controller="Home" method="post">
+        <form id="login-form" asp-action="Login" asp-controller="Token" method="post">
             <input type="hidden" asp-for="RedirectUri" />
             <input type="hidden" asp-for="Code" />
-            @for (int i = 0; i < Model.RequestedScopes.Count; i++)
+            @for (int i = 0; i < Model.RequestedScopes!.Count; i++)
             {
-                <input type="hidden" asp-for="RequestedScopes[i]" />
+                <input type="hidden" asp-for="RequestedScopes![i]" />
             }
             <div class="content-inner">
             <div class="title mb-4">

@@ -1,10 +1,6 @@
 
 using System.Text.Json;
-using amorphie.token.core.Models.Token;
-using amorphie.token.core.Models;
-using amorphie.token.Services.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using amorphie.token.core.Helpers;
 using System.Dynamic;
 
 namespace amorphie.token.Modules;
@@ -31,7 +27,7 @@ public static class CheckUser
                 PropertyNameCaseInsensitive = true
             });
 
-            var userResponse = await userService.Login(new LoginRequest() { Reference = requestBody.username, Password = requestBody.password });
+            var userResponse = await userService.Login(new LoginRequest() { Reference = requestBody.Username!, Password = requestBody.Password! });
 
             if (userResponse.StatusCode != 200)
             {

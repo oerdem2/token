@@ -21,6 +21,7 @@ public static class CheckScopes
         [FromServices] IAuthorizationService authorizationService
         )
         {
+            await Task.CompletedTask;
             Console.WriteLine("CheckScopes called");
             var transitionName = body.GetProperty("LastTransition").ToString();
 
@@ -38,9 +39,9 @@ public static class CheckScopes
                 PropertyNameCaseInsensitive = true
             });
 
-            var requestedScopes = requestBody.scopes.ToList();
+            var requestedScopes = requestBody.Scopes!.ToList();
 
-            if (!requestedScopes.All(clientInfo.allowedscopetags.Contains))
+            if (!requestedScopes.All(clientInfo.allowedscopetags!.Contains))
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = false;

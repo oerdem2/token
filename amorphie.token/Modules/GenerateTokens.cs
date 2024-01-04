@@ -6,6 +6,8 @@ using amorphie.token.Services.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using amorphie.token.core.Helpers;
 using System.Dynamic;
+using amorphie.token.core.Extensions;
+using amorphie.token.Services.TransactionHandler;
 
 namespace amorphie.token.Modules;
 
@@ -18,7 +20,7 @@ public static class GenerateTokens
 
         static async Task<IResult> generateTokens(
         [FromBody] dynamic body,
-        [FromServices] IAuthorizationService authorizationService
+        [FromServices] ITokenService tokenService
         )
         {
             Console.WriteLine("GenerateTokens called");
@@ -53,7 +55,7 @@ public static class GenerateTokens
                 PropertyNameCaseInsensitive = true
             });
 
-            ServiceResponse<TokenResponse> result = await authorizationService.GenerateTokenWithPasswordFromWorkflow(requestBody, clientInfo, userInfo);
+            ServiceResponse<TokenResponse> result = await tokenService.GenerateTokenWithPasswordFromWorkflow(requestBody.MapTo<GenerateTokenRequest>(), clientInfo, userInfo, null);
 
             if (result.StatusCode == 200)
             {
@@ -63,7 +65,7 @@ public static class GenerateTokens
                 targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
                 dynamic variables = new Dictionary<string, dynamic>();
                 variables.Add("status", true);
-                variables.Add($"TRX-{transitionName}", targetObject);
+                variables.Add($"TRX{transitionName.ToString().Replace("-", "")}", targetObject);
                 Console.WriteLine("GenerateTokens Success");
                 return Results.Ok(variables);
             }

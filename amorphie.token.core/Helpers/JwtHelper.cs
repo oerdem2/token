@@ -11,12 +11,11 @@ namespace amorphie.token.core.Helpers;
 public class JwtHelper
 {
     public static string GenerateJwt(string? issuer = null, string? audience = null, List<Claim>? claims = null, DateTime? notBefore = null, DateTime? expires = null,
-    SigningCredentials signingCredentials = null)
+    SigningCredentials? signingCredentials = null)
     {
         JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
         var token = new JwtSecurityToken(issuer, audience, claims,
             expires: expires, signingCredentials: signingCredentials);
-
 
         string jwt = handler.WriteToken(token);
         return jwt;
@@ -40,19 +39,21 @@ public class JwtHelper
         return claim?.Value;
     }
 
-    public static TokenInfo CreateTokenInfo(TokenType tokenType, Guid jti, string clientId, DateTime expiredAt, bool isActive, string jwt, string reference, List<string> scopes, Guid userId, Guid? relatedTokenId)
+    public static TokenInfo CreateTokenInfo(TokenType tokenType, Guid jti, string clientId, DateTime expiredAt, bool isActive, string reference, List<string> scopes, Guid userId, Guid? relatedTokenId, Guid? consentId)
     {
-        var tokenInfo = new TokenInfo();
-        tokenInfo.Id = jti;
-        tokenInfo.TokenType = tokenType;
-        tokenInfo.ClientId = clientId;
-        tokenInfo.ExpiredAt = expiredAt;
-        tokenInfo.IsActive = isActive;
-        tokenInfo.Jwt = jwt;
-        tokenInfo.Reference = reference;
-        tokenInfo.Scopes = scopes;
-        tokenInfo.UserId = userId;
-        tokenInfo.RelatedTokenId = relatedTokenId;
+        var tokenInfo = new TokenInfo
+        {
+            Scopes = scopes,
+            ClientId = clientId,
+            Id = jti,
+            TokenType = tokenType,
+            ExpiredAt = expiredAt,
+            IsActive = isActive,
+            Reference = reference,
+            UserId = userId,
+            RelatedTokenId = relatedTokenId,
+            ConsentId = consentId
+        };
 
         return tokenInfo;
     }
@@ -60,9 +61,9 @@ public class JwtHelper
     public static bool ValidateToken(
     string token,
     string issuer,
-    string audience,
+    string? audience,
     SecurityKey signingKey,
-    out JwtSecurityToken jwt
+    out JwtSecurityToken? jwt
     )
     {
         var validationParameters = new TokenValidationParameters
@@ -86,6 +87,7 @@ public class JwtHelper
         }
         catch (SecurityTokenValidationException ex)
         {
+            Console.WriteLine(ex.ToString());
             jwt = null;
             return false;
         }

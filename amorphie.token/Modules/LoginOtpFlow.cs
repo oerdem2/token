@@ -51,7 +51,7 @@ public static class LoginOtpFlow
                     SmsType = "Otp",
                     Phone = new
                     {
-                        CountryCode = userInfo.MobilePhone.CountryCode,
+                        CountryCode = userInfo.MobilePhone!.CountryCode,
                         Prefix = userInfo.MobilePhone.Prefix,
                         Number = userInfo.MobilePhone.Number
                     },

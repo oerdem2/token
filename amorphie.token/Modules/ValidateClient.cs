@@ -26,12 +26,12 @@ public static class ValidateClient
             Console.WriteLine("Client validate worker txn name:" + transitionName);
             var requestBodySerialized = body.GetProperty($"TRX-{transitionName}").GetProperty("Data").GetProperty("entityData").ToString();
             Console.WriteLine("Client validate worker request body:" + requestBodySerialized);
-            var requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized, new JsonSerializerOptions
+            TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
 
-            ServiceResponse<ClientResponse> clientResult = await clientService.ValidateClient(requestBody.client_id, requestBody.client_secret);
+            ServiceResponse<ClientResponse> clientResult = await clientService.ValidateClient(requestBody.ClientId, requestBody.ClientSecret);
 
             if (clientResult.StatusCode == 200)
             {

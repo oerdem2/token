@@ -17,7 +17,7 @@ public static class CheckGrantTypes
         [FromServices] IAuthorizationService authorizationService
         )
         {
-            Console.WriteLine("CheckGrantType called");
+            await Task.CompletedTask;
             var transitionName = body.GetProperty("LastTransition").ToString();
 
             var requestBodySerialized = body.GetProperty($"TRX-{transitionName}").GetProperty("Data").GetProperty("entityData").ToString();
@@ -35,7 +35,7 @@ public static class CheckGrantTypes
                 PropertyNameCaseInsensitive = true
             });
 
-            if (clientInfo.allowedgranttypes == null || !clientInfo.allowedgranttypes.Any(g => g.GrantType == requestBody.grant_type))
+            if (clientInfo.allowedgranttypes == null || !clientInfo.allowedgranttypes.Any(g => g.GrantType == requestBody.GrantType))
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
