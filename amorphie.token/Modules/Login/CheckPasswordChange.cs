@@ -24,10 +24,10 @@ namespace amorphie.token.Modules.Login
 
             dynamic variables = new ExpandoObject();
             var mustResetPassword = password.MustResetPassword ?? false;
-            
+
             if (DateTime.Now > password.CreatedAt.AddDays(90) || (mustResetPassword && DateTime.Now > password.CreatedAt.AddDays(45)))
             {
-                
+
                 variables.status = true;
                 variables.changePassword = true;
                 return Results.Ok(variables);
@@ -38,7 +38,7 @@ namespace amorphie.token.Modules.Login
                 variables.status = true;
             }
 
-            
+
             return Results.Ok(variables);
         }
     }

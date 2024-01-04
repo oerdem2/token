@@ -36,7 +36,7 @@ namespace amorphie.token.Modules.Login
 
             dynamic variables = new ExpandoObject();
             variables.status = true;
-            
+
             return Results.Ok(variables);
         }
     }

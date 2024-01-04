@@ -13,5 +13,5 @@ public class Login
     public string? Code { get; set; }
     public IList<string>? RequestedScopes { get; set; }
     public string? OpenBanking { get; set; }
-    public Guid TransactionId{get;set;}
+    public Guid TransactionId { get; set; }
 }

@@ -19,6 +19,6 @@ public class AuthorizationCode
     public LoginResponse? Subject { get; set; }
     public string? CodeChallenge { get; set; }
     public string? CodeChallengeMethod { get; set; }
-    public string? Nonce{get;set;}
-    public string? ConsentId{get;set;}
+    public string? Nonce { get; set; }
+    public string? ConsentId { get; set; }
 }

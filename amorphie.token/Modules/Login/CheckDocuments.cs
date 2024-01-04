@@ -49,7 +49,7 @@ namespace amorphie.token.Modules.Login
             {
                 PropertyNameCaseInsensitive = true
             });
-            
+
             var requestBodySerialized = body.GetProperty("TRXamorphiemobilelogin").GetProperty("Data").GetProperty("entityData").ToString();
 
             TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized, new JsonSerializerOptions
@@ -64,20 +64,20 @@ namespace amorphie.token.Modules.Login
                 PropertyNameCaseInsensitive = true
             });
 
-            ServiceResponse<TokenResponse> result = await tokenService.GenerateTokenWithPasswordFromWorkflow(requestBody.MapTo<GenerateTokenRequest>(), clientInfo, userInfo,profile);
-            
+            ServiceResponse<TokenResponse> result = await tokenService.GenerateTokenWithPasswordFromWorkflow(requestBody.MapTo<GenerateTokenRequest>(), clientInfo, userInfo, profile);
+
             using var httpClient = new HttpClient();
             StringContent request = new(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
 
-            var httpResponse = await httpClient.PostAsync(configuration["localAddress"]+"public/Token", request);
+            var httpResponse = await httpClient.PostAsync(configuration["localAddress"] + "public/Token", request);
             var resp = await httpResponse.Content.ReadFromJsonAsync<TokenResponse>();
-            Console.WriteLine("resp token:" +resp.AccessToken);
+            Console.WriteLine("resp token:" + resp.AccessToken);
             dynamic variables = new Dictionary<string, dynamic>();
 
-            var documentsResponse = await consentService.CheckDocument(clientInfo.id!,"7b19daa2-8793-45d2-9d96-aa7540c9d1ab",userInfo.Reference);
-            
+            var documentsResponse = await consentService.CheckDocument(clientInfo.id!, "7b19daa2-8793-45d2-9d96-aa7540c9d1ab", userInfo.Reference);
+
             var documents = documentsResponse.Response;
-            if(!documents!.isAuthorized)
+            if (!documents!.isAuthorized)
             {
                 dataChanged.additionalData = new ExpandoObject();
                 dataChanged.additionalData.documents = documents.contractDocuments;
@@ -85,12 +85,12 @@ namespace amorphie.token.Modules.Login
                 targetObject.Data = dataChanged;
                 targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
                 targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
-                variables.Add($"TRX{transitionName.ToString().Replace("-","")}", targetObject);
-                variables.Add("documentsToApprove",true);
+                variables.Add($"TRX{transitionName.ToString().Replace("-", "")}", targetObject);
+                variables.Add("documentsToApprove", true);
             }
             else
             {
-                variables.Add("documentsToApprove",false);
+                variables.Add("documentsToApprove", false);
             }
 
             return Results.Ok(variables);

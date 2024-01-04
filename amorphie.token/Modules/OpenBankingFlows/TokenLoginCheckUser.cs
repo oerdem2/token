@@ -25,13 +25,13 @@ public static class OpenbankingCheckUser
         )
         {
             await transactionService.GetTransaction(Guid.Parse(body.transactionId));
-            var validateUserResult = await transactionService.CheckLoginFromWorkflow(body.username,body.password);
-            if(validateUserResult.StatusCode != 200)
+            var validateUserResult = await transactionService.CheckLoginFromWorkflow(body.username, body.password);
+            if (validateUserResult.StatusCode != 200)
             {
-                return Results.Ok(new{status=false});
+                return Results.Ok(new { status = false });
             }
 
-            return Results.Ok(new{status=true});
+            return Results.Ok(new { status = true });
         }
 
     }

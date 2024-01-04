@@ -28,18 +28,18 @@ public static class TokenLoginCheckDevice
             await transactionService.GetTransaction(Guid.Parse(body.GetProperty("transactionId").ToString()));
             var transaction = transactionService.Transaction;
 
-            var checkDeviceResult = await userService.CheckDevice(transactionService.Transaction.User!.Id,Guid.Parse("6c1a722d-5125-45fd-81c7-cdf7d0a7a10b"));
-            if(checkDeviceResult.StatusCode != 200)
+            var checkDeviceResult = await userService.CheckDevice(transactionService.Transaction.User!.Id, Guid.Parse("6c1a722d-5125-45fd-81c7-cdf7d0a7a10b"));
+            if (checkDeviceResult.StatusCode != 200)
             {
                 transaction.SecondFactorMethod = SecondFactorMethod.Otp;
                 await transactionService.SaveTransaction(transaction);
-                return Results.Ok(new{status=true});
+                return Results.Ok(new { status = true });
             }
 
             transaction.SecondFactorMethod = SecondFactorMethod.Push;
             await transactionService.SaveTransaction(transaction);
 
-            return Results.Ok(new{status=true});
+            return Results.Ok(new { status = true });
         }
 
     }

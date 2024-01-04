@@ -33,10 +33,11 @@ namespace amorphie.token.Modules.Login
                 .OrderByDescending(i => i.CreatedAt).FirstOrDefaultAsync();
 
             dynamic variables = new Dictionary<string, dynamic>();
-            if(securityImage == null || securityImage.RequireChange == true)
+            if (securityImage == null || securityImage.RequireChange == true)
             {
                 var securityImages = await ibContext.SecurityImageDefinition.Where(i => i.IsActive).Select(
-                    i => new{
+                    i => new
+                    {
                         Id = i.Id,
                         ImagePath = i.ImagePath,
                         IsSelected = false,
@@ -49,16 +50,16 @@ namespace amorphie.token.Modules.Login
                 targetObject.Data = dataChanged;
                 targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
                 targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
-                variables.Add($"TRX{transitionName.ToString().Replace("-","")}", targetObject);
-                variables.Add("status",true);
-                variables.Add("changeSecurityImage",true);
+                variables.Add($"TRX{transitionName.ToString().Replace("-", "")}", targetObject);
+                variables.Add("status", true);
+                variables.Add("changeSecurityImage", true);
             }
             else
             {
-                variables.Add("status",true);
-                variables.Add("changeSecurityImage",false);
+                variables.Add("status", true);
+                variables.Add("changeSecurityImage", false);
             }
-            
+
             return Results.Ok(variables);
         }
     }

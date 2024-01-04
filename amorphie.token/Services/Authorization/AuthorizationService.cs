@@ -12,10 +12,10 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
 {
     private readonly IClientService _clientService;
     private readonly DaprClient _daprClient;
-   
+
 
     public AuthorizationService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, ITagService tagService,
-    IUserService userService, IConsentService consentService ,DaprClient daprClient, DatabaseContext databaseContext, IProfileService profileService)
+    IUserService userService, IConsentService consentService, DaprClient daprClient, DatabaseContext databaseContext, IProfileService profileService)
     : base(logger, configuration)
     {
         _clientService = clientService;
@@ -118,5 +118,5 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
 
         return code;
     }
-    
+
 }

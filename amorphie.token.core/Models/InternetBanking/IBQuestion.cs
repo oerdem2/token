@@ -4,7 +4,7 @@ namespace amorphie.token.core.Models.InternetBanking
 {
     public class IBQuestion : IbBaseEntity
     {
-        public Guid UserId{get;set;}
+        public Guid UserId { get; set; }
         public Guid DefinitionId { get; set; }
         public string? EncryptedAnswer { get; set; }
         public int Status { get; set; }

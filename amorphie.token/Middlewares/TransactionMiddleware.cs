@@ -13,16 +13,16 @@ namespace amorphie.token.Middlewares
             _next = next;
         }
 
-        public async Task InvokeAsync(HttpContext context,ITransactionService transactionService)
+        public async Task InvokeAsync(HttpContext context, ITransactionService transactionService)
         {
             try
             {
-                
+
                 // var requestBody = await GetRequestBody(context);
-                
+
                 // var actualUsername = "";
                 // var actualPassword = "";
-               
+
                 // if(context.Request.Method == "GET")
                 // {
                 //     if(!context.Request.Query.ContainsKey("transactionId"))
@@ -50,7 +50,7 @@ namespace amorphie.token.Middlewares
                 // if(context.Request.HasFormContentType)
                 // {
                 //     IFormCollection form = await context.Request.ReadFormAsync();
-                    
+
                 //     if(form.ContainsKey("transactionId"))
                 //     {
                 //         var response = await transactionService.GetTransaction(Guid.Parse(form["transactionId"]!));
@@ -75,7 +75,7 @@ namespace amorphie.token.Middlewares
                 //     {
                 //         actualUsername = form["username"];
                 //         actualPassword = form["password"];
-                        
+
                 //         // if(!string.IsNullOrWhiteSpace(actualUsername) && !string.IsNullOrWhiteSpace(actualPassword))
                 //         // {
                 //         //     Dictionary<string,StringValues> formParams = new Dictionary<string, StringValues>();
@@ -121,7 +121,7 @@ namespace amorphie.token.Middlewares
 
                 //     if(middlewareRequest.Username != null && middlewareRequest.Password != null)
                 //     {
-                        
+
                 //         actualUsername = middlewareRequest.Username;
                 //         actualPassword = middlewareRequest.Password;
                 //         // if(!string.IsNullOrWhiteSpace(middlewareRequest.username) && !string.IsNullOrWhiteSpace(middlewareRequest.password))
@@ -134,12 +134,12 @@ namespace amorphie.token.Middlewares
                 //         // }
                 //     }
                 // }
-                        
+
                 // var migrateUser = await transactionService.CheckLogin(actualUsername!,actualPassword!);
-               
+
                 await _next.Invoke(context);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
                 await _next.Invoke(context);
@@ -158,16 +158,16 @@ namespace amorphie.token.Middlewares
             return requestBody;
         }
 
-     
 
-        
+
+
     }
 
     public class MiddlewareRequest
     {
-        public string? Username{get;set;}
-        public string? Password{get;set;}
-        public Guid? TransactionId{get;set;}
+        public string? Username { get; set; }
+        public string? Password { get; set; }
+        public Guid? TransactionId { get; set; }
     }
 
     public static class TransactionMiddlewareExtensions

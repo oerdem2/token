@@ -53,27 +53,27 @@ namespace amorphie.token.Modules.Login
 
             app.MapPost("/amorphie-login-generate-tokens", GenerateTokens.generateTokens)
             .Produces(StatusCodes.Status200OK);
-    
-            app.MapPost("/post-transition/{recordId}/{transition}",postTransition);
 
-            static async Task<IResult> postTransition(Guid recordId,string transition,
+            app.MapPost("/post-transition/{recordId}/{transition}", postTransition);
+
+            static async Task<IResult> postTransition(Guid recordId, string transition,
             [FromBody] dynamic body
             )
             {
-                
-                
-                var httpClient = new HttpClient();  
+
+
+                var httpClient = new HttpClient();
                 StringContent request = new(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
-                request.Headers.Add("User",Guid.NewGuid().ToString());
+                request.Headers.Add("User", Guid.NewGuid().ToString());
                 var test = JsonSerializer.Serialize(body);
-                request.Headers.Add("Behalf-Of-User",Guid.NewGuid().ToString());
+                request.Headers.Add("Behalf-Of-User", Guid.NewGuid().ToString());
                 var response = await httpClient.PostAsync(
-                    "https://test-amorphie-workflow.burgan.com.tr/workflow/consumer/mobile-login/record/"+recordId+"/transition/"+transition,
+                    "https://test-amorphie-workflow.burgan.com.tr/workflow/consumer/mobile-login/record/" + recordId + "/transition/" + transition,
                     request);
 
                 return Results.Ok(JsonSerializer.Serialize(await response.Content.ReadAsStringAsync()));
-            } 
+            }
         }
-        
+
     }
 }

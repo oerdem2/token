@@ -12,12 +12,12 @@ public class OpenBankingTokenRequest
     [JsonPropertyName("rizaNo")]
     public string? ConsentNo { get; set; }
     [JsonPropertyName("rizaTip")]
-    public string? ConsentType{get;set;}
+    public string? ConsentType { get; set; }
     [JsonPropertyName("yetTip")]
-    public string? AuthType{get;set;}
+    public string? AuthType { get; set; }
     [JsonPropertyName("yetKod")]
-    public string? AuthCode{get;set;}
+    public string? AuthCode { get; set; }
     [JsonPropertyName("yenilemeBelirteci")]
-    public string? RefreshToken{get;set;}
-   
+    public string? RefreshToken { get; set; }
+
 }

@@ -8,25 +8,25 @@ namespace amorphie.token.core.Models.InternetBanking
             get;
             set;
         }
- 
+
         public string? CreatedByInstanceState
         {
             get;
             set;
         }
- 
+
         public virtual string? CreatedByUserName
         {
             get;
             set;
         }
- 
+
         public virtual string? CreatedByIP
         {
             get;
             set;
         }
- 
+
         public virtual string? CreatedBehalfOf
         {
             get;

@@ -12,10 +12,10 @@ public class OpenBankingTokenResponse
     [JsonPropertyName("erisimBelirteci")]
     public string? AccessToken { get; set; }
     [JsonPropertyName("gecerlilikSuresi")]
-    public int ExpiresIn{get;set;}
+    public int ExpiresIn { get; set; }
     [JsonPropertyName("yenilemeBelirteci")]
-    public string? RefreshToken{get;set;}
+    public string? RefreshToken { get; set; }
     [JsonPropertyName("yenilemeBelirteciGecerlilikSuresi")]
-    public int RefreshTokenExpiresIn{get;set;}
-   
+    public int RefreshTokenExpiresIn { get; set; }
+
 }

@@ -21,22 +21,22 @@ public static class TokenLoginSetTransaction
             await transactionService.GetTransaction(Guid.Parse(body.GetProperty("transactionId").ToString()));
             var transaction = transactionService.Transaction;
 
-            var state = request.Headers.FirstOrDefault(h=> h.Key.Equals("State")).Value.ToString();            
-            if(state.Equals("completed"))
+            var state = request.Headers.FirstOrDefault(h => h.Key.Equals("State")).Value.ToString();
+            if (state.Equals("completed"))
             {
                 transaction.TransactionState = TransactionState.Completed;
             }
-            if(state.Equals("error"))
+            if (state.Equals("error"))
             {
                 transaction.TransactionState = TransactionState.Error;
             }
-            if(state.Equals("next"))
+            if (state.Equals("next"))
             {
                 transaction.Next = true;
             }
 
             await transactionService.SaveTransaction(transaction);
-            return Results.Ok(new{status=true});
+            return Results.Ok(new { status = true });
         }
 
     }

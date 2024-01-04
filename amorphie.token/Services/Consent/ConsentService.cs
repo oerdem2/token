@@ -9,7 +9,7 @@ namespace amorphie.token.Services.Consent
     public class ConsentService : ServiceBase, IConsentService
     {
         private readonly DaprClient _daprClient;
-        public ConsentService(ILogger<ConsentService> logger,IConfiguration configuration,DaprClient daprClient) : base(logger,configuration)
+        public ConsentService(ILogger<ConsentService> logger, IConfiguration configuration, DaprClient daprClient) : base(logger, configuration)
         {
             _daprClient = daprClient;
         }
@@ -18,8 +18,8 @@ namespace amorphie.token.Services.Consent
         {
             try
             {
-                var documents = await _daprClient.InvokeMethodAsync<DocumentResponse>(HttpMethod.Post, Configuration["ConsentServiceAppName"],$"Authorization/CheckAuthorizationForLogin/clientId={clientId}&roleId={roleId}&userTCKN={citizenshipNo}?scopeTCKN={citizenshipNo}");
-                
+                var documents = await _daprClient.InvokeMethodAsync<DocumentResponse>(HttpMethod.Post, Configuration["ConsentServiceAppName"], $"Authorization/CheckAuthorizationForLogin/clientId={clientId}&roleId={roleId}&userTCKN={citizenshipNo}?scopeTCKN={citizenshipNo}");
+
                 return new ServiceResponse<DocumentResponse>()
                 {
                     StatusCode = 200,
@@ -49,8 +49,8 @@ namespace amorphie.token.Services.Consent
         {
             try
             {
-                var consent = await _daprClient.InvokeMethodAsync<ConsentResponse>(HttpMethod.Get, Configuration["ConsentServiceAppName"], "/OpenBankingConsentHHS/"+consentId.ToString());
-                
+                var consent = await _daprClient.InvokeMethodAsync<ConsentResponse>(HttpMethod.Get, Configuration["ConsentServiceAppName"], "/OpenBankingConsentHHS/" + consentId.ToString());
+
                 return new ServiceResponse<ConsentResponse>()
                 {
                     StatusCode = 200,

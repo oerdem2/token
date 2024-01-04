@@ -12,7 +12,7 @@ namespace amorphie.token.Services.FlowHandler
         private readonly IMessagingGateway _messagingGateway;
         private readonly DaprClient _daprClient;
 
-        public FlowHandler(ITransactionService transactionService,IMessagingGateway messagingGateway,DaprClient daprClient,IConfiguration configuration,ILogger<FlowHandler> logger) : base(logger,configuration)
+        public FlowHandler(ITransactionService transactionService, IMessagingGateway messagingGateway, DaprClient daprClient, IConfiguration configuration, ILogger<FlowHandler> logger) : base(logger, configuration)
         {
             _transactionService = transactionService;
             _daprClient = daprClient;
@@ -25,7 +25,7 @@ namespace amorphie.token.Services.FlowHandler
             try
             {
                 var sendedOtpValue = await _daprClient.GetStateAsync<string>(Configuration["DAPR_STATE_STORE_NAME"], $"{_transactionService.Transaction.Id}_Login_Otp_Code");
-                if(sendedOtpValue.Equals(otpValue))
+                if (sendedOtpValue.Equals(otpValue))
                 {
                     response.StatusCode = 200;
                 }
@@ -58,7 +58,7 @@ namespace amorphie.token.Services.FlowHandler
 
             await _daprClient.SaveStateAsync(Configuration["DAPR_STATE_STORE_NAME"], $"{_transactionService.Transaction.Id}_Login_Otp_Code", code);
 
-            
+
             var otpRequest = new SmsRequest()
             {
                 Sender = SenderType.AutoDetect,
@@ -76,11 +76,11 @@ namespace amorphie.token.Services.FlowHandler
                     Identity = "Otp Login"
                 }
             };
-           
+
             try
             {
                 var smsReponse = await _messagingGateway.SendSms(otpRequest);
-                if(smsReponse.Status == "Success")
+                if (smsReponse.Status == "Success")
                 {
                     response.StatusCode = 200;
                     var transactionResponse = await _transactionService.SaveTransaction(transaction);
@@ -100,7 +100,7 @@ namespace amorphie.token.Services.FlowHandler
             return response;
         }
 
-        
+
 
     }
 }

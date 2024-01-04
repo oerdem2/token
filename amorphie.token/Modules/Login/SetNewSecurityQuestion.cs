@@ -31,7 +31,7 @@ namespace amorphie.token.Modules.Login
                 Id = questionId,
                 UserId = ibUser.Id,
                 DefinitionId = Guid.Parse(securityQuestionId),
-                EncryptedAnswer = passwordHasher.EncryptString(answer.Trim(),questionId.ToString("N")),
+                EncryptedAnswer = passwordHasher.EncryptString(answer.Trim(), questionId.ToString("N")),
                 CreatedByInstanceId = Guid.Parse(instanceId),
                 CreatedByInstanceState = "SetNewSecurityQuestion",
                 Status = 10,
@@ -42,7 +42,7 @@ namespace amorphie.token.Modules.Login
 
             dynamic variables = new ExpandoObject();
             variables.status = true;
-            
+
             return Results.Ok(variables);
         }
     }

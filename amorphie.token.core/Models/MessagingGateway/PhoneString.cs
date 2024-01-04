@@ -9,6 +9,6 @@ namespace amorphie.token.core.Models.MessagingGateway
     {
         public string CountryCode { get; set; }
         public string Prefix { get; set; }
-        public string Number { get; set; }    
+        public string Number { get; set; }
     }
 }

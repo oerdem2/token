@@ -65,7 +65,7 @@ public static class GenerateTokens
                 targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
                 dynamic variables = new Dictionary<string, dynamic>();
                 variables.Add("status", true);
-                variables.Add($"TRX{transitionName.ToString().Replace("-","")}", targetObject);
+                variables.Add($"TRX{transitionName.ToString().Replace("-", "")}", targetObject);
                 Console.WriteLine("GenerateTokens Success");
                 return Results.Ok(variables);
             }

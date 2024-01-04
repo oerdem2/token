@@ -13,7 +13,7 @@ namespace amorphie.token.Modules.Login
 {
     public static class SetLoginType
     {
-        
+
         public static async Task<IResult> setLoginType(
         [FromBody] dynamic body,
         [FromServices] IUserService userService,
@@ -30,7 +30,7 @@ namespace amorphie.token.Modules.Login
             var ibUserSerialized = body.GetProperty("ibUserSerialized").ToString();
             IBUser ibUser = JsonSerializer.Deserialize<IBUser>(ibUserSerialized);
 
-            
+
 
 
             var clientInfoSerialized = body.GetProperty("clientSerialized").ToString();
@@ -44,10 +44,10 @@ namespace amorphie.token.Modules.Login
             var securityImage = await ibContext.SecurityImage.Where(i => i.UserId == ibUser.Id)
                 .OrderByDescending(i => i.CreatedAt).FirstOrDefaultAsync();
 
-            if(securityImage != null)
+            if (securityImage != null)
             {
                 var securityImageInfo = await ibContext.SecurityImageDefinition.Where(i => i.Id == securityImage.DefinitionId).FirstOrDefaultAsync();
-                if(securityImageInfo != null)
+                if (securityImageInfo != null)
                 {
                     securityImagePath = securityImageInfo.ImagePath ?? string.Empty;
                 }
@@ -65,34 +65,34 @@ namespace amorphie.token.Modules.Login
             ServiceResponse<object> response = await userService.CheckDevice(userInfo.Id, Guid.Parse(clientInfo.id!));
             dynamic variables = new Dictionary<string, dynamic>();
             dataChanged.additionalData = new ExpandoObject();
-            dataChanged.additionalData.phoneNumber = "0"+userInfo.MobilePhone.Prefix.ToString().Substring(0,2)+"******"+userInfo.MobilePhone.Number.ToString().Substring(userInfo.MobilePhone.Number.Length-3,2);
+            dataChanged.additionalData.phoneNumber = "0" + userInfo.MobilePhone.Prefix.ToString().Substring(0, 2) + "******" + userInfo.MobilePhone.Number.ToString().Substring(userInfo.MobilePhone.Number.Length - 3, 2);
             dataChanged.additionalData.securityImage = securityImagePath;
             targetObject.Data = dataChanged;
             targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
             targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
-            variables.Add($"TRX{transitionName.ToString().Replace("-","")}", targetObject);
+            variables.Add($"TRX{transitionName.ToString().Replace("-", "")}", targetObject);
 
             if (response.StatusCode == 200)
             {
-                variables.Add("isSecondFactorRequired",false);
+                variables.Add("isSecondFactorRequired", false);
                 Console.WriteLine("SetLoginType Device Found");
                 return Results.Ok(variables);
             }
 
             if (response.StatusCode == 404)
             {
-                variables.Add("isSecondFactorRequired",true);
+                variables.Add("isSecondFactorRequired", true);
                 Console.WriteLine("SetLoginType Device Not Found");
                 return Results.Ok(variables);
             }
             else
             {
-                variables.Add("status",false);
-                variables.Add("isSecondFactorRequired",response.Detail);
-                variables.Add("LastTransition","amorphie-mobile-login-error-end");
+                variables.Add("status", false);
+                variables.Add("isSecondFactorRequired", response.Detail);
+                variables.Add("LastTransition", "amorphie-mobile-login-error-end");
                 return Results.Ok(variables);
             }
         }
-        
+
     }
 }

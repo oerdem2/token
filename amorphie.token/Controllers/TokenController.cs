@@ -35,8 +35,8 @@ public class TokenController : Controller
     private readonly IConsentService _consentService;
     private readonly IProfileService _profileService;
     public TokenController(ILogger<TokenController> logger, ITokenService tokenService, IUserService userService, DatabaseContext databaseContext
-    , IConfiguration configuration, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService,ITransactionService transactionService,
-    IFlowHandler flowHandler,IConsentService consentService,IProfileService profileService)
+    , IConfiguration configuration, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService, ITransactionService transactionService,
+    IFlowHandler flowHandler, IConsentService consentService, IProfileService profileService)
     {
         _logger = logger;
         _tokenService = tokenService;
@@ -50,8 +50,8 @@ public class TokenController : Controller
         _daprClient = daprClient;
         _consentService = consentService;
         _profileService = profileService;
-        
-        
+
+
     }
 
     [HttpGet("private/signalr")]
@@ -94,7 +94,7 @@ public class TokenController : Controller
     }
 
     [HttpPut("public/Revoke/{clientId}/{reference}")]
-    public async Task<IActionResult> RevokeByClient(string clientId,string reference)
+    public async Task<IActionResult> RevokeByClient(string clientId, string reference)
     {
         try
         {
@@ -159,10 +159,10 @@ public class TokenController : Controller
         return View("SignalR");
     }
 
-   
+
 
     [HttpPost("public/StartWorkflow")]
-    public async Task<IActionResult> StartWorkflow([FromBody]dynamic loginRequest)
+    public async Task<IActionResult> StartWorkflow([FromBody] dynamic loginRequest)
     {
         var transactionId = Guid.NewGuid();
 
@@ -230,31 +230,31 @@ public class TokenController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("private/Introspect")]
     [Consumes("application/x-www-form-urlencoded")]
-    public async Task<IResult> Introspect([FromForm] string token,[FromQuery] bool isTemporary = false)
+    public async Task<IResult> Introspect([FromForm] string token, [FromQuery] bool isTemporary = false)
     {
-        foreach(var q in HttpContext.Request.Query)
+        foreach (var q in HttpContext.Request.Query)
         {
             Console.WriteLine($"Query Key:{q.Key}  Query Value:{q.Value}");
         }
-        foreach(var f in HttpContext.Request.Form)
+        foreach (var f in HttpContext.Request.Form)
         {
             Console.WriteLine($"Form Key:{f.Key}  Form Value:{f.Value}");
         }
-        foreach(var h in HttpContext.Request.Headers)
+        foreach (var h in HttpContext.Request.Headers)
         {
             Console.WriteLine($"Header Key:{h.Key}  Header Value:{h.Value}");
         }
 
         var temporary = JwtHelper.GetClaim(token, "isTemporary");
-        
-        if(temporary != null && temporary.Equals("1"))
+
+        if (temporary != null && temporary.Equals("1"))
         {
-            if(!isTemporary)
+            if (!isTemporary)
             {
                 return Results.Json(new { active = false });
             }
         }
-       
+
 
         var jti = JwtHelper.GetClaim(token, "jti");
 
@@ -284,24 +284,24 @@ public class TokenController : Controller
         {
             return Results.Json(new { active = false });
         }
-        
-        foreach(var c in validatedToken!.Claims)
+
+        foreach (var c in validatedToken!.Claims)
         {
             Console.WriteLine($"C Key : {c.Type} C Value:{c.Value}");
         }
-        Dictionary<string,object> claimValues = new();
-        foreach(Claim claim in validatedToken!.Claims)
+        Dictionary<string, object> claimValues = new();
+        foreach (Claim claim in validatedToken!.Claims)
         {
-            if(!claimValues.ContainsKey(claim.Type.Replace(".","_")))
+            if (!claimValues.ContainsKey(claim.Type.Replace(".", "_")))
             {
-                if(!claim.Type.Equals("exp") && !claim.Type.Equals("nbf") && !claim.Type.Equals("iat"))
-                    claimValues.Add(claim.Type.Replace(".","_"),claim.Value);
+                if (!claim.Type.Equals("exp") && !claim.Type.Equals("nbf") && !claim.Type.Equals("iat"))
+                    claimValues.Add(claim.Type.Replace(".", "_"), claim.Value);
                 else
-                    claimValues.Add(claim.Type.Replace(".","_"),long.Parse(claim.Value));
+                    claimValues.Add(claim.Type.Replace(".", "_"), long.Parse(claim.Value));
             }
         }
-        claimValues.Add("clientId",client.id!);
-        claimValues.Add("active",true);
+        claimValues.Add("clientId", client.id!);
+        claimValues.Add("active", true);
         return Results.Json(claimValues);
     }
 
@@ -312,7 +312,7 @@ public class TokenController : Controller
         string? xforwardedfor = HttpContext.Request.Headers.ContainsKey("X-Forwarded-For") ? HttpContext.Request.Headers.FirstOrDefault(h => h.Key.ToLower().Equals("x-forwarded-for")).Value.ToString() : HttpContext.Connection.RemoteIpAddress?.ToString();
         var ipAddress = xforwardedfor?.Split(",")[0].Trim() ?? xforwardedfor;
         _transactionService.IpAddress = ipAddress;
-        
+
         var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
         if (tokenRequest.GrantType == "authorization_code")
         {
@@ -385,27 +385,27 @@ public class TokenController : Controller
     public async Task<IActionResult> OpenBankingToken([FromBody] OpenBankingTokenRequest openBankingTokenRequest)
     {
         var generateTokenRequest = new GenerateTokenRequest();
-        
+
         var clientResult = await _clientService.CheckClient(_configuration["OpenBankingClientId"]!);
-        if(clientResult.StatusCode != 200)
+        if (clientResult.StatusCode != 200)
         {
             return BadRequest();
         }
         var client = clientResult.Response;
 
-        if(openBankingTokenRequest.AuthType!.Equals("yet_kod"))
+        if (openBankingTokenRequest.AuthType!.Equals("yet_kod"))
         {
             generateTokenRequest.GrantType = "authorization_code";
             generateTokenRequest.ClientId = client!.id;
             generateTokenRequest.ClientSecret = client.clientsecret;
             generateTokenRequest.GrantType = "authorization_code";
-            generateTokenRequest.Scopes = new List<string>(){"open-banking"};
+            generateTokenRequest.Scopes = new List<string>() { "open-banking" };
             generateTokenRequest.Code = openBankingTokenRequest.AuthCode;
 
             var token = await _tokenService.GenerateToken(generateTokenRequest);
-            if(token.StatusCode != 200)
+            if (token.StatusCode != 200)
             {
-                return Problem(statusCode:token.StatusCode,detail:token.Detail);
+                return Problem(statusCode: token.StatusCode, detail: token.Detail);
             }
 
             var openBankingTokenResponse = new OpenBankingTokenResponse
@@ -415,21 +415,21 @@ public class TokenController : Controller
                 RefreshToken = token.Response.RefreshToken,
                 RefreshTokenExpiresIn = token.Response.RefreshTokenExpiresIn
             };
-            await _daprClient.DeleteStateAsync(_configuration["DAPR_STATE_STORE_NAME"],openBankingTokenRequest.AuthCode);
-            await _daprClient.DeleteStateAsync(_configuration["DAPR_STATE_STORE_NAME"],"AuthCodeInfo_"+openBankingTokenRequest.ConsentNo);
+            await _daprClient.DeleteStateAsync(_configuration["DAPR_STATE_STORE_NAME"], openBankingTokenRequest.AuthCode);
+            await _daprClient.DeleteStateAsync(_configuration["DAPR_STATE_STORE_NAME"], "AuthCodeInfo_" + openBankingTokenRequest.ConsentNo);
 
             await _consentService.UpdateConsentForUsage(Guid.Parse(openBankingTokenRequest.ConsentNo!));
             return Ok(openBankingTokenResponse);
         }
-        if(openBankingTokenRequest.AuthType.Equals("yenileme_belirteci"))
+        if (openBankingTokenRequest.AuthType.Equals("yenileme_belirteci"))
         {
             generateTokenRequest.GrantType = "refresh_token";
             generateTokenRequest.RefreshToken = openBankingTokenRequest.RefreshToken;
 
             var token = await _tokenService.GenerateTokenWithRefreshToken(generateTokenRequest);
-            if(token.StatusCode != 200)
+            if (token.StatusCode != 200)
             {
-                return Problem(statusCode:token.StatusCode,detail:token.Detail);
+                return Problem(statusCode: token.StatusCode, detail: token.Detail);
             }
 
             var openBankingTokenResponse = new OpenBankingTokenResponse

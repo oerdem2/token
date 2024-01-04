@@ -7,9 +7,9 @@ namespace amorphie.token.core.Models.JobWorker
 {
     public class PublishMessage
     {
-        public Guid TransactionId{get;set;}
-        public string? Messages{get;set;}
-        public string? ValueToCheck{get;set;}
-        public string? CheckType{get;set;}
+        public Guid TransactionId { get; set; }
+        public string? Messages { get; set; }
+        public string? ValueToCheck { get; set; }
+        public string? CheckType { get; set; }
     }
 }

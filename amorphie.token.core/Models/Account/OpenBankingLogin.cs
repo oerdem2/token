@@ -7,7 +7,7 @@ namespace amorphie.token.core.Models.Account;
 
 public class OpenBankingLogin
 {
-    public string transactionId{get;set;}
+    public string transactionId { get; set; }
     public string username { get; set; }
     public string password { get; set; }
 }

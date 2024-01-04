@@ -7,10 +7,10 @@ namespace amorphie.token.core.Models.Account
 {
     public class Otp
     {
-        public string OtpValue{get;set;}
-        public string Phone{get;set;}
-        public Guid transactionId{get;set;}
-        public bool HasError{get;set;} = false;
-        public string ErrorMessage{get;set;} = String.Empty;
+        public string OtpValue { get; set; }
+        public string Phone { get; set; }
+        public Guid transactionId { get; set; }
+        public bool HasError { get; set; } = false;
+        public string ErrorMessage { get; set; } = String.Empty;
     }
 }

@@ -20,14 +20,14 @@ public static class TokenLoginSendOtp
         {
             await transactionService.GetTransaction(Guid.Parse(body.GetProperty("transactionId").ToString()));
             var transaction = transactionService.Transaction;
-            
+
             var otpResult = await flowHandler.StartOtpFlow(transaction);
-            if(otpResult.StatusCode != 200)
+            if (otpResult.StatusCode != 200)
             {
-                return Results.Ok(new{status=false});
+                return Results.Ok(new { status = false });
             }
 
-            return Results.Ok(new{status=true,otpErrorCount = transaction.OtpErrorCount});
+            return Results.Ok(new { status = true, otpErrorCount = transaction.OtpErrorCount });
         }
 
     }

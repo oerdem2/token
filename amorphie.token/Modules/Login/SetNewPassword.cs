@@ -31,12 +31,12 @@ namespace amorphie.token.Modules.Login
                 CreatedByUserName = "Amorphie",
                 UserId = ibUser.Id
             };
-            password.HashedPassword = passwordHasher.HashPassword(newPassword,password.Id.ToString());
+            password.HashedPassword = passwordHasher.HashPassword(newPassword, password.Id.ToString());
 
             dynamic variables = new ExpandoObject();
-            foreach(var pass in oldPasswords)
+            foreach (var pass in oldPasswords)
             {
-                if(pass.HashedPassword?.Equals(password.HashedPassword) ?? false)
+                if (pass.HashedPassword?.Equals(password.HashedPassword) ?? false)
                 {
                     variables.status = false;
                     variables.message = "New Password Can Not Be Same With Last 5 Passwords";
@@ -47,7 +47,7 @@ namespace amorphie.token.Modules.Login
             await ibContext.Password.AddAsync(password);
             await ibContext.SaveChangesAsync();
 
-            
+
             variables.status = true;
             return Results.Ok(variables);
         }

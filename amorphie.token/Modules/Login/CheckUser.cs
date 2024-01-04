@@ -27,7 +27,7 @@ namespace amorphie.token.Modules.Login
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
 
             var userResponse = await internetBankingUserService.GetUser(request.Username!);
-            if(userResponse.StatusCode != 200)
+            if (userResponse.StatusCode != 200)
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
@@ -37,8 +37,8 @@ namespace amorphie.token.Modules.Login
             }
             var user = userResponse.Response;
 
-            
-            if(userResponse.StatusCode != 200)
+
+            if (userResponse.StatusCode != 200)
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
@@ -48,26 +48,26 @@ namespace amorphie.token.Modules.Login
             }
             var passwordResponse = await internetBankingUserService.GetPassword(user!.Id);
             var passwordRecord = passwordResponse.Response;
-            
-            var isVerified = internetBankingUserService.VerifyPassword(passwordRecord!.HashedPassword!,request.Password!,passwordRecord.Id.ToString());
+
+            var isVerified = internetBankingUserService.VerifyPassword(passwordRecord!.HashedPassword!, request.Password!, passwordRecord.Id.ToString());
             //Consider SuccessRehashNeeded
-            if(isVerified != PasswordVerificationResult.Success)
+            if (isVerified != PasswordVerificationResult.Success)
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = "Username or password doesn't match";
                 variables.PasswordTryCount = passwordRecord.AccessFailedCount;
-                await ibContext.Password.Where(p => p.Id == passwordRecord.Id).ExecuteUpdateAsync(setters => setters.SetProperty(p => p.AccessFailedCount,p => p.AccessFailedCount + 1));
+                await ibContext.Password.Where(p => p.Id == passwordRecord.Id).ExecuteUpdateAsync(setters => setters.SetProperty(p => p.AccessFailedCount, p => p.AccessFailedCount + 1));
 
                 return Results.Ok(variables);
             }
             else
             {
-                await ibContext.Password.Where(p => p.Id == passwordRecord.Id).ExecuteUpdateAsync(setters => setters.SetProperty(p => p.AccessFailedCount,0));
-                
+                await ibContext.Password.Where(p => p.Id == passwordRecord.Id).ExecuteUpdateAsync(setters => setters.SetProperty(p => p.AccessFailedCount, 0));
+
             }
             var userInfoResult = await profileService.GetCustomerSimpleProfile(request.Username!);
-            if(userInfoResult.StatusCode != 200)
+            if (userInfoResult.StatusCode != 200)
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
@@ -78,7 +78,7 @@ namespace amorphie.token.Modules.Login
 
             var userInfo = userInfoResult.Response;
 
-            if(userInfo!.data!.profile!.Equals("customer") || !userInfo!.data!.profile!.status!.Equals("active"))
+            if (userInfo!.data!.profile!.Equals("customer") || !userInfo!.data!.profile!.status!.Equals("active"))
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
@@ -89,7 +89,7 @@ namespace amorphie.token.Modules.Login
             }
 
             var mobilePhoneCount = userInfo!.data!.phones!.Count(p => p.type!.Equals("mobile"));
-            if(mobilePhoneCount != 1)
+            if (mobilePhoneCount != 1)
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
@@ -100,7 +100,7 @@ namespace amorphie.token.Modules.Login
             }
 
             var mobilePhone = userInfo!.data!.phones!.FirstOrDefault(p => p.type!.Equals("mobile"));
-            if(string.IsNullOrWhiteSpace(mobilePhone!.prefix) || string.IsNullOrWhiteSpace(mobilePhone!.number))
+            if (string.IsNullOrWhiteSpace(mobilePhone!.prefix) || string.IsNullOrWhiteSpace(mobilePhone!.number))
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
@@ -133,7 +133,7 @@ namespace amorphie.token.Modules.Login
 
             var migrateResult = await userService.SaveUser(userRequest);
 
-            var amorphieUserResult = await userService.Login(new LoginRequest(){Reference=request.Username!,Password=request.Password!});
+            var amorphieUserResult = await userService.Login(new LoginRequest() { Reference = request.Username!, Password = request.Password! });
             var amorphieUser = amorphieUserResult.Response;
 
             dynamic variablesSuccess = new ExpandoObject();

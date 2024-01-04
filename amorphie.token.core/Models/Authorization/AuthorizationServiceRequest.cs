@@ -12,5 +12,5 @@ public class AuthorizationServiceRequest
     public string? Nonce { get; set; }
     public string? CodeChallange { get; set; }
     public string? CodeChallangeMethod { get; set; }
-    public Guid? ConsentId{get;set;}
+    public Guid? ConsentId { get; set; }
 }

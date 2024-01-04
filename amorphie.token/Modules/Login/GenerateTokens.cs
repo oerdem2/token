@@ -63,7 +63,7 @@ namespace amorphie.token.Modules.Login
             var ipAddress = xforwardedfor.Split(",")[0].Trim();
 
             transactionService.IpAddress = ipAddress;
-            ServiceResponse<TokenResponse> result = await tokenService.GenerateTokenWithPasswordFromWorkflow(requestBody.MapTo<GenerateTokenRequest>(), clientInfo, userInfo,profile);
+            ServiceResponse<TokenResponse> result = await tokenService.GenerateTokenWithPasswordFromWorkflow(requestBody.MapTo<GenerateTokenRequest>(), clientInfo, userInfo, profile);
 
             if (result.StatusCode == 200)
             {
@@ -73,7 +73,7 @@ namespace amorphie.token.Modules.Login
                 targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
                 dynamic variables = new Dictionary<string, dynamic>();
                 variables.Add("status", true);
-                variables.Add($"TRX{transitionName.ToString().Replace("-","")}", targetObject);
+                variables.Add($"TRX{transitionName.ToString().Replace("-", "")}", targetObject);
                 Console.WriteLine("GenerateTokens Success");
                 return Results.Ok(variables);
             }

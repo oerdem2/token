@@ -35,18 +35,18 @@ public static class ValidateClient
         HttpRequest request
         )
         {
-            return Results.Ok(new{test="123"});
-            Guid.TryParse(body.GetProperty("TransactionId").ToString(),out Guid TransactionId);
+            return Results.Ok(new { test = "123" });
+            Guid.TryParse(body.GetProperty("TransactionId").ToString(), out Guid TransactionId);
             dynamic resultData = new ExpandoObject();
-            if(Guid.TryParse(body.GetProperty("ClientId").ToString(),out Guid ClientId))
+            if (Guid.TryParse(body.GetProperty("ClientId").ToString(), out Guid ClientId))
             {
                 dynamic errorData = new ExpandoObject();
                 errorData.jobKey = Convert.ToInt64(request.Headers["X-Zeebe-Job-Key"]);
                 errorData.errorCode = "Error500";
                 errorData.errorMessage = "ClientId Not Valid";
-                await daprClient.InvokeBindingAsync("zeebe-local","throw-error",errorData);    
+                await daprClient.InvokeBindingAsync("zeebe-local", "throw-error", errorData);
             }
-            
+
             await Task.CompletedTask;
             return Results.Ok();
         }
@@ -58,18 +58,18 @@ public static class ValidateClient
         HttpRequest request
         )
         {
-            return Results.Ok(new{test="123"});
-            Guid.TryParse(body.GetProperty("TransactionId").ToString(),out Guid TransactionId);
+            return Results.Ok(new { test = "123" });
+            Guid.TryParse(body.GetProperty("TransactionId").ToString(), out Guid TransactionId);
             dynamic resultData = new ExpandoObject();
-            if(Guid.TryParse(body.GetProperty("ClientId").ToString(),out Guid ClientId))
+            if (Guid.TryParse(body.GetProperty("ClientId").ToString(), out Guid ClientId))
             {
                 dynamic errorData = new ExpandoObject();
                 errorData.jobKey = Convert.ToInt64(request.Headers["X-Zeebe-Job-Key"]);
                 errorData.errorCode = "Error500";
                 errorData.errorMessage = "ClientId Not Valid";
-                await daprClient.InvokeBindingAsync("zeebe-local","throw-error",errorData);    
+                await daprClient.InvokeBindingAsync("zeebe-local", "throw-error", errorData);
             }
-            
+
             await Task.CompletedTask;
             return Results.Ok();
         }
@@ -81,18 +81,18 @@ public static class ValidateClient
         HttpRequest request
         )
         {
-            return Results.Ok(new{test="123"});
-            Guid.TryParse(body.GetProperty("TransactionId").ToString(),out Guid TransactionId);
+            return Results.Ok(new { test = "123" });
+            Guid.TryParse(body.GetProperty("TransactionId").ToString(), out Guid TransactionId);
             dynamic resultData = new ExpandoObject();
-            if(Guid.TryParse(body.GetProperty("ClientId").ToString(),out Guid ClientId))
+            if (Guid.TryParse(body.GetProperty("ClientId").ToString(), out Guid ClientId))
             {
                 dynamic errorData = new ExpandoObject();
                 errorData.jobKey = Convert.ToInt64(request.Headers["X-Zeebe-Job-Key"]);
                 errorData.errorCode = "Error500";
                 errorData.errorMessage = "ClientId Not Valid";
-                await daprClient.InvokeBindingAsync("zeebe-local","throw-error",errorData);    
+                await daprClient.InvokeBindingAsync("zeebe-local", "throw-error", errorData);
             }
-            
+
             await Task.CompletedTask;
             return Results.Ok();
         }
@@ -115,9 +115,9 @@ public static class ValidateClient
 
             var property = t.GetProperties().FirstOrDefault(p => p.Name.ToLower() == valueToCheck!.ToLower());
 
-            if(checkType!.ToLower() == "isnull")
+            if (checkType!.ToLower() == "isnull")
             {
-                if(property!.GetValue(transaction) == null)
+                if (property!.GetValue(transaction) == null)
                 {
                     transaction.TransactionNextMessage = messages[0];
                 }
@@ -126,10 +126,10 @@ public static class ValidateClient
                     transaction.TransactionNextMessage = messages[1];
                 }
             }
-            Console.WriteLine("InWorker TransactionId: "+transaction.Id);
+            Console.WriteLine("InWorker TransactionId: " + transaction.Id);
             transaction.TransactionNextEvent = TransactionNextEvent.PublishMessage;
             await transactionService.SaveTransaction(transaction);
-            return Results.Ok(new{test="123"});
+            return Results.Ok(new { test = "123" });
         }
 
         static async Task<IResult> showPage(
@@ -140,19 +140,19 @@ public static class ValidateClient
         HttpRequest request
         )
         {
-            Guid.TryParse(body.GetProperty("TransactionId").ToString(),out Guid TransactionId);
+            Guid.TryParse(body.GetProperty("TransactionId").ToString(), out Guid TransactionId);
             var pageName = body.GetProperty("PageName").ToString();
             await transactionService.GetTransaction(TransactionId);
             var transaction = transactionService.Transaction;
 
             transaction!.TransactionNextEvent = TransactionNextEvent.ShowPage;
-            if(pageName.Equals("login"))
+            if (pageName.Equals("login"))
                 transaction.TransactionNextPage = TransactionNextPage.Login;
-            if(pageName.Equals("otp"))
+            if (pageName.Equals("otp"))
                 transaction.TransactionNextPage = TransactionNextPage.Otp;
 
             await transactionService.SaveTransaction(transaction);
-            return Results.Ok(new{test="123"});
+            return Results.Ok(new { test = "123" });
         }
 
         static async Task<IResult> checkUser(
@@ -166,32 +166,32 @@ public static class ValidateClient
         {
             try
             {
-                Guid.TryParse(body.GetProperty("TransactionId").ToString(),out Guid TransactionId);
+                Guid.TryParse(body.GetProperty("TransactionId").ToString(), out Guid TransactionId);
                 var username = body.GetProperty("username").ToString();
                 var password = body.GetProperty("password").ToString();
                 await transactionService.GetTransaction(TransactionId);
                 var transaction = transactionService.Transaction;
 
-                var userResult = await userService.Login(new LoginRequest(){Reference=username,Password=password});
-                if(userResult.StatusCode == 200)
+                var userResult = await userService.Login(new LoginRequest() { Reference = username, Password = password });
+                if (userResult.StatusCode == 200)
                 {
                     transaction!.TransactionNextEvent = TransactionNextEvent.PublishMessage;
                     transaction.TransactionNextMessage = "amorphie-oauth-otp-flow";
                     transaction.User = userResult.Response;
                     await transactionService.SaveTransaction(transaction);
-                    return Results.Ok(new{test="123"});
+                    return Results.Ok(new { test = "123" });
                 }
                 else
                 {
-                    return Results.Ok(new{test="123"});
+                    return Results.Ok(new { test = "123" });
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("ex t:"+ex.ToString());
+                Console.WriteLine("ex t:" + ex.ToString());
             }
-            
-            return Results.Ok(new{test="123"});
+
+            return Results.Ok(new { test = "123" });
         }
 
         static async Task<IResult> generateOtp(
@@ -206,18 +206,18 @@ public static class ValidateClient
         {
             try
             {
-                Guid.TryParse(body.GetProperty("TransactionId").ToString(),out Guid TransactionId);
+                Guid.TryParse(body.GetProperty("TransactionId").ToString(), out Guid TransactionId);
                 await transactionService.GetTransaction(TransactionId);
 
                 var otpResult = await flowHandler.StartOtpFlow(transactionService.Transaction!);
-                
+
             }
             catch (Exception ex)
             {
-                Console.WriteLine("ex t:"+ex.ToString());
+                Console.WriteLine("ex t:" + ex.ToString());
             }
-            
-            return Results.Ok(new{test="123"});
+
+            return Results.Ok(new { test = "123" });
         }
     }
 }

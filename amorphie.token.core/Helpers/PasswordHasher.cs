@@ -215,13 +215,13 @@ namespace amorphie.token.core.Helpers
             }
         }
 
-        public  string EncryptString(string text, string keyString, bool isHexAvailable = false)
+        public string EncryptString(string text, string keyString, bool isHexAvailable = false)
         {
             if (string.IsNullOrWhiteSpace(text))
             {
                 return text;
             }
- 
+
             byte[] bytes = Encoding.UTF8.GetBytes(keyString);
             using (Aes aes = Aes.Create())
             {
@@ -236,7 +236,7 @@ namespace amorphie.token.core.Helpers
                                 streamWriter.Write(text);
                             }
                         }
- 
+
                         byte[] ıV = aes.IV;
                         byte[] array = memoryStream.ToArray();
                         byte[] array2 = new byte[ıV.Length + array.Length];
@@ -248,13 +248,13 @@ namespace amorphie.token.core.Helpers
             }
         }
 
-        public  string DecryptString(string cipherText, string keyString)
+        public string DecryptString(string cipherText, string keyString)
         {
             if (string.IsNullOrWhiteSpace(cipherText))
             {
                 return cipherText;
             }
- 
+
             byte[] array = Convert.FromBase64String(cipherText);
             byte[] array2 = new byte[16];
             byte[] array3 = new byte[array.Length - array2.Length];

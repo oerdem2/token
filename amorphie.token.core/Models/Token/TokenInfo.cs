@@ -23,5 +23,5 @@ public class TokenInfo
     public string? Reference { get; set; }
     public DateTime ExpiredAt { get; set; }
     public Guid? RelatedTokenId { get; set; }
-    public Guid? ConsentId{get;set;}
+    public Guid? ConsentId { get; set; }
 }

@@ -33,31 +33,32 @@ namespace amorphie.token.Modules.Login
                 .OrderByDescending(q => q.CreatedAt).FirstOrDefaultAsync();
 
             dynamic variables = new Dictionary<string, dynamic>();
-            if(securityQuestion == null)
+            if (securityQuestion == null)
             {
-                variables.Add("status",true);
-                variables.Add("changeSecurityQuestion",true);
+                variables.Add("status", true);
+                variables.Add("changeSecurityQuestion", true);
             }
             else
             {
                 var securityQuestionDefinition = await ibContext.QuestionDefinition.
                     FirstOrDefaultAsync(d => d.Id == securityQuestion.DefinitionId && d.IsActive && d.Type == 10);
-                if(securityQuestionDefinition == null || securityQuestion?.Status != 10)
+                if (securityQuestionDefinition == null || securityQuestion?.Status != 10)
                 {
-                    variables.Add("status",true);
-                    variables.Add("changeSecurityQuestion",true);
+                    variables.Add("status", true);
+                    variables.Add("changeSecurityQuestion", true);
                 }
                 else
                 {
-                    variables.Add("status",true);
-                    variables.Add("changeSecurityQuestion",false);
+                    variables.Add("status", true);
+                    variables.Add("changeSecurityQuestion", false);
                 }
             }
-            
-            if(variables["changeSecurityQuestion"] == true)
+
+            if (variables["changeSecurityQuestion"] == true)
             {
                 var securityQuestions = await ibContext.QuestionDefinition.Where(q => q.IsActive && q.Type == 10).Select(
-                    q => new{
+                    q => new
+                    {
                         Id = q.Id,
                         DescriptionTr = q.DescriptionTr,
                         DescriptionEn = q.DescriptionEn,
@@ -71,7 +72,7 @@ namespace amorphie.token.Modules.Login
                 targetObject.Data = dataChanged;
                 targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
                 targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
-                variables.Add($"TRX{transitionName.ToString().Replace("-","")}", targetObject);
+                variables.Add($"TRX{transitionName.ToString().Replace("-", "")}", targetObject);
             }
 
             return Results.Ok(variables);

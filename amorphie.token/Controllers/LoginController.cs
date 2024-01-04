@@ -28,8 +28,8 @@ public class LoginController : Controller
     private readonly IConsentService _consentService;
     private readonly IProfileService _profileService;
     public LoginController(ILogger<TokenController> logger, IAuthorizationService authorizationService, IUserService userService, DatabaseContext databaseContext
-    , IConfiguration configuration, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService,ITransactionService transactionService,
-    IFlowHandler flowHandler,IConsentService consentService,IProfileService profileService)
+    , IConfiguration configuration, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService, ITransactionService transactionService,
+    IFlowHandler flowHandler, IConsentService consentService, IProfileService profileService)
     {
         _logger = logger;
         _authorizationService = authorizationService;
@@ -60,11 +60,11 @@ public class LoginController : Controller
             variables.username = loginRequest.UserName;
             variables.password = loginRequest.Password;
             message.variables = variables;
-            await _daprClient.InvokeBindingAsync("zeebe-local","publish-message",message);
+            await _daprClient.InvokeBindingAsync("zeebe-local", "publish-message", message);
 
             return await WorkflowProcess();
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             return BadRequest();
         }
@@ -83,18 +83,18 @@ public class LoginController : Controller
             message.correlationKey = transaction!.Id.ToString();
             dynamic variables = new ExpandoObject();
             variables.otpValue = otpRequest.OtpValue;
-            
+
             message.variables = variables;
-            await _daprClient.InvokeBindingAsync("zeebe-local","publish-message",message);
+            await _daprClient.InvokeBindingAsync("zeebe-local", "publish-message", message);
 
             return await WorkflowProcess();
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             return BadRequest();
         }
     }
-    
+
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("public/Login")]
     public async Task<IActionResult> Login(Login loginRequest)
@@ -159,19 +159,19 @@ public class LoginController : Controller
             message.messageName = "openbanking-login-process";
             message.variables = openBankingLoginRequest;
 
-            _daprClient.InvokeBindingAsync("zeebe-local","publish-message",message);
+            _daprClient.InvokeBindingAsync("zeebe-local", "publish-message", message);
             await _transactionService.GetTransaction(Guid.Parse(openBankingLoginRequest.transactionId));
-            while(_transactionService.Transaction!.TransactionState == TransactionState.Active && _transactionService.Transaction.Next == false)
+            while (_transactionService.Transaction!.TransactionState == TransactionState.Active && _transactionService.Transaction.Next == false)
             {
                 await _transactionService.GetTransaction(Guid.Parse(openBankingLoginRequest.transactionId));
                 await Task.Delay(100);
             }
-            if(_transactionService.Transaction.TransactionState == TransactionState.Error)
+            if (_transactionService.Transaction.TransactionState == TransactionState.Error)
             {
                 ViewBag.ErrorDetail = "Bir hata oluştu. Daha sonra tekrar deneyiniz";
                 return View("error");
             }
-            if(_transactionService.Transaction.Next)
+            if (_transactionService.Transaction.Next)
             {
                 var transaction = _transactionService.Transaction;
                 transaction.Next = false;
@@ -186,11 +186,11 @@ public class LoginController : Controller
 
                 if (_transactionService.Transaction.SecondFactorMethod == SecondFactorMethod.Otp)
                 {
-                    return View("Otp",otpModel);
+                    return View("Otp", otpModel);
                 }
                 else
                 {
-                    return View("Otp",otpModel);
+                    return View("Otp", otpModel);
                 }
             }
 
@@ -207,29 +207,29 @@ public class LoginController : Controller
     private async Task<IActionResult> WorkflowProcess()
     {
         var transaction = _transactionService.Transaction;
-        
-        while(transaction!.TransactionNextEvent == TransactionNextEvent.Waiting)
+
+        while (transaction!.TransactionNextEvent == TransactionNextEvent.Waiting)
         {
             await _transactionService.ReloadTransaction();
             transaction = _transactionService.Transaction;
-            
+
             await Task.Delay(100);
         }
 
         Console.WriteLine("Transaction Not Waited Anymore");
-        Console.WriteLine("Transaction Next State: "+transaction.TransactionNextEvent);
-        if(transaction.TransactionNextEvent == TransactionNextEvent.ShowPage)
+        Console.WriteLine("Transaction Next State: " + transaction.TransactionNextEvent);
+        if (transaction.TransactionNextEvent == TransactionNextEvent.ShowPage)
         {
-            if(transaction.TransactionNextPage == TransactionNextPage.Login)
+            if (transaction.TransactionNextPage == TransactionNextPage.Login)
             {
                 var loginModel = new Login()
                 {
-                    
+
                 };
                 ViewBag.HasError = false;
                 return View("LoginPage", loginModel);
             }
-            if(transaction.TransactionNextPage == TransactionNextPage.Otp)
+            if (transaction.TransactionNextPage == TransactionNextPage.Otp)
             {
                 var otpModel = new Otp()
                 {
@@ -244,18 +244,18 @@ public class LoginController : Controller
             }
         }
 
-        if(transaction.TransactionNextEvent == TransactionNextEvent.PublishMessage)
+        if (transaction.TransactionNextEvent == TransactionNextEvent.PublishMessage)
         {
             dynamic zeebeMessage = new ExpandoObject();
             zeebeMessage.messageName = transaction.TransactionNextMessage;
             zeebeMessage.correlationKey = transaction.Id;
-            await _daprClient.InvokeBindingAsync("zeebe-local","publish-message",zeebeMessage);
+            await _daprClient.InvokeBindingAsync("zeebe-local", "publish-message", zeebeMessage);
 
             transaction.TransactionNextEvent = TransactionNextEvent.Waiting;
             await _transactionService.SaveTransaction(transaction);
         }
 
-        
+
         return await WorkflowProcess();
     }
 }

@@ -18,7 +18,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace amorphie.token.Services.Token;
 
-public class TokenService : ServiceBase,ITokenService
+public class TokenService : ServiceBase, ITokenService
 {
     private readonly IClientService _clientService;
     private readonly IUserService _userService;
@@ -34,9 +34,9 @@ public class TokenService : ServiceBase,ITokenService
     private SimpleProfileResponse? _profile;
     private IInternetBankingUserService? _internetBankingUserService;
     private IProfileService? _profileService;
-    public TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService,IClaimHandlerService claimService,
-    ITransactionService transactionService, IUserService userService ,DaprClient daprClient, DatabaseContext databaseContext
-    ,IInternetBankingUserService internetBankingUserService,IProfileService profileService):base(logger,configuration)
+    public TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, IClaimHandlerService claimService,
+    ITransactionService transactionService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext
+    , IInternetBankingUserService internetBankingUserService, IProfileService profileService) : base(logger, configuration)
     {
         _clientService = clientService;
         _userService = userService;
@@ -70,11 +70,11 @@ public class TokenService : ServiceBase,ITokenService
         var accessTokenInfo = _tokenInfoDetail.TokenList.FirstOrDefault(t => t.TokenType == TokenType.AccessToken);
         var refreshTokenInfo = _tokenInfoDetail.TokenList.FirstOrDefault(t => t.TokenType == TokenType.RefreshToken);
 
-        if(accessTokenInfo != null)
+        if (accessTokenInfo != null)
         {
             await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"], accessTokenInfo!.Id.ToString(), accessTokenInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", _tokenInfoDetail.AccessTokenDuration.ToString() } });
         }
-        if(refreshTokenInfo != null)
+        if (refreshTokenInfo != null)
         {
             await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"], refreshTokenInfo!.Id.ToString(), refreshTokenInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", _tokenInfoDetail.RefreshTokenDuration.ToString() } });
         }
@@ -89,25 +89,25 @@ public class TokenService : ServiceBase,ITokenService
         };
 
         var identityInfo = _client!.tokens!.FirstOrDefault(t => t.type == 2);
-        if(identityInfo == null)
+        if (identityInfo == null)
             return string.Empty;
 
         if (identityInfo.claims != null && identityInfo.claims.Count() > 0)
         {
-            var populatedClaims = await _claimService.PopulateClaims(identityInfo.claims,_user,_profile);
-            if(_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
+            var populatedClaims = await _claimService.PopulateClaims(identityInfo.claims, _user, _profile);
+            if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
             {
-                claims.Add(new Claim("client_id","3fa85f64-5717-4562-b3fc-2c963f66afa6"));
-                claims.Add(new Claim("email",_profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address));
-                claims.Add(new Claim("phone_number",_profile.data.phones.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString()));
-                claims.Add(new Claim("role","FullAuthorized"));
-                claims.Add(new Claim("credentials","IsInternetCustomer###1"));
-                claims.Add(new Claim("credentials","IsAnonymous###1"));
-                claims.Add(new Claim("azp","3fa85f64-5717-4562-b3fc-2c963f66afa6"));
-                claims.Add(new Claim("logon_ip",_transactionService.IpAddress ?? "undefined"));
-            }   
+                claims.Add(new Claim("client_id", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                claims.Add(new Claim("email", _profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address));
+                claims.Add(new Claim("phone_number", _profile.data.phones.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString()));
+                claims.Add(new Claim("role", "FullAuthorized"));
+                claims.Add(new Claim("credentials", "IsInternetCustomer###1"));
+                claims.Add(new Claim("credentials", "IsAnonymous###1"));
+                claims.Add(new Claim("azp", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                claims.Add(new Claim("logon_ip", _transactionService.IpAddress ?? "undefined"));
+            }
             claims.AddRange(populatedClaims);
-            
+
         }
 
         int idDuration = 0;
@@ -126,7 +126,7 @@ public class TokenService : ServiceBase,ITokenService
 
         _tokenInfoDetail!.IdTokenId = Guid.NewGuid();
         _tokenInfoDetail!.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.IdToken, _tokenInfoDetail.IdTokenId, _client.id!, DateTime.UtcNow.AddSeconds(idDuration), true, _user!.Reference
-        , new List<string>(), _user!.Id, _tokenInfoDetail.AccessTokenId,null));
+        , new List<string>(), _user!.Id, _tokenInfoDetail.AccessTokenId, null));
 
         return idToken;
     }
@@ -142,7 +142,7 @@ public class TokenService : ServiceBase,ITokenService
 
 
         var accessInfo = _client!.tokens!.FirstOrDefault(t => t.type == 0);
-        if(accessInfo == null)
+        if (accessInfo == null)
             return string.Empty;
 
         int accessDuration = 0;
@@ -161,26 +161,26 @@ public class TokenService : ServiceBase,ITokenService
         {
             foreach (var accessClaim in accessInfo.claims)
             {
-                var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims,_user);
+                var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user);
                 tokenClaims.AddRange(populatedClaims);
-                if(_tokenRequest.Scopes.Contains("temporary"))
-                    tokenClaims.Add(new Claim("isTemporary","1"));
-            } 
-            if(_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
+                if (_tokenRequest.Scopes.Contains("temporary"))
+                    tokenClaims.Add(new Claim("isTemporary", "1"));
+            }
+            if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
             {
-                tokenClaims.Add(new Claim("client_id","3fa85f64-5717-4562-b3fc-2c963f66afa6"));
-                tokenClaims.Add(new Claim("email",_profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address));
-                tokenClaims.Add(new Claim("phone_number",_profile.data.phones.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString()));
-                tokenClaims.Add(new Claim("role","FullAuthorized"));
-                tokenClaims.Add(new Claim("credentials","IsInternetCustomer###1"));
-                tokenClaims.Add(new Claim("credentials","IsAnonymous###1"));
-                tokenClaims.Add(new Claim("azp","3fa85f64-5717-4562-b3fc-2c963f66afa6"));
-                tokenClaims.Add(new Claim("logon_ip",_transactionService.IpAddress ?? "undefined"));
-            }     
+                tokenClaims.Add(new Claim("client_id", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                tokenClaims.Add(new Claim("email", _profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address));
+                tokenClaims.Add(new Claim("phone_number", _profile.data.phones.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString()));
+                tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                tokenClaims.Add(new Claim("credentials", "IsInternetCustomer###1"));
+                tokenClaims.Add(new Claim("credentials", "IsAnonymous###1"));
+                tokenClaims.Add(new Claim("azp", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                tokenClaims.Add(new Claim("logon_ip", _transactionService.IpAddress ?? "undefined"));
+            }
         }
         tokenClaims.Add(new Claim("jti", _tokenInfoDetail.AccessTokenId.ToString()));
         tokenClaims.Add(new Claim("userId", _user!.Id.ToString()));
-        tokenClaims.Add(new Claim("iat",DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()));
+        tokenClaims.Add(new Claim("iat", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()));
 
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_client.jwtSalt!));
         var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha384);
@@ -191,7 +191,7 @@ public class TokenService : ServiceBase,ITokenService
             expires: expires, signingCredentials: signinCredentials);
 
         _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.AccessToken, _tokenInfoDetail.AccessTokenId, _client.id!, DateTime.UtcNow.AddSeconds(accessDuration), true, _user.Reference
-        , _tokenRequest.Scopes!.ToArray().Except(excludedScopes).ToList(), _user.Id, null,_tokenRequest!.ConsentId));
+        , _tokenRequest.Scopes!.ToArray().Except(excludedScopes).ToList(), _user.Id, null, _tokenRequest!.ConsentId));
 
         return access_token;
     }
@@ -207,7 +207,7 @@ public class TokenService : ServiceBase,ITokenService
             tokenClaims.Add(new Claim("jti", _tokenInfoDetail.RefreshTokenId.ToString()));
             tokenClaims.Add(new Claim("userId", _user!.Id.ToString()));
         }
-        if(refreshInfo == null)
+        if (refreshInfo == null)
             return string.Empty;
 
         int refreshDuration = 0;
@@ -230,7 +230,7 @@ public class TokenService : ServiceBase,ITokenService
             expires: refreshExpires, signingCredentials: signinCredentials);
 
         _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.RefreshToken, _tokenInfoDetail.RefreshTokenId, _client.id!, DateTime.UtcNow.AddSeconds(refreshDuration), true, _user!.Reference
-        , new List<string>(), _user!.Id, _tokenInfoDetail.AccessTokenId,_tokenRequest!.ConsentId));
+        , new List<string>(), _user!.Id, _tokenInfoDetail.AccessTokenId, _tokenRequest!.ConsentId));
 
         return refresh_token;
     }
@@ -258,9 +258,9 @@ public class TokenService : ServiceBase,ITokenService
     public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithRefreshToken(GenerateTokenRequest tokenRequest)
     {
         _tokenRequest = tokenRequest;
-        
-        var refreshTokenJti = JwtHelper.GetClaim(tokenRequest.RefreshToken!,"jti");
-        if(refreshTokenJti == null)
+
+        var refreshTokenJti = JwtHelper.GetClaim(tokenRequest.RefreshToken!, "jti");
+        if (refreshTokenJti == null)
         {
             return new ServiceResponse<TokenResponse>()
             {
@@ -337,8 +337,8 @@ public class TokenService : ServiceBase,ITokenService
                 Detail = "Client is Not Authorized For Requested Scopes"
             };
         }
-        
-        if(refreshTokenInfo.UserId != null)
+
+        if (refreshTokenInfo.UserId != null)
         {
             var userResponse = await _userService.GetUserById(refreshTokenInfo.UserId!.Value);
 
@@ -370,7 +370,7 @@ public class TokenService : ServiceBase,ITokenService
 
             var tokenResponse = await GenerateTokenResponse();
 
-            if(tokenResponse.AccessToken == string.Empty || tokenResponse.RefreshToken == string.Empty)
+            if (tokenResponse.AccessToken == string.Empty || tokenResponse.RefreshToken == string.Empty)
             {
                 return new ServiceResponse<TokenResponse>()
                 {
@@ -409,7 +409,7 @@ public class TokenService : ServiceBase,ITokenService
 
         var tokenResponse = await GenerateTokenResponse();
 
-        if(tokenResponse.IdToken == string.Empty && tokenResponse.AccessToken == string.Empty)
+        if (tokenResponse.IdToken == string.Empty && tokenResponse.AccessToken == string.Empty)
         {
             return new ServiceResponse<TokenResponse>()
             {
@@ -462,9 +462,9 @@ public class TokenService : ServiceBase,ITokenService
                 Detail = "Client is Not Authorized For Requested Scopes"
             };
         }
-        
+
         var userResponse = await _internetBankingUserService.GetUser(_tokenRequest.Username!);
-        if(userResponse.StatusCode != 200)
+        if (userResponse.StatusCode != 200)
         {
             return new ServiceResponse<TokenResponse>()
             {
@@ -475,7 +475,7 @@ public class TokenService : ServiceBase,ITokenService
         var user = userResponse.Response;
 
         var passwordResponse = await _internetBankingUserService.GetPassword(user!.Id);
-        if(userResponse.StatusCode != 200)
+        if (userResponse.StatusCode != 200)
         {
             return new ServiceResponse<TokenResponse>()
             {
@@ -485,9 +485,9 @@ public class TokenService : ServiceBase,ITokenService
         }
         var passwordRecord = passwordResponse.Response;
 
-        var isVerified = _internetBankingUserService.VerifyPassword(passwordRecord!.HashedPassword!,_tokenRequest.Password!,passwordRecord.Id.ToString());
+        var isVerified = _internetBankingUserService.VerifyPassword(passwordRecord!.HashedPassword!, _tokenRequest.Password!, passwordRecord.Id.ToString());
         //Consider SuccessRehashNeeded
-        if(isVerified != PasswordVerificationResult.Success)
+        if (isVerified != PasswordVerificationResult.Success)
         {
             return new ServiceResponse<TokenResponse>()
             {
@@ -497,7 +497,7 @@ public class TokenService : ServiceBase,ITokenService
         }
 
         var userInfoResult = await _profileService.GetCustomerSimpleProfile(_tokenRequest.Username!);
-        if(userInfoResult.StatusCode != 200)
+        if (userInfoResult.StatusCode != 200)
         {
             return new ServiceResponse<TokenResponse>()
             {
@@ -508,7 +508,7 @@ public class TokenService : ServiceBase,ITokenService
 
         var userInfo = userInfoResult.Response;
         _profile = userInfo;
-        if(userInfo!.data!.profile!.Equals("customer") || !userInfo!.data!.profile!.status!.Equals("active"))
+        if (userInfo!.data!.profile!.Equals("customer") || !userInfo!.data!.profile!.status!.Equals("active"))
         {
             return new ServiceResponse<TokenResponse>()
             {
@@ -518,7 +518,7 @@ public class TokenService : ServiceBase,ITokenService
         }
 
         var mobilePhoneCount = userInfo!.data!.phones!.Count(p => p.type!.Equals("mobile"));
-        if(mobilePhoneCount != 1)
+        if (mobilePhoneCount != 1)
         {
             return new ServiceResponse<TokenResponse>()
             {
@@ -528,7 +528,7 @@ public class TokenService : ServiceBase,ITokenService
         }
 
         var mobilePhone = userInfo!.data!.phones!.FirstOrDefault(p => p.type!.Equals("mobile"));
-        if(string.IsNullOrWhiteSpace(mobilePhone!.prefix) || string.IsNullOrWhiteSpace(mobilePhone!.number))
+        if (string.IsNullOrWhiteSpace(mobilePhone!.prefix) || string.IsNullOrWhiteSpace(mobilePhone!.number))
         {
             return new ServiceResponse<TokenResponse>()
             {
@@ -584,7 +584,7 @@ public class TokenService : ServiceBase,ITokenService
 
         var tokenResponse = await GenerateTokenResponse();
 
-        if(tokenResponse.IdToken == string.Empty && tokenResponse.AccessToken == string.Empty)
+        if (tokenResponse.IdToken == string.Empty && tokenResponse.AccessToken == string.Empty)
         {
             return new ServiceResponse<TokenResponse>()
             {
@@ -663,7 +663,7 @@ public class TokenService : ServiceBase,ITokenService
 
         var tokenResponse = await GenerateTokenResponse();
 
-        if(tokenResponse.IdToken == string.Empty && tokenResponse.AccessToken == string.Empty)
+        if (tokenResponse.IdToken == string.Empty && tokenResponse.AccessToken == string.Empty)
         {
             return new ServiceResponse<TokenResponse>()
             {

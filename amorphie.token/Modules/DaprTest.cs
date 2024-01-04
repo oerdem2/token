@@ -26,21 +26,21 @@ public static class DaprTest
         app.MapGet("/oidc", oidc)
         .Produces(StatusCodes.Status200OK);
 
-        
+
         static async Task<IResult> oidc(
             HttpRequest request
         )
         {
             foreach (var header in request.Headers)
             {
-                 Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
+                Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
             }
             Console.WriteLine("geldi oidc");
             await Task.CompletedTask;
             return Results.Content("test");
         }
 
-       
+
 
 
 

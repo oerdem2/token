@@ -31,8 +31,8 @@ public class AuthorizeController : Controller
     private readonly IConsentService _consentService;
     private readonly IProfileService _profileService;
     public AuthorizeController(ILogger<AuthorizeController> logger, IAuthorizationService authorizationService, IUserService userService, DatabaseContext databaseContext
-    , IConfiguration configuration, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService,ITransactionService transactionService,
-    IFlowHandler flowHandler,IConsentService consentService,IProfileService profileService)
+    , IConfiguration configuration, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService, ITransactionService transactionService,
+    IFlowHandler flowHandler, IConsentService consentService, IProfileService profileService)
     {
         _logger = logger;
         _authorizationService = authorizationService;
@@ -52,12 +52,13 @@ public class AuthorizeController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> OpenBankingAuthorize(OpenBankingAuthorizationRequest authorizationRequest)
     {
-        Models.Transaction.Transaction transaction = new(){
+        Models.Transaction.Transaction transaction = new()
+        {
             Id = Guid.NewGuid(),
             TransactionState = TransactionState.Active
         };
         var consentResult = await _consentService.GetConsent(authorizationRequest.riza_no);
-        if(consentResult.StatusCode != 200)
+        if (consentResult.StatusCode != 200)
         {
             ViewBag.ErrorDetail = consentResult.Detail;
             return View("Error");
@@ -69,7 +70,7 @@ public class AuthorizeController : Controller
         string kmlkNo = consentData!.kmlk.kmlkVrs.ToString();
 
         var customerInfoResult = await _profileService.GetCustomerProfile(kmlkNo);
-        if(customerInfoResult.StatusCode != 200)
+        if (customerInfoResult.StatusCode != 200)
         {
             ViewBag.ErrorDetail = customerInfoResult.Detail;
             return View("Error");
@@ -86,15 +87,15 @@ public class AuthorizeController : Controller
             transactionId = _transactionService.Transaction!.Id.ToString()
         };
 
-        if(customerInfo!.businessLine == "X")
+        if (customerInfo!.businessLine == "X")
         {
-            return View("OpenBankingLoginOn",loginModel);
+            return View("OpenBankingLoginOn", loginModel);
         }
         else
         {
-            return View("OpenBankingLoginBurgan",loginModel);
+            return View("OpenBankingLoginBurgan", loginModel);
         }
-        
+
     }
 
     [HttpGet("public/Authorize")]
@@ -121,19 +122,19 @@ public class AuthorizeController : Controller
     {
         var transaction = _transactionService.Transaction;
 
-        while(transaction!.TransactionNextEvent == TransactionNextEvent.Waiting)
+        while (transaction!.TransactionNextEvent == TransactionNextEvent.Waiting)
         {
             await _transactionService.ReloadTransaction();
             transaction = _transactionService.Transaction;
-            
+
             await Task.Delay(10);
         }
 
         Console.WriteLine("Transaction Not Waited Anymore");
-        Console.WriteLine("Transaction Next State: "+transaction.TransactionNextEvent);
-        if(transaction.TransactionNextEvent == TransactionNextEvent.ShowPage)
+        Console.WriteLine("Transaction Next State: " + transaction.TransactionNextEvent);
+        if (transaction.TransactionNextEvent == TransactionNextEvent.ShowPage)
         {
-            if(transaction.TransactionNextPage == TransactionNextPage.Login)
+            if (transaction.TransactionNextPage == TransactionNextPage.Login)
             {
                 var loginModel = new Login()
                 {
@@ -148,17 +149,17 @@ public class AuthorizeController : Controller
             }
         }
 
-        if(transaction.TransactionNextEvent == TransactionNextEvent.PublishMessage)
+        if (transaction.TransactionNextEvent == TransactionNextEvent.PublishMessage)
         {
             dynamic zeebeMessage = new ExpandoObject();
             zeebeMessage.messageName = "amorphie-oauth-session-off";
             zeebeMessage.correlationKey = transaction.Id;
-            await _daprClient.InvokeBindingAsync("zeebe-local","publish-message",zeebeMessage);
+            await _daprClient.InvokeBindingAsync("zeebe-local", "publish-message", zeebeMessage);
         }
 
         transaction.TransactionNextEvent = TransactionNextEvent.Waiting;
         await _transactionService.SaveTransaction(transaction);
-        
+
         return await WorkflowProcess();
     }
 

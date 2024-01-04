@@ -85,9 +85,9 @@ else
 builder.Services.AddScoped<IInternetBankingUserService, InternetBankingUserService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
-builder.Services.AddScoped<IFlowHandler,FlowHandler>();
-builder.Services.AddScoped<ITokenService,TokenService>();
-builder.Services.AddScoped<IClaimHandlerService,ClaimHandlerService>();
+builder.Services.AddScoped<IFlowHandler, FlowHandler>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IClaimHandlerService, ClaimHandlerService>();
 
 builder.Services.AddRefitClient<IProfile>()
 .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["ProfileBaseAddress"]!))

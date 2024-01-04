@@ -18,6 +18,6 @@ public class GenerateTokenRequest
     public string? CodeVerifier { get; set; }
     public string? RecordId { get; set; }
     public IEnumerable<string>? Scopes { get; set; }
-    public Guid? ConsentId{get;set;}
+    public Guid? ConsentId { get; set; }
 
 }

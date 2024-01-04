@@ -94,5 +94,5 @@ public static class LoginOtpFlow
         }
     }
 
-    
+
 }

@@ -7,7 +7,7 @@ using amorphie.token.Services.Profile;
 
 namespace amorphie.token.Services.TransactionHandler
 {
-    public class TransactionService : ServiceBase,ITransactionService
+    public class TransactionService : ServiceBase, ITransactionService
     {
         private readonly IProfileService _profileService;
         private readonly IInternetBankingUserService _internetBankingUserService;
@@ -20,7 +20,7 @@ namespace amorphie.token.Services.TransactionHandler
         public string IpAddress { get => _ip; set => _ip = value; }
 
         public TransactionService(ILogger<TransactionService> logger, IConfiguration configuration,
-        IProfileService profileService,IInternetBankingUserService internetBankingUserService,IUserService userService,DaprClient daprClient) : base(logger, configuration)
+        IProfileService profileService, IInternetBankingUserService internetBankingUserService, IUserService userService, DaprClient daprClient) : base(logger, configuration)
         {
             _profileService = profileService;
             _internetBankingUserService = internetBankingUserService;
@@ -44,7 +44,7 @@ namespace amorphie.token.Services.TransactionHandler
             var response = new ServiceResponse();
             try
             {
-                _transaction = await _daprClient.GetStateAsync<core.Models.Transaction.Transaction>(Configuration["DAPR_STATE_STORE_NAME"],"txn_"+id.ToString());
+                _transaction = await _daprClient.GetStateAsync<core.Models.Transaction.Transaction>(Configuration["DAPR_STATE_STORE_NAME"], "txn_" + id.ToString());
                 response.StatusCode = 200;
             }
             catch (Exception ex)
@@ -52,7 +52,7 @@ namespace amorphie.token.Services.TransactionHandler
                 response.StatusCode = 500;
                 response.Detail = ex.ToString();
             }
-            
+
             return response;
         }
 
@@ -61,9 +61,9 @@ namespace amorphie.token.Services.TransactionHandler
             var response = new ServiceResponse();
             try
             {
-                _transaction = await _daprClient.GetStateAsync<core.Models.Transaction.Transaction>(Configuration["DAPR_STATE_STORE_NAME"],"txn_"+_transaction!.Id.ToString());
-                Console.WriteLine("Reload Transaction Next Event: "+_transaction.TransactionNextEvent);
-                Console.WriteLine("Reload Transaction Next Page : "+_transaction.TransactionNextPage);
+                _transaction = await _daprClient.GetStateAsync<core.Models.Transaction.Transaction>(Configuration["DAPR_STATE_STORE_NAME"], "txn_" + _transaction!.Id.ToString());
+                Console.WriteLine("Reload Transaction Next Event: " + _transaction.TransactionNextEvent);
+                Console.WriteLine("Reload Transaction Next Page : " + _transaction.TransactionNextPage);
                 response.StatusCode = 200;
             }
             catch (Exception ex)
@@ -71,7 +71,7 @@ namespace amorphie.token.Services.TransactionHandler
                 response.StatusCode = 500;
                 response.Detail = ex.ToString();
             }
-            
+
             return response;
         }
 
@@ -81,7 +81,7 @@ namespace amorphie.token.Services.TransactionHandler
             var response = new ServiceResponse();
             try
             {
-                await _daprClient.SaveStateAsync<core.Models.Transaction.Transaction>(Configuration["DAPR_STATE_STORE_NAME"],"txn_"+transaction.Id.ToString(),transaction);
+                await _daprClient.SaveStateAsync<core.Models.Transaction.Transaction>(Configuration["DAPR_STATE_STORE_NAME"], "txn_" + transaction.Id.ToString(), transaction);
                 _transaction = transaction;
                 response.StatusCode = 200;
             }
@@ -99,7 +99,7 @@ namespace amorphie.token.Services.TransactionHandler
             var response = new ServiceResponse();
             try
             {
-                await _daprClient.SaveStateAsync<core.Models.Transaction.Transaction>(Configuration["DAPR_STATE_STORE_NAME"],"txn_"+_transaction!.Id.ToString(),_transaction);
+                await _daprClient.SaveStateAsync<core.Models.Transaction.Transaction>(Configuration["DAPR_STATE_STORE_NAME"], "txn_" + _transaction!.Id.ToString(), _transaction);
                 response.StatusCode = 200;
             }
             catch (Exception ex)
@@ -115,7 +115,7 @@ namespace amorphie.token.Services.TransactionHandler
         {
             ServiceResponse response = new();
             var userResponse = await _internetBankingUserService.GetUser(username);
-            if(userResponse.StatusCode != 200)
+            if (userResponse.StatusCode != 200)
             {
                 response.StatusCode = userResponse.StatusCode;
                 response.Detail = userResponse.Detail;
@@ -124,7 +124,7 @@ namespace amorphie.token.Services.TransactionHandler
             var user = userResponse.Response;
 
             var passwordResponse = await _internetBankingUserService.GetPassword(user!.Id);
-            if(userResponse.StatusCode != 200)
+            if (userResponse.StatusCode != 200)
             {
                 response.StatusCode = userResponse.StatusCode;
                 response.Detail = userResponse.Detail;
@@ -132,17 +132,17 @@ namespace amorphie.token.Services.TransactionHandler
             }
             var passwordRecord = passwordResponse.Response;
 
-            var isVerified = _internetBankingUserService.VerifyPassword(passwordRecord!.HashedPassword,password,passwordRecord.Id.ToString());
+            var isVerified = _internetBankingUserService.VerifyPassword(passwordRecord!.HashedPassword, password, passwordRecord.Id.ToString());
             //Consider SuccessRehashNeeded
-            if(isVerified != PasswordVerificationResult.Success)
+            if (isVerified != PasswordVerificationResult.Success)
             {
                 response.StatusCode = 401;
                 response.Detail = "Username or password don't match";
                 return response;
             }
 
-            var migrateResult = await MigrateUser(username,password,passwordRecord.Id.ToString());
-            if(migrateResult.StatusCode != 200)
+            var migrateResult = await MigrateUser(username, password, passwordRecord.Id.ToString());
+            if (migrateResult.StatusCode != 200)
             {
                 response.StatusCode = migrateResult.StatusCode;
                 response.Detail = migrateResult.Detail;
@@ -158,7 +158,7 @@ namespace amorphie.token.Services.TransactionHandler
         {
             ServiceResponse response = new();
             var userResponse = await _internetBankingUserService.GetUser(username);
-            if(userResponse.StatusCode != 200)
+            if (userResponse.StatusCode != 200)
             {
                 response.StatusCode = userResponse.StatusCode;
                 response.Detail = userResponse.Detail;
@@ -167,7 +167,7 @@ namespace amorphie.token.Services.TransactionHandler
             var user = userResponse.Response;
 
             var passwordResponse = await _internetBankingUserService.GetPassword(user!.Id);
-            if(userResponse.StatusCode != 200)
+            if (userResponse.StatusCode != 200)
             {
                 response.StatusCode = userResponse.StatusCode;
                 response.Detail = userResponse.Detail;
@@ -175,28 +175,29 @@ namespace amorphie.token.Services.TransactionHandler
             }
             var passwordRecord = passwordResponse.Response;
 
-            var isVerified = _internetBankingUserService.VerifyPassword(passwordRecord!.HashedPassword,password,passwordRecord.Id.ToString());
+            var isVerified = _internetBankingUserService.VerifyPassword(passwordRecord!.HashedPassword, password, passwordRecord.Id.ToString());
             //Consider SuccessRehashNeeded
-            if(isVerified != PasswordVerificationResult.Success)
+            if (isVerified != PasswordVerificationResult.Success)
             {
                 response.StatusCode = 401;
                 response.Detail = "Username or password don't match";
                 return response;
             }
 
-            var migrateResult = await MigrateUser(username,password,passwordRecord.Id.ToString(),_transaction!.Profile);
-            if(migrateResult.StatusCode != 200)
+            var migrateResult = await MigrateUser(username, password, passwordRecord.Id.ToString(), _transaction!.Profile);
+            if (migrateResult.StatusCode != 200)
             {
                 response.StatusCode = migrateResult.StatusCode;
                 response.Detail = migrateResult.Detail;
                 return response;
             }
 
-            var userResult = await _userService.Login(new LoginRequest(){
+            var userResult = await _userService.Login(new LoginRequest()
+            {
                 Reference = username,
                 Password = password
             });
-            if(userResult.StatusCode != 200)
+            if (userResult.StatusCode != 200)
             {
                 response.StatusCode = userResult.StatusCode;
                 response.Detail = userResult.Detail;
@@ -211,22 +212,22 @@ namespace amorphie.token.Services.TransactionHandler
             return response;
         }
 
-        private async Task<ServiceResponse> MigrateUser(string username,string password,string salt,ProfileResponse? profile = null)
+        private async Task<ServiceResponse> MigrateUser(string username, string password, string salt, ProfileResponse? profile = null)
         {
             var response = new ServiceResponse();
 
             ServiceResponse<ProfileResponse>? userInfoResult = null;
-            if(profile == null)
+            if (profile == null)
             {
                 userInfoResult = await _profileService.GetCustomerProfile(username);
-                if(userInfoResult.StatusCode != 200)
+                if (userInfoResult.StatusCode != 200)
                 {
                     response.StatusCode = userInfoResult.StatusCode;
                     response.Detail = userInfoResult.Detail;
                     return response;
                 }
             }
-            
+
             var userInfo = profile ?? userInfoResult!.Response;
 
             var userRequest = new UserInfo
@@ -235,7 +236,8 @@ namespace amorphie.token.Services.TransactionHandler
                 lastName = userInfo.surname
             };
             var phone = userInfo.phones.FirstOrDefault(p => p.type == "mobile");
-            userRequest.phone = new core.Models.User.UserPhone(){
+            userRequest.phone = new core.Models.User.UserPhone()
+            {
                 countryCode = phone!.countryCode,
                 prefix = phone.prefix,
                 number = phone.number
@@ -251,7 +253,7 @@ namespace amorphie.token.Services.TransactionHandler
             userRequest.reference = username;
 
             var migrateResult = await _userService.SaveUser(userRequest);
-            if(migrateResult.StatusCode != 200)
+            if (migrateResult.StatusCode != 200)
             {
                 response.StatusCode = migrateResult.StatusCode;
                 response.Detail = migrateResult.Detail;
@@ -268,7 +270,7 @@ namespace amorphie.token.Services.TransactionHandler
 
         public ServiceResponse<LoginResponse> GetUser()
         {
-            if(_transaction!.User == null)
+            if (_transaction!.User == null)
             {
                 return new ServiceResponse<LoginResponse>()
                 {
@@ -280,13 +282,13 @@ namespace amorphie.token.Services.TransactionHandler
             return new ServiceResponse<LoginResponse>()
             {
                 StatusCode = 200,
-                Response = _transaction.User                    
+                Response = _transaction.User
             };
         }
 
         public ServiceResponse<ConsentResponse> GetConsent()
         {
-            if(_transaction!.ConsentData == null)
+            if (_transaction!.ConsentData == null)
             {
                 return new ServiceResponse<ConsentResponse>()
                 {
@@ -298,7 +300,7 @@ namespace amorphie.token.Services.TransactionHandler
             return new ServiceResponse<ConsentResponse>()
             {
                 StatusCode = 200,
-                Response = _transaction.ConsentData                    
+                Response = _transaction.ConsentData
             };
         }
 
@@ -306,7 +308,8 @@ namespace amorphie.token.Services.TransactionHandler
         {
             _transaction!.User = user;
             await SaveTransaction();
-            return new ServiceResponse(){
+            return new ServiceResponse()
+            {
                 StatusCode = 200
             };
         }
@@ -315,7 +318,8 @@ namespace amorphie.token.Services.TransactionHandler
         {
             _transaction!.ConsentData = consent;
             await SaveTransaction();
-            return new ServiceResponse(){
+            return new ServiceResponse()
+            {
                 StatusCode = 200
             };
         }

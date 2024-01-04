@@ -8,10 +8,10 @@ namespace amorphie.token.core.Models.MessagingGateway
 {
     public class SmsRequest
     {
-        
+
         public SenderType Sender { get; set; }
         public SmsTypes SmsType { get; set; }
-        public PhoneString Phone { get; set; }        
+        public PhoneString Phone { get; set; }
         public string Content { get; set; }
         public long? CustomerNo { get; set; }
         public string? CitizenshipNo { get; set; }

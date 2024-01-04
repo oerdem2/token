@@ -19,5 +19,5 @@ public class TokenResponse
     [JsonPropertyName("expires_in")]
     public int ExpiresIn { get; set; }
     [JsonPropertyName("refresh_token_expires_in")]
-    public int RefreshTokenExpiresIn{get;set;}
+    public int RefreshTokenExpiresIn { get; set; }
 }

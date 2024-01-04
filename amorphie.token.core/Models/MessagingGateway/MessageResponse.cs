@@ -7,7 +7,7 @@ namespace amorphie.token.core.Models.MessagingGateway
 {
     public class MessageResponse
     {
-        public Guid TxnId{get;set;}
-        public string Status{get;set;}
+        public Guid TxnId { get; set; }
+        public string Status { get; set; }
     }
 }

@@ -73,9 +73,9 @@ public class UserServiceLocal : IUserService
     public async Task<ServiceResponse> SaveUser(UserInfo userInfo)
     {
         var httpClient = _httpClientFactory.CreateClient("User");
-        var request = new StringContent(JsonSerializer.Serialize(userInfo),Encoding.UTF8,"application/json");
+        var request = new StringContent(JsonSerializer.Serialize(userInfo), Encoding.UTF8, "application/json");
         var httpResponseMessage = await httpClient.PostAsync(
-            "user",request);
+            "user", request);
 
         if (httpResponseMessage.IsSuccessStatusCode)
         {
@@ -90,14 +90,15 @@ public class UserServiceLocal : IUserService
     public async Task<ServiceResponse> SaveDevice(Guid userId, Guid clientId)
     {
         var httpClient = _httpClientFactory.CreateClient("User");
-        var request = new StringContent(JsonSerializer.Serialize(new{
+        var request = new StringContent(JsonSerializer.Serialize(new
+        {
             clientId = clientId,
             userId = userId,
             deviceId = Guid.NewGuid(),
             installationId = Guid.NewGuid()
-        }),Encoding.UTF8,"application/json");
+        }), Encoding.UTF8, "application/json");
         var httpResponseMessage = await httpClient.PostAsync(
-            "userDevice/save-device",request);
+            "userDevice/save-device", request);
 
         if (httpResponseMessage.IsSuccessStatusCode)
         {
