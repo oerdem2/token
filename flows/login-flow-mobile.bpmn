@@ -127,7 +127,7 @@
       </bpmn:eventBasedGateway>
       <bpmn:intermediateCatchEvent id="Event_1tx2alc" name="OtpTimeOut">
         <bpmn:incoming>Flow_0fwl4i5</bpmn:incoming>
-        <bpmn:outgoing>Flow_16bd4mz</bpmn:outgoing>
+        <bpmn:outgoing>Flow_1yc194h</bpmn:outgoing>
         <bpmn:timerEventDefinition id="TimerEventDefinition_0rwua7s">
           <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT300S</bpmn:timeDuration>
         </bpmn:timerEventDefinition>
@@ -451,7 +451,6 @@
       </bpmn:serviceTask>
       <bpmn:intermediateCatchEvent id="Event_0gevsrz" name="ReSendOtpLoginFlow">
         <bpmn:incoming>Flow_1fo25of</bpmn:incoming>
-        <bpmn:incoming>Flow_16bd4mz</bpmn:incoming>
         <bpmn:outgoing>Flow_1jpy8cq</bpmn:outgoing>
         <bpmn:messageEventDefinition id="MessageEventDefinition_13bchiw" messageRef="Message_3uqf9tc" />
       </bpmn:intermediateCatchEvent>
@@ -460,6 +459,7 @@
           <zeebe:taskDefinition type="amorphie-login-otp-flow" />
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_1jpy8cq</bpmn:incoming>
+        <bpmn:incoming>Flow_03wofh7</bpmn:incoming>
         <bpmn:outgoing>Flow_0t5o9vq</bpmn:outgoing>
       </bpmn:serviceTask>
       <bpmn:serviceTask id="Activity_0j5zygm" name="SetState">
@@ -543,7 +543,6 @@
       <bpmn:sequenceFlow id="Flow_1auoh3j" sourceRef="Activity_0j5zygm" targetRef="Gateway_0rb4ux7" />
       <bpmn:sequenceFlow id="Flow_0fwl4i5" sourceRef="Gateway_0rb4ux7" targetRef="Event_1tx2alc" />
       <bpmn:sequenceFlow id="Flow_1fo25of" sourceRef="Gateway_0rb4ux7" targetRef="Event_0gevsrz" />
-      <bpmn:sequenceFlow id="Flow_16bd4mz" sourceRef="Event_1tx2alc" targetRef="Event_0gevsrz" />
       <bpmn:sequenceFlow id="Flow_13r934l" sourceRef="Gateway_1j3fkcd" targetRef="Activity_1mkji7m">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=OtpTryCount&gt;=5</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
@@ -614,7 +613,7 @@
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=PasswordTryCount&gt;=5</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
       <bpmn:sequenceFlow id="Flow_1p0k4pu" sourceRef="Gateway_0txexl4" targetRef="Activity_03w3fvj">
-        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=PasswordTryCount=false</bpmn:conditionExpression>
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=PasswordTryCount&lt;5</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
       <bpmn:sequenceFlow id="Flow_0wzg9vm" sourceRef="Activity_1ii9wbw" targetRef="Activity_1buhejd" />
       <bpmn:sequenceFlow id="Flow_15ywhtt" sourceRef="Activity_1k39uxx" targetRef="Gateway_1j3fkcd" />
@@ -646,6 +645,13 @@
       </bpmn:intermediateCatchEvent>
       <bpmn:sequenceFlow id="Flow_05j5esr" sourceRef="Gateway_0rb4ux7" targetRef="Event_1dksbl3" />
       <bpmn:sequenceFlow id="Flow_0fff0ke" sourceRef="Event_1dksbl3" targetRef="Activity_0vpp8nt" />
+      <bpmn:intermediateCatchEvent id="Event_04ybd8v" name="ReSendOtpLoginFlow">
+        <bpmn:incoming>Flow_1yc194h</bpmn:incoming>
+        <bpmn:outgoing>Flow_03wofh7</bpmn:outgoing>
+        <bpmn:messageEventDefinition id="MessageEventDefinition_08ogtq7" messageRef="Message_3uqf9tc" />
+      </bpmn:intermediateCatchEvent>
+      <bpmn:sequenceFlow id="Flow_1yc194h" sourceRef="Event_1tx2alc" targetRef="Event_04ybd8v" />
+      <bpmn:sequenceFlow id="Flow_03wofh7" sourceRef="Event_04ybd8v" targetRef="Activity_09b920p" />
     </bpmn:subProcess>
     <bpmn:sequenceFlow id="Flow_1i1l2lo" sourceRef="StartEvent_1" targetRef="Activity_03jlkw1" />
     <bpmn:boundaryEvent id="Event_1d724tq" name="Error" attachedToRef="Activity_03jlkw1">
@@ -660,12 +666,12 @@
       <bpmn:incoming>Flow_1wp089g</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_0lxoa7v" sourceRef="Event_1ugrjsj" targetRef="Activity_08cvi3i" />
-    <bpmn:serviceTask id="Activity_08cvi3i" name="SetState">
+    <bpmn:serviceTask id="Activity_08cvi3i" name="SetState12">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="amorphie-workflow-set-state" />
         <zeebe:taskHeaders>
           <zeebe:header key="TARGET_STATE" value="amorphie-mobile-login" />
-          <zeebe:header key="PAGE_URL" value="home" />
+          <zeebe:header key="PAGE_URL" value="LOGIN" />
         </zeebe:taskHeaders>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0lxoa7v</bpmn:incoming>
@@ -1079,6 +1085,12 @@
         <dc:Bounds x="2100" y="670" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1n8linf" bpmnElement="Event_04ybd8v">
+        <dc:Bounds x="1172" y="1052" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1147" y="1097.5" width="85" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_0lkav5t_di" bpmnElement="Flow_0lkav5t">
         <di:waypoint x="880" y="710" />
         <di:waypoint x="945" y="710" />
@@ -1223,10 +1235,6 @@
       <bpmndi:BPMNEdge id="Flow_1fo25of_di" bpmnElement="Flow_1fo25of">
         <di:waypoint x="1415" y="990" />
         <di:waypoint x="1308" y="990" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_16bd4mz_di" bpmnElement="Flow_16bd4mz">
-        <di:waypoint x="1290" y="1052" />
-        <di:waypoint x="1290" y="1008" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_13r934l_di" bpmnElement="Flow_13r934l">
         <di:waypoint x="1710" y="1135" />
@@ -1448,6 +1456,16 @@
       <bpmndi:BPMNEdge id="Flow_0fff0ke_di" bpmnElement="Flow_0fff0ke">
         <di:waypoint x="1578" y="990" />
         <di:waypoint x="1720" y="990" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1yc194h_di" bpmnElement="Flow_1yc194h">
+        <di:waypoint x="1272" y="1070" />
+        <di:waypoint x="1208" y="1070" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03wofh7_di" bpmnElement="Flow_03wofh7">
+        <di:waypoint x="1190" y="1052" />
+        <di:waypoint x="1190" y="961" />
+        <di:waypoint x="1110" y="961" />
+        <di:waypoint x="1110" y="870" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="Event_1d724tq_di" bpmnElement="Event_1d724tq">
         <dc:Bounds x="3392" y="1632" width="36" height="36" />
