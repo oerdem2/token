@@ -304,6 +304,8 @@ public class TokenController : Controller
 
         if(!claimValues.ContainsKey("client_id"))
             claimValues.Add("client_id", client.code ?? client.id!);
+        if(!claimValues.ContainsKey("clientId"))
+            claimValues.Add("clientId", client.code ?? client.id!);
         claimValues.Add("active", true);
         return Results.Json(claimValues);
     }
