@@ -30,6 +30,7 @@ namespace amorphie.token.Modules.Login
             dynamic variables = new ExpandoObject();
             variables.PasswordTryCount = 0;
             variables.wrongCredentials = false;
+            variables.disableUser = false;
 
             var userResponse = await internetBankingUserService.GetUser(request.Username!);
             if (userResponse.StatusCode != 200)
@@ -74,10 +75,7 @@ namespace amorphie.token.Modules.Login
                 {
                     variables.disableUser = true;
                 }
-                else
-                {
-                    variables.disableUser = false;
-                }
+  
                 await ibContext.SaveChangesAsync();
                 return Results.Ok(variables);
             }
