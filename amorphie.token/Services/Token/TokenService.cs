@@ -432,7 +432,6 @@ public class TokenService : ServiceBase, ITokenService
     public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithPassword(GenerateTokenRequest tokenRequest)
     {
         _tokenRequest = tokenRequest;
-
         ServiceResponse<ClientResponse> clientResponse;
         if(Guid.TryParse(_tokenRequest.ClientId!,out Guid _))
         {

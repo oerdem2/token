@@ -21,7 +21,7 @@ namespace amorphie.token.Modules.Login
             var ibUserSerialized = body.GetProperty("ibUserSerialized").ToString();
             IBUser ibUser = JsonSerializer.Deserialize<IBUser>(ibUserSerialized);
             Console.WriteLine("Step - 3");
-            var oldPasswords = await ibContext.Password.Where(p => p.UserId == ibUser.Id).OrderBy(p => p.CreatedAt).Take(5).ToListAsync();
+            var oldPasswords = await ibContext.Password.Where(p => p.UserId == ibUser.Id).OrderByDescending(p => p.CreatedAt).Take(5).ToListAsync();
 
             PasswordHasher passwordHasher = new();
             IBPassword password = new IBPassword
