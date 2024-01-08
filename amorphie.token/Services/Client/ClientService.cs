@@ -138,4 +138,130 @@ public class ClientService : ServiceBase, IClientService
             Detail = "Server Error"
         };
     }
+
+    public async Task<ServiceResponse<ClientResponse>> CheckClientByCode(string clientCode)
+    {
+        try
+        {
+            var client = await _daprClient.InvokeMethodAsync<ClientResponse>(HttpMethod.Get, Configuration["ClientServiceAppName"], "client/code/" + clientCode);
+            if (client == null)
+            {
+                return new ServiceResponse<ClientResponse>()
+                {
+                    StatusCode = 460,
+                    Detail = "Client Not Found"
+                };
+            }
+            return new ServiceResponse<ClientResponse>()
+            {
+                StatusCode = 200,
+                Response = client
+            };
+        }
+        catch (InvocationException ex)
+        {
+            Logger.LogError("Dapr Service Invocation Failed | Detail:" + ex.ToString());
+            if ((int)ex.Response.StatusCode >= 400 && (int)ex.Response.StatusCode < 500)
+            {
+                if ((int)ex.Response.StatusCode == 460)
+                {
+                    return new ServiceResponse<ClientResponse>()
+                    {
+                        StatusCode = 460,
+                        Detail = "Client Not Found"
+                    };
+                }
+
+            }
+            else
+            {
+                return new ServiceResponse<ClientResponse>()
+                {
+                    StatusCode = 500,
+                    Detail = "Server Error"
+                };
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Logger.LogError("An Error Occured At Client Invocation | Detail:" + ex.ToString());
+            return new ServiceResponse<ClientResponse>()
+            {
+                StatusCode = 500,
+                Detail = "Server Error"
+            };
+        }
+        return new ServiceResponse<ClientResponse>()
+        {
+            StatusCode = 500,
+            Detail = "Server Error"
+        };
+
+    }
+
+    public async Task<ServiceResponse<ClientResponse>> ValidateClientByCode(string clientCode, string clientSecret)
+    {
+        try
+        {
+            var client = await _daprClient.InvokeMethodAsync<ValidateClientByCodeRequest, ClientResponse>(Configuration["ClientServiceAppName"], "/client/validateClientByCode",
+            new()
+            {
+                Code = clientCode,
+                Secret = clientSecret
+            });
+
+            if (client == null)
+            {
+                return new ServiceResponse<ClientResponse>()
+                {
+                    StatusCode = 460,
+                    Detail = "Client Not Found"
+                };
+            }
+            return new ServiceResponse<ClientResponse>()
+            {
+                StatusCode = 200,
+                Response = client
+            };
+        }
+        catch (InvocationException ex)
+        {
+            Logger.LogError("Dapr Service Invocation Failed | Detail:" + ex.ToString());
+            if ((int)ex.Response.StatusCode >= 400 && (int)ex.Response.StatusCode < 500)
+            {
+                if ((int)ex.Response.StatusCode == 460)
+                {
+                    return new ServiceResponse<ClientResponse>()
+                    {
+                        StatusCode = 460,
+                        Detail = "Client Not Found"
+                    };
+                }
+
+            }
+            else
+            {
+                return new ServiceResponse<ClientResponse>()
+                {
+                    StatusCode = 500,
+                    Detail = "Server Error"
+                };
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Logger.LogError("An Error Occured At Client Invocation | Detail:" + ex.Message);
+            return new ServiceResponse<ClientResponse>()
+            {
+                StatusCode = 500,
+                Detail = "Server Error"
+            };
+        }
+
+        return new ServiceResponse<ClientResponse>()
+        {
+            StatusCode = 500,
+            Detail = "Server Error"
+        };
+    }
 }

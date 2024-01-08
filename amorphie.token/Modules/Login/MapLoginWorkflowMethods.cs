@@ -21,6 +21,9 @@ namespace amorphie.token.Modules.Login
             app.MapPost("/amorphie-login-check-user", CheckUser.checkUser)
             .Produces(StatusCodes.Status200OK);
 
+            app.MapPost("/amorphie-login-disable-user", DisableUser.disableUser)
+            .Produces(StatusCodes.Status200OK);
+
             app.MapPost("/amorphie-login-set-login-type", SetLoginType.setLoginType)
             .Produces(StatusCodes.Status200OK);
 
@@ -28,6 +31,9 @@ namespace amorphie.token.Modules.Login
             .Produces(StatusCodes.Status200OK);
 
             app.MapPost("/amorphie-login-check-otp-flow", CheckOtpFlow.checkOtpFlow)
+            .Produces(StatusCodes.Status200OK);
+
+            app.MapPost("/amorphie-login-clear-otp-flow", ClearOtpFlow.clearOtpFlow)
             .Produces(StatusCodes.Status200OK);
 
             app.MapPost("/amorphie-login-check-password-change", CheckPasswordChange.checkPasswordChange)

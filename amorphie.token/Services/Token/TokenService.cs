@@ -159,16 +159,15 @@ public class TokenService : ServiceBase, ITokenService
 
         if (accessInfo.claims != null && accessInfo.claims.Count() > 0)
         {
-            foreach (var accessClaim in accessInfo.claims)
-            {
-                var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user);
-                tokenClaims.AddRange(populatedClaims);
-                if (_tokenRequest.Scopes.Contains("temporary"))
-                    tokenClaims.Add(new Claim("isTemporary", "1"));
-            }
+            
+            var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user, _profile);
+            tokenClaims.AddRange(populatedClaims);
+            if (_tokenRequest.Scopes.Contains("temporary"))
+                tokenClaims.Add(new Claim("isTemporary", "1"));
+            
             if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
             {
-                tokenClaims.Add(new Claim("client_id", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                tokenClaims.Add(new Claim("client_id", _client.code ?? _client.id));
                 tokenClaims.Add(new Claim("email", _profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address));
                 tokenClaims.Add(new Claim("phone_number", _profile.data.phones.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString()));
                 tokenClaims.Add(new Claim("role", "FullAuthorized"));
@@ -365,7 +364,7 @@ public class TokenService : ServiceBase, ITokenService
 
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_client.jwtSalt!));
         JwtSecurityToken? refreshTokenValidated;
-        if (JwtHelper.ValidateToken(tokenRequest.RefreshToken!, "BurganIam", _client.returnuri, secretKey, out refreshTokenValidated))
+        if (JwtHelper.ValidateToken(tokenRequest.RefreshToken!, "BurganIam", _client.returnuri,Configuration.GetSection("validAudiences").Get<IEnumerable<string>>(), secretKey, out refreshTokenValidated))
         {
 
             var tokenResponse = await GenerateTokenResponse();
@@ -431,7 +430,15 @@ public class TokenService : ServiceBase, ITokenService
     {
         _tokenRequest = tokenRequest;
 
-        var clientResponse = await _clientService.ValidateClient(_tokenRequest.ClientId!, _tokenRequest.ClientSecret!);
+        ServiceResponse<ClientResponse> clientResponse;
+        if(Guid.TryParse(_tokenRequest.ClientId!,out Guid _))
+        {
+            clientResponse = await _clientService.ValidateClient(_tokenRequest.ClientId!, _tokenRequest.ClientSecret!);
+        }
+        else
+        {
+            clientResponse = await _clientService.ValidateClientByCode(_tokenRequest.ClientId!, _tokenRequest.ClientSecret!);
+        }
 
         if (clientResponse.StatusCode != 200)
         {

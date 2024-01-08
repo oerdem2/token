@@ -14,6 +14,7 @@ using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.MessagingGateway;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.TransactionHandler;
+using Dapr.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Refit;
 
@@ -102,6 +103,8 @@ builder.Services.AddRefitClient<IMessagingGateway>()
 .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["MessagingGatewayBaseAddress"]!));
 builder.Logging.ClearProviders();
 var app = builder.Build();
+app.UseTransactionMiddleware();
+
 
 //Db Migrate
 using var scope = app.Services.CreateScope();
@@ -131,7 +134,6 @@ app.MapTokenLoginSetTransaction();
 
 app.MapAmorphieOauthCheckClientEndpoint();
 
-app.UseTransactionMiddleware();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

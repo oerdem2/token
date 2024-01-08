@@ -13,7 +13,7 @@ public class UserServiceLocal : IUserService
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<ServiceResponse<object>> CheckDevice(Guid userId, Guid clientId)
+    public async Task<ServiceResponse<object>> CheckDevice(Guid userId, string clientId)
     {
         var httpClient = _httpClientFactory.CreateClient("User");
         var httpResponseMessage = await httpClient.GetAsync($"userDevice/search?Page=0&PageSize=50&Keyword={userId}&&{clientId}&SortColumn=CreatedAt&SortDirection=Desc");
@@ -87,7 +87,7 @@ public class UserServiceLocal : IUserService
         }
     }
 
-    public async Task<ServiceResponse> SaveDevice(Guid userId, Guid clientId)
+    public async Task<ServiceResponse> SaveDevice(Guid userId, string clientId)
     {
         var httpClient = _httpClientFactory.CreateClient("User");
         var request = new StringContent(JsonSerializer.Serialize(new

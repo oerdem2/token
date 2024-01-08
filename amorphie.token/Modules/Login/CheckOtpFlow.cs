@@ -16,36 +16,18 @@ public static class CheckOtpFlow
     DaprClient daprClient
     )
     {
-        Console.WriteLine("CheckOtp called");
         var transactionId = body.GetProperty("InstanceId").ToString();
-        Console.WriteLine("check otp txn Id:" + transactionId);
         var entityData = body.GetProperty("TRXamorphiemobileloginsendotp").GetProperty("Data").GetProperty("entityData").ToString();
 
         var entityObj = JsonSerializer.Deserialize<Dictionary<string, object>>(entityData);
         var providedCode = entityObj["otpValue"].ToString();
+        var generatedCode = await daprClient.GetStateAsync<string?>(configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code");
 
-        var generatedCode = await daprClient.GetStateAsync<string>(configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code");
-
-        if (providedCode == generatedCode)
+        if (generatedCode != null && providedCode == generatedCode)
         {
             dynamic variables = new ExpandoObject();
             variables.otpMatch = true;
-            Console.WriteLine("CheckOtp Success");
-
-            var clientInfoSerialized = body.GetProperty("clientSerialized").ToString();
-
-            ClientResponse clientInfo = JsonSerializer.Deserialize<ClientResponse>(clientInfoSerialized, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            var userInfoSerialized = body.GetProperty("userSerialized").ToString();
-
-            LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
+            
             //await userService.SaveDevice(userInfo.Id,Guid.Parse(clientInfo.id));
             return Results.Ok(variables);
         }

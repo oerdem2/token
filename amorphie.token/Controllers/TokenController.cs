@@ -17,6 +17,7 @@ using System.Dynamic;
 using System.Security.Claims;
 using Google.Api;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
+using VaultSharp.V1.AuthMethods.Token.Models;
 
 namespace amorphie.token.core.Controllers;
 
@@ -232,19 +233,6 @@ public class TokenController : Controller
     [Consumes("application/x-www-form-urlencoded")]
     public async Task<IResult> Introspect([FromForm] string token, [FromQuery] bool isTemporary = false)
     {
-        foreach (var q in HttpContext.Request.Query)
-        {
-            Console.WriteLine($"Query Key:{q.Key}  Query Value:{q.Value}");
-        }
-        foreach (var f in HttpContext.Request.Form)
-        {
-            Console.WriteLine($"Form Key:{f.Key}  Form Value:{f.Value}");
-        }
-        foreach (var h in HttpContext.Request.Headers)
-        {
-            Console.WriteLine($"Header Key:{h.Key}  Header Value:{h.Value}");
-        }
-
         var temporary = JwtHelper.GetClaim(token, "isTemporary");
 
         if (temporary != null && temporary.Equals("1"))
@@ -270,7 +258,16 @@ public class TokenController : Controller
         if (accessTokenInfo.TokenType != TokenType.AccessToken || !accessTokenInfo.IsActive)
             return Results.Json(new { active = false });
 
-        var clientInfo = await _clientService.CheckClient(accessTokenInfo.ClientId);
+        ServiceResponse<ClientResponse> clientInfo;
+        if(Guid.TryParse(accessTokenInfo.ClientId,out Guid _))
+        {
+            clientInfo = await _clientService.CheckClient(accessTokenInfo.ClientId);
+        }
+        else
+        {
+            clientInfo = await _clientService.CheckClientByCode(accessTokenInfo.ClientId);
+        }
+        
         var client = clientInfo.Response;
 
         if (client == null)
@@ -280,27 +277,31 @@ public class TokenController : Controller
 
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.jwtSalt!));
 
-        if (!JwtHelper.ValidateToken(token, "BurganIam", client!.returnuri, secretKey, out JwtSecurityToken? validatedToken))
+        if (!JwtHelper.ValidateToken(token, "BurganIam", client!.returnuri, _configuration.GetSection("validAudiences").Get<IEnumerable<string>>(),secretKey, out JwtSecurityToken? validatedToken))
         {
             return Results.Json(new { active = false });
         }
 
-        foreach (var c in validatedToken!.Claims)
-        {
-            Console.WriteLine($"C Key : {c.Type} C Value:{c.Value}");
-        }
         Dictionary<string, object> claimValues = new();
         foreach (Claim claim in validatedToken!.Claims)
         {
-            if (!claimValues.ContainsKey(claim.Type.Replace(".", "_")))
+            if(!claimValues.ContainsKey(claim.Type))
             {
-                if (!claim.Type.Equals("exp") && !claim.Type.Equals("nbf") && !claim.Type.Equals("iat"))
-                    claimValues.Add(claim.Type.Replace(".", "_"), claim.Value);
+                if(validatedToken!.Claims.Count(c => c.Type == claim.Type) > 1)
+                {
+                    claimValues.Add(claim.Type.Replace(".", "_"), validatedToken!.Claims.Where(c => c.Type == claim.Type).Select(c => c.Value));
+                }
                 else
-                    claimValues.Add(claim.Type.Replace(".", "_"), long.Parse(claim.Value));
+                {
+                    if (!claim.Type.Equals("exp") && !claim.Type.Equals("nbf") && !claim.Type.Equals("iat"))
+                        claimValues.Add(claim.Type.Replace(".", "_"), claim.Value);
+                    else
+                        claimValues.Add(claim.Type.Replace(".", "_"), long.Parse(claim.Value));
+                }
             }
+            
         }
-        claimValues.Add("clientId", client.id!);
+        claimValues.Add("client_id", client.code ?? client.id!);
         claimValues.Add("active", true);
         return Results.Json(claimValues);
     }

@@ -24,7 +24,16 @@ namespace amorphie.token.Modules.Login
             var requestBodySerialized = body.GetProperty($"TRXamorphiemobilelogin").GetProperty("Data").GetProperty("entityData").ToString();
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
 
-            var clientResult = await clientService.ValidateClient(request.ClientId!, request.ClientSecret!);
+            ServiceResponse<ClientResponse> clientResult;
+            if(Guid.TryParse(request.ClientId,out Guid _))
+            {
+                clientResult = await clientService.ValidateClient(request.ClientId!, request.ClientSecret!);
+            }
+            else
+            {
+                clientResult = await clientService.ValidateClientByCode(request.ClientId!, request.ClientSecret!);
+            }
+
             if (clientResult.StatusCode == 200)
             {
                 dynamic variables = new ExpandoObject();

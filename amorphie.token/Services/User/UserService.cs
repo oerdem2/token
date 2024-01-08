@@ -10,7 +10,7 @@ public class UserService : ServiceBase, IUserService
         _daprClient = daprClient;
     }
 
-    public async Task<ServiceResponse<object>> CheckDevice(Guid userId, Guid clientId)
+    public async Task<ServiceResponse<object>> CheckDevice(Guid userId, string clientId)
     {
         try
         {
@@ -226,8 +226,9 @@ public class UserService : ServiceBase, IUserService
         }
     }
 
-    public Task<ServiceResponse> SaveDevice(Guid userId, Guid clientId)
+    public Task<ServiceResponse> SaveDevice(Guid userId, string clientId)
     {
+        //Modify
         throw new NotImplementedException();
     }
 }

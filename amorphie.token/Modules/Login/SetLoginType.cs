@@ -62,7 +62,7 @@ namespace amorphie.token.Modules.Login
 
             targetObject.Data = dataChanged;
 
-            ServiceResponse<object> response = await userService.CheckDevice(userInfo.Id, Guid.Parse(clientInfo.id!));
+            ServiceResponse<object> response = await userService.CheckDevice(userInfo.Id, clientInfo.id!);
             dynamic variables = new Dictionary<string, dynamic>();
             dataChanged.additionalData = new ExpandoObject();
             dataChanged.additionalData.phoneNumber = "0" + userInfo.MobilePhone.Prefix.ToString().Substring(0, 2) + "******" + userInfo.MobilePhone.Number.ToString().Substring(userInfo.MobilePhone.Number.Length - 3, 2);

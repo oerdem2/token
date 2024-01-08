@@ -62,6 +62,7 @@ public class JwtHelper
     string token,
     string issuer,
     string? audience,
+    IEnumerable<string> audienceList,
     SecurityKey signingKey,
     out JwtSecurityToken? jwt
     )
@@ -71,10 +72,11 @@ public class JwtHelper
             ValidateIssuer = true,
             ValidIssuer = issuer,
             ValidateAudience = true,
-            ValidAudience = audience,
+            ValidAudiences = audienceList,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = signingKey,
-            ValidateLifetime = true
+            ValidateLifetime = true,
+
         };
 
         try
