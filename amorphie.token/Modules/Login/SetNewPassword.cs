@@ -3,6 +3,7 @@ using System.Text.Json;
 using amorphie.core.Zeebe.dapr;
 using amorphie.token.core.Models.InternetBanking;
 using amorphie.token.data;
+using amorphie.token.Services.InternetBanking;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,7 +13,8 @@ namespace amorphie.token.Modules.Login
     {
         public static async Task<IResult> setNewPassword(
         [FromBody] dynamic body,
-        [FromServices] IbDatabaseContext ibContext
+        [FromServices] IbDatabaseContext ibContext,
+        [FromServices] IInternetBankingUserService internetBankingUserService
         )
         {
             Console.WriteLine("Step - 1");
@@ -39,7 +41,7 @@ namespace amorphie.token.Modules.Login
                 Console.WriteLine("hashed pass: "+pass.HashedPassword);
                 Console.WriteLine("new password: "+newPassword);
                 Console.WriteLine("pass ID: "+pass.Id);
-                Console.WriteLine("pass result: "+passwordHasher.VerifyHashedPassword(pass.HashedPassword,newPassword,pass.Id.ToString()));
+                Console.WriteLine("pass result: "+internetBankingUserService.VerifyPassword(pass.HashedPassword,newPassword,pass.Id.ToString()));
                 if (passwordHasher.VerifyHashedPassword(pass.HashedPassword,newPassword,pass.Id.ToString()) != PasswordVerificationResult.Failed)
                 {
                     Console.WriteLine("Step - 7");
