@@ -72,6 +72,7 @@ public class JwtHelper
             ValidateIssuer = true,
             ValidIssuer = issuer,
             ValidateAudience = true,
+            ValidAudience = audience,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = signingKey,
             ValidateLifetime = true,
