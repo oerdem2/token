@@ -37,7 +37,9 @@ namespace amorphie.token.Modules.Login
             {
                 Console.WriteLine("Step - 6");
                 Console.WriteLine("hashed pass: "+pass.HashedPassword);
+                Console.WriteLine("new password: "+newPassword);
                 Console.WriteLine("pass ID: "+pass.Id);
+                Console.WriteLine("pass result: "+passwordHasher.VerifyHashedPassword(pass.HashedPassword,newPassword,pass.Id.ToString()));
                 if (passwordHasher.VerifyHashedPassword(pass.HashedPassword,newPassword,pass.Id.ToString()) != PasswordVerificationResult.Failed)
                 {
                     Console.WriteLine("Step - 7");

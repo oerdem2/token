@@ -314,7 +314,7 @@ public class TokenController : Controller
     [HttpPost("public/Token")]
     public async Task<IActionResult> Token([FromBody] TokenRequest tokenRequest)
     {
-        string? xforwardedfor = HttpContext.Request.Headers.ContainsKey("X-Forwarded-For") ? HttpContext.Request.Headers.FirstOrDefault(h => h.Key.ToLower().Equals("x-forwarded-for")).Value.ToString() : HttpContext.Connection.RemoteIpAddress?.ToString();
+         string? xforwardedfor = HttpContext.Request.Headers.ContainsKey("X-Forwarded-For") ? HttpContext.Request.Headers.FirstOrDefault(h => h.Key.ToLower().Equals("x-forwarded-for")).Value.ToString() : HttpContext.Connection.RemoteIpAddress?.ToString();
         var ipAddress = xforwardedfor?.Split(",")[0].Trim() ?? xforwardedfor;
         _transactionService.IpAddress = ipAddress;
 
