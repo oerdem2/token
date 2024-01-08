@@ -486,7 +486,6 @@ public class TokenService : ServiceBase, ITokenService
 
         var userStatus = await _ibContext.Status.Where(s => s.UserId == user!.Id && (!s.State.HasValue || s.State.Value == 10)).OrderByDescending(s => s.CreatedAt).FirstOrDefaultAsync();
 
-
         var passwordResponse = await _internetBankingUserService.GetPassword(user!.Id);
         if (userResponse.StatusCode != 200)
         {

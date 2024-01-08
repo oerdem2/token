@@ -44,7 +44,7 @@ namespace amorphie.token.Modules.Login
             var user = userResponse.Response;
             variables.ibUserSerialized = JsonSerializer.Serialize(user);
 
-            var userStatus = await ibContext.Status.Where(s => !s.State.HasValue || s.State.Value == 10).OrderByDescending(s => s.CreatedAt).FirstOrDefaultAsync();
+            var userStatus = await ibContext.Status.Where(s => s.UserId == user!.Id && (!s.State.HasValue || s.State.Value == 10)).OrderByDescending(s => s.CreatedAt).FirstOrDefaultAsync();
             if (userStatus?.Type == 30 || userStatus?.Type == 40)
             {
                 variables.status = false;
