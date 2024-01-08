@@ -37,6 +37,7 @@ namespace amorphie.token.Modules.Login
                 variables.status = false;
                 variables.message = "User Not Found";
                 variables.LastTransition = "amorphie-login-error";
+                variables.wrongCredentials = true;
                 return Results.Ok(variables);
             }
             var user = userResponse.Response;
@@ -57,6 +58,7 @@ namespace amorphie.token.Modules.Login
                 variables.status = false;
                 variables.message = "Password not found";
                 variables.LastTransition = "amorphie-login-error";
+                variables.wrongCredentials = true;
                 return Results.Ok(variables);
             }
             var passwordRecord = passwordResponse.Response;
@@ -91,6 +93,7 @@ namespace amorphie.token.Modules.Login
             {
                 variables.status = false;
                 variables.message = "UserInfo Not Found";
+                variables.wrongCredentials = true;
                 return Results.Ok(variables);
             }
 
@@ -101,6 +104,7 @@ namespace amorphie.token.Modules.Login
                 variables.status = false;
                 variables.message = "User is Not Customer Or Not Active";
                 variables.LastTransition = "amorphie-login-error";
+                variables.wrongCredentials = true;
                 return Results.Ok(variables);
             }
 
