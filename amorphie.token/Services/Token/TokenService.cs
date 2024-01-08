@@ -13,6 +13,7 @@ using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.TransactionHandler;
 using Google.Protobuf.WellKnownTypes;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.IdentityModel.Tokens;
 
@@ -33,10 +34,11 @@ public class TokenService : ServiceBase, ITokenService
     private LoginResponse? _user;
     private SimpleProfileResponse? _profile;
     private IInternetBankingUserService? _internetBankingUserService;
+    private IbDatabaseContext _ibContext;
     private IProfileService? _profileService;
     public TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, IClaimHandlerService claimService,
     ITransactionService transactionService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext
-    , IInternetBankingUserService internetBankingUserService, IProfileService profileService) : base(logger, configuration)
+    , IInternetBankingUserService internetBankingUserService, IProfileService profileService,IbDatabaseContext ibContext) : base(logger, configuration)
     {
         _clientService = clientService;
         _userService = userService;
@@ -46,6 +48,7 @@ public class TokenService : ServiceBase, ITokenService
         _claimService = claimService;
         _internetBankingUserService = internetBankingUserService;
         _profileService = profileService;
+        _ibContext = ibContext;
         _tokenInfoDetail = new();
     }
 
@@ -480,6 +483,9 @@ public class TokenService : ServiceBase, ITokenService
             };
         }
         var user = userResponse.Response;
+
+        var userStatus = await _ibContext.Status.Where(s => s.UserId == user!.Id && (!s.State.HasValue || s.State.Value == 10)).OrderByDescending(s => s.CreatedAt).FirstOrDefaultAsync();
+
 
         var passwordResponse = await _internetBankingUserService.GetPassword(user!.Id);
         if (userResponse.StatusCode != 200)
