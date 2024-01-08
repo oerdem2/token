@@ -48,7 +48,6 @@ namespace amorphie.token.Modules.Login
             {
                 variables.status = false;
                 variables.message = "User Not Active";
-                variables.LastTransition = "amorphie-login-error";
                 return Results.Ok(variables);
             }
 
@@ -57,7 +56,6 @@ namespace amorphie.token.Modules.Login
             {
                 variables.status = false;
                 variables.message = "Password not found";
-                variables.LastTransition = "amorphie-login-error";
                 variables.wrongCredentials = true;
                 return Results.Ok(variables);
             }
@@ -79,11 +77,13 @@ namespace amorphie.token.Modules.Login
                 {
                     variables.disableUser = false;
                 }
+                await ibContext.SaveChangesAsync();
                 return Results.Ok(variables);
             }
             else
             {
                 passwordRecord.AccessFailedCount = 0;
+                await ibContext.SaveChangesAsync();
             }
 
             variables.PasswordTryCount = passwordRecord.AccessFailedCount;
