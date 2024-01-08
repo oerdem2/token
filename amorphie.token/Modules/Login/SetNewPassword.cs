@@ -36,7 +36,7 @@ namespace amorphie.token.Modules.Login
             dynamic variables = new ExpandoObject();
             foreach (var pass in oldPasswords)
             {
-                if (pass.HashedPassword?.Equals(password.HashedPassword) ?? false)
+                if (passwordHasher.VerifyHashedPassword(pass.HashedPassword,newPassword,pass.Id.ToString()) != PasswordVerificationResult.Failed)
                 {
                     variables.status = false;
                     variables.message = "New Password Can Not Be Same With Last 5 Passwords";
