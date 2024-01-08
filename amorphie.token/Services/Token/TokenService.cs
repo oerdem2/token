@@ -364,7 +364,7 @@ public class TokenService : ServiceBase, ITokenService
 
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_client.jwtSalt!));
         JwtSecurityToken? refreshTokenValidated;
-        if (JwtHelper.ValidateToken(tokenRequest.RefreshToken!, "BurganIam", _client.returnuri,Configuration.GetSection("validAudiences").Get<IEnumerable<string>>(), secretKey, out refreshTokenValidated))
+        if (JwtHelper.ValidateToken(tokenRequest.RefreshToken!, "BurganIam", _client.returnuri, secretKey, out refreshTokenValidated))
         {
 
             var tokenResponse = await GenerateTokenResponse();

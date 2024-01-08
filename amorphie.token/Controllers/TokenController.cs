@@ -277,7 +277,7 @@ public class TokenController : Controller
 
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.jwtSalt!));
 
-        if (!JwtHelper.ValidateToken(token, "BurganIam", client!.returnuri,new List<string>(),secretKey, out JwtSecurityToken? validatedToken))
+        if (!JwtHelper.ValidateToken(token, "BurganIam", client!.returnuri,secretKey, out JwtSecurityToken? validatedToken))
         {
             return Results.Json(new { active = false });
         }

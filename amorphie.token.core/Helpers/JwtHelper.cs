@@ -62,7 +62,6 @@ public class JwtHelper
     string token,
     string issuer,
     string? audience,
-    IEnumerable<string> audienceList,
     SecurityKey signingKey,
     out JwtSecurityToken? jwt
     )
