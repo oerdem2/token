@@ -306,6 +306,7 @@ public class TokenController : Controller
             claimValues.Add("client_id", client.code ?? client.id!);
         if(!claimValues.ContainsKey("clientId"))
             claimValues.Add("clientId", client.code ?? client.id!);
+        claimValues["aud"] = new List<string>(){"BackOfficeApi","WorkflowApi","RetailLoanApi","AutoQueryApi","CardApi","IntegrationLegacyApi","CallCenterApi","IbGwApi","Apisix","ScheduleApi","TransactionApi","IProvisionApi","EndorsementApi","QuerynetApi"};
         claimValues.Add("active", true);
         return Results.Json(claimValues);
     }
