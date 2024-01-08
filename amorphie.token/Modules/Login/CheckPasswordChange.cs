@@ -25,7 +25,7 @@ namespace amorphie.token.Modules.Login
             dynamic variables = new ExpandoObject();
             var mustResetPassword = password.MustResetPassword ?? false;
 
-            if (DateTime.Now > password.CreatedAt.AddDays(90) || (mustResetPassword && DateTime.Now > password.CreatedAt.AddDays(45)))
+            if (DateTime.Now > password.CreatedAt.AddDays(90) || mustResetPassword)
             {
 
                 variables.status = true;
