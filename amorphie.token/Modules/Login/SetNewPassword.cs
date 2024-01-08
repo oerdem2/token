@@ -30,12 +30,14 @@ namespace amorphie.token.Modules.Login
                 CreatedByUserName = "Amorphie",
                 UserId = ibUser.Id
             };
-            password.HashedPassword = passwordHasher.HashPassword(newPassword, password.Id.ToString());
+            
             Console.WriteLine("Step - 4");
             dynamic variables = new ExpandoObject();
             foreach (var pass in oldPasswords)
             {
                 Console.WriteLine("Step - 6");
+                Console.WriteLine("hashed pass: "+pass.HashedPassword);
+                Console.WriteLine("pass ID: "+pass.Id);
                 if (passwordHasher.VerifyHashedPassword(pass.HashedPassword,newPassword,pass.Id.ToString()) != PasswordVerificationResult.Failed)
                 {
                     Console.WriteLine("Step - 7");
@@ -44,6 +46,8 @@ namespace amorphie.token.Modules.Login
                     return Results.Ok(variables);
                 }
             }
+
+            password.HashedPassword = passwordHasher.HashPassword(newPassword, password.Id.ToString());
             Console.WriteLine("Step - 8");
             await ibContext.Password.AddAsync(password);
             await ibContext.SaveChangesAsync();

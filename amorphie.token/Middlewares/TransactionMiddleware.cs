@@ -46,7 +46,7 @@ namespace amorphie.token.Middlewares
                 variables.errorCode = "exception-error";
                 variables.errorMessage = ex.Message;
 
-                await daprClient.InvokeBindingAsync(configuration["ZEEBE_COMMAND"],"throw-error",variables);
+                await daprClient.InvokeBindingAsync(configuration["ZeebeCommand"],"throw-error",variables);
                 context.Response.StatusCode = 200;
                 context.Response.ContentType = "application/json";
             }
