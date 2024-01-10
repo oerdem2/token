@@ -70,12 +70,13 @@ namespace amorphie.token.Modules.Login
                 variables.status = false;
                 variables.message = "Username or password doesn't match";
                 passwordRecord.AccessFailedCount = (passwordRecord.AccessFailedCount ?? 0 )+ 1;
+                variables.PasswordTryCount = passwordRecord.AccessFailedCount;
                 variables.wrongCredentials = true;
                 if(passwordRecord.AccessFailedCount >= 5)
                 {
                     variables.disableUser = true;
                 }
-  
+                
                 await ibContext.SaveChangesAsync();
                 return Results.Ok(variables);
             }
@@ -93,7 +94,7 @@ namespace amorphie.token.Modules.Login
                 await ibContext.SaveChangesAsync();
             }
 
-            variables.PasswordTryCount = passwordRecord.AccessFailedCount;
+            
 
             var userInfoResult = await profileService.GetCustomerSimpleProfile(request.Username!);
             if (userInfoResult.StatusCode != 200)
