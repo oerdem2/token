@@ -1,10 +1,12 @@
 
 using System.Dynamic;
 using System.Text.Json;
+using amorphie.core.Zeebe.dapr;
 using amorphie.token.core.Models.InternetBanking;
 using amorphie.token.data;
 using amorphie.token.Services.InternetBanking;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace amorphie.token.Modules;
 
@@ -25,6 +27,14 @@ public static class DisableUser
         var userResponse = await internetBankingUserService.GetUser(request.Username!);
         var user = userResponse.Response;
 
+        var lastStatus = await ibContext.Status.Where(s => s.UserId == user!.Id && (!s.State.HasValue || s.State.Value == 10)).OrderByDescending(s => s.CreatedAt).FirstOrDefaultAsync();
+
+        dynamic variables = new ExpandoObject();
+        if (lastStatus?.Type == 30 || lastStatus?.Type == 40)
+        {
+            variables.status = true;
+            return Results.Ok(variables);
+        }
         IBStatus status = new();
         status.UserId = user.Id;
         status.CreatedByInstanceId = Guid.Parse(transactionId);
@@ -36,7 +46,7 @@ public static class DisableUser
         await ibContext.Status.AddAsync(status);
         await ibContext.SaveChangesAsync();
 
-        dynamic variables = new ExpandoObject();
+        
         variables.status = true;
         
         return Results.Ok(variables);
