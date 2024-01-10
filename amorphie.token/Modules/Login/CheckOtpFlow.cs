@@ -23,12 +23,38 @@ public static class CheckOtpFlow
         var providedCode = entityObj["otpValue"].ToString();
         var generatedCode = await daprClient.GetStateAsync<string?>(configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code");
 
+        var clientInfoSerialized = body.GetProperty("clientSerialized").ToString();
+
+        ClientResponse clientInfo = JsonSerializer.Deserialize<ClientResponse>(clientInfoSerialized, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        var userInfoSerialized = body.GetProperty("userSerialized").ToString();
+
+        LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
         if (generatedCode != null && providedCode == generatedCode)
         {
             dynamic variables = new ExpandoObject();
             variables.otpMatch = true;
             
-            //await userService.SaveDevice(userInfo.Id,Guid.Parse(clientInfo.id));
+            var deviceId = body.GetProperty("Headers").GetProperty("xdeviceid").ToString();
+            var installationId = (Guid)body.GetProperty("Headers").GetProperty("xtokenid");
+            var platform = body.GetProperty("Headers").GetProperty("xdeployment").ToString();
+            var model = body.GetProperty("Headers").GetProperty("xdeviceinfo").ToString();
+            await userService.SaveDevice(new UserSaveMobileDeviceDto()
+            {
+                DeviceId = deviceId,
+                InstallationId = installationId,
+                DeviceModel = model,
+                DevicePlatform = platform,
+                ClientId = clientInfo.code ?? clientInfo.id,
+                UserId = userInfo.Id
+            });
             return Results.Ok(variables);
         }
         else
