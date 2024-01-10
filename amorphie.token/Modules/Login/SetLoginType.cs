@@ -89,7 +89,6 @@ namespace amorphie.token.Modules.Login
             {
                 variables.Add("status", false);
                 variables.Add("isSecondFactorRequired", response.Detail);
-                variables.Add("LastTransition", "amorphie-mobile-login-error-end");
                 return Results.Ok(variables);
             }
         }

@@ -38,7 +38,6 @@ namespace amorphie.token.Modules.Login
             {
                 variables.status = false;
                 variables.message = "User Not Found";
-                variables.LastTransition = "amorphie-login-error";
                 variables.wrongCredentials = true;
                 return Results.Ok(variables);
             }
@@ -111,7 +110,6 @@ namespace amorphie.token.Modules.Login
             {
                 variables.status = false;
                 variables.message = "User is Not Customer Or Not Active";
-                variables.LastTransition = "amorphie-login-error";
                 variables.wrongCredentials = true;
                 return Results.Ok(variables);
             }
@@ -121,7 +119,6 @@ namespace amorphie.token.Modules.Login
             {
                 variables.status = false;
                 variables.message = "Bad Phone Data";
-                variables.LastTransition = "amorphie-login-error";
                 
                 return Results.Ok(variables);
             }
@@ -131,7 +128,6 @@ namespace amorphie.token.Modules.Login
             {
                 variables.status = false;
                 variables.message = "Bad Phone Format";
-                variables.LastTransition = "amorphie-login-error";
                 return Results.Ok(variables);
             }
 
