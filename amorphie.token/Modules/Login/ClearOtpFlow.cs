@@ -20,7 +20,7 @@ public static class ClearOtpFlow
 
         dynamic variables = new ExpandoObject();
         variables.status = true;
-        
+        variables.otpTimeout = true;
         return Results.Ok(variables);
     }
 

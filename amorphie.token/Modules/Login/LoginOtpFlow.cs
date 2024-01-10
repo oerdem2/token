@@ -40,6 +40,8 @@ public static class LoginOtpFlow
 
         await daprClient.SaveStateAsync(configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code", code);
 
+        dynamic variables = new ExpandoObject();
+        variables.otpTimeout = false;
         if (aks == null || aks.Equals("H"))
         {
             var otpRequest = new
@@ -67,14 +69,13 @@ public static class LoginOtpFlow
 
             if (httpResponse.IsSuccessStatusCode)
             {
-                dynamic variables = new ExpandoObject();
+                
                 variables.status = true;
                 variables.OtpTryCount = 0;
                 return Results.Ok(variables);
             }
             else
             {
-                dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = "Otp Service Error";
                 return Results.Ok(variables);
@@ -82,7 +83,6 @@ public static class LoginOtpFlow
         }
         else
         {
-            dynamic variables = new ExpandoObject();
             variables.status = true;
             return Results.Ok(variables);
         }
