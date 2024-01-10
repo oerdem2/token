@@ -128,7 +128,7 @@
         <bpmn:incoming>Flow_0fwl4i5</bpmn:incoming>
         <bpmn:outgoing>Flow_1yc194h</bpmn:outgoing>
         <bpmn:timerEventDefinition id="TimerEventDefinition_0rwua7s">
-          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT30S</bpmn:timeDuration>
+          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT180S</bpmn:timeDuration>
         </bpmn:timerEventDefinition>
       </bpmn:intermediateCatchEvent>
       <bpmn:serviceTask id="Activity_1mkji7m" name="ThrowError">

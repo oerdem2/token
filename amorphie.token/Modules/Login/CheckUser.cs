@@ -8,6 +8,7 @@ using amorphie.token.data;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
 using Azure.Core.Pipeline;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -81,6 +82,14 @@ namespace amorphie.token.Modules.Login
             }
             else
             {
+                if(passwordRecord.AccessFailedCount >= 5)
+                {
+                    variables.disableUser = true;
+                    variables.status = false;
+                    variables.wrongCredentials = true;
+                    variables.message = "User Not Active";
+                    return Results.Ok(variables);
+                }
                 passwordRecord.AccessFailedCount = 0;
                 await ibContext.SaveChangesAsync();
             }
