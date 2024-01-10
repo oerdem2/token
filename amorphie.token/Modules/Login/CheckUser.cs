@@ -50,6 +50,7 @@ namespace amorphie.token.Modules.Login
                 variables.status = false;
                 variables.message = "User Not Active";
                 variables.wrongCredentials = true;
+                variables.disableUser = true;
                 return Results.Ok(variables);
             }
 
