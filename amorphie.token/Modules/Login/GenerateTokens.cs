@@ -17,7 +17,8 @@ namespace amorphie.token.Modules.Login
         public static async Task<IResult> generateTokens(
         [FromBody] dynamic body,
         [FromServices] ITokenService tokenService,
-        [FromServices] ITransactionService transactionService
+        [FromServices] ITransactionService transactionService,
+        [FromServices] IUserService userService
         )
         {
             Console.WriteLine("GenerateTokens called");
@@ -67,6 +68,20 @@ namespace amorphie.token.Modules.Login
 
             if (result.StatusCode == 200)
             {
+                var deviceId = body.GetProperty("Headers").GetProperty("xdeviceid").ToString();
+                var installationId = body.GetProperty("Headers").GetProperty("xtokenid").ToString();
+                var platform = body.GetProperty("Headers").GetProperty("xdeployment").ToString();
+                var model = body.GetProperty("Headers").GetProperty("xdeviceinfo").ToString();
+                await userService.SaveDevice(new UserSaveMobileDeviceDto()
+                {
+                    DeviceId = deviceId,
+                    InstallationId = Guid.Parse(installationId),
+                    DeviceModel = model,
+                    DevicePlatform = platform,
+                    ClientId = clientInfo.code ?? clientInfo.id,
+                    UserId = userInfo.Id
+                });
+
                 dataChanged.additionalData = result.Response;
                 targetObject.Data = dataChanged;
                 targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
@@ -82,7 +97,6 @@ namespace amorphie.token.Modules.Login
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.tokenResponse = result.Detail;
-                variables.LastTransition = "token-error";
                 Console.WriteLine("GenerateTokens Error " + JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }

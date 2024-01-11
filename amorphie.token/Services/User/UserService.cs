@@ -10,11 +10,11 @@ public class UserService : ServiceBase, IUserService
         _daprClient = daprClient;
     }
 
-    public async Task<ServiceResponse<object>> CheckDevice(Guid userId, Guid clientId)
+    public async Task<ServiceResponse<object>> CheckDevice(Guid userId, string clientId, string deviceId, Guid installationId)
     {
         try
         {
-            await _daprClient.InvokeMethodAsync(HttpMethod.Get, Configuration["UserServiceAppName"], $"/userDevice/search?Page=0&PageSize=50&Keyword={userId}&&{clientId}&SortColumn=CreatedAt&SortDirection=Desc");
+            await _daprClient.InvokeMethodAsync(HttpMethod.Get, Configuration["UserServiceAppName"], $"/userDevice/check-device/{clientId}/{userId}/{deviceId}/{installationId}");
             Console.WriteLine("Device bulundu");
             return new ServiceResponse<object>()
             {
@@ -226,8 +226,36 @@ public class UserService : ServiceBase, IUserService
         }
     }
 
-    public Task<ServiceResponse> SaveDevice(Guid userId, Guid clientId)
+    public async Task<ServiceResponse> SaveDevice(UserSaveMobileDeviceDto userSaveMobileDeviceDto)
     {
-        throw new NotImplementedException();
+        try
+        {
+            await _daprClient.InvokeMethodAsync(Configuration["UserServiceAppName"], "/userDevice/save-mobile-device-client", userSaveMobileDeviceDto);
+            Console.WriteLine("Device bulundu");
+            return new ServiceResponse()
+            {
+                StatusCode = 200,
+                Detail = "",
+            };
+        }
+        catch (InvocationException ex)
+        {
+            Logger.LogError("An Error Occured At User Invocation Save Device | Detail:" + ex.ToString());
+            return new ServiceResponse()
+            {
+                StatusCode = (int)ex.Response.StatusCode,
+                Detail = await ex.Response.Content.ReadAsStringAsync()
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("An Error Occured At User Invocation Save Device | Detail:" + ex.ToString());
+            return new ServiceResponse()
+            {
+                StatusCode = 500,
+                Detail = "Dapr Save Device Invoke Method Error"
+            };
+        }
+
     }
 }

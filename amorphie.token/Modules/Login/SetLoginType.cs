@@ -30,9 +30,6 @@ namespace amorphie.token.Modules.Login
             var ibUserSerialized = body.GetProperty("ibUserSerialized").ToString();
             IBUser ibUser = JsonSerializer.Deserialize<IBUser>(ibUserSerialized);
 
-
-
-
             var clientInfoSerialized = body.GetProperty("clientSerialized").ToString();
 
             ClientResponse clientInfo = JsonSerializer.Deserialize<ClientResponse>(clientInfoSerialized, new JsonSerializerOptions
@@ -62,7 +59,14 @@ namespace amorphie.token.Modules.Login
 
             targetObject.Data = dataChanged;
 
-            ServiceResponse<object> response = await userService.CheckDevice(userInfo.Id, Guid.Parse(clientInfo.id!));
+            Console.WriteLine("step - 1");
+            var deviceId = body.GetProperty("Headers").GetProperty("xdeviceid").ToString();
+            Console.WriteLine("step - 2");
+            var installationId = body.GetProperty("Headers").GetProperty("xtokenid").ToString();
+            Console.WriteLine("step - 3");
+            ServiceResponse<object> response = await userService.CheckDevice(userInfo.Id, clientInfo.code ?? clientInfo.id!, deviceId, Guid.Parse(installationId));
+            Console.WriteLine("step - 4");
+            Console.WriteLine("resp code:" + response.StatusCode);
             dynamic variables = new Dictionary<string, dynamic>();
             dataChanged.additionalData = new ExpandoObject();
             dataChanged.additionalData.phoneNumber = "0" + userInfo.MobilePhone.Prefix.ToString().Substring(0, 2) + "******" + userInfo.MobilePhone.Number.ToString().Substring(userInfo.MobilePhone.Number.Length - 3, 2);
@@ -89,7 +93,6 @@ namespace amorphie.token.Modules.Login
             {
                 variables.Add("status", false);
                 variables.Add("isSecondFactorRequired", response.Detail);
-                variables.Add("LastTransition", "amorphie-mobile-login-error-end");
                 return Results.Ok(variables);
             }
         }

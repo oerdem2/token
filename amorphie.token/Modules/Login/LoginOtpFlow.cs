@@ -37,11 +37,11 @@ public static class LoginOtpFlow
             code = "123456";
 
         var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-        if (env != null && !env.Equals("Prod"))
-            code = "123456";
 
         await daprClient.SaveStateAsync(configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code", code);
 
+        dynamic variables = new ExpandoObject();
+        variables.otpTimeout = false;
         if (aks == null || aks.Equals("H"))
         {
             var otpRequest = new
@@ -69,26 +69,20 @@ public static class LoginOtpFlow
 
             if (httpResponse.IsSuccessStatusCode)
             {
-                Console.WriteLine("LoginOtpFlow Success");
-                dynamic variables = new ExpandoObject();
+
                 variables.status = true;
                 variables.OtpTryCount = 0;
                 return Results.Ok(variables);
             }
             else
             {
-                dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = "Otp Service Error";
-                variables.LastTransition = "token-error";
-                Console.WriteLine("LoginOtpFlow Error " + JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
         }
         else
         {
-            Console.WriteLine("LoginOtpFlow Success");
-            dynamic variables = new ExpandoObject();
             variables.status = true;
             return Results.Ok(variables);
         }

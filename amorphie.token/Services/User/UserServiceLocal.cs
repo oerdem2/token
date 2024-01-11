@@ -1,7 +1,6 @@
 
 using System.Text;
 using System.Text.Json;
-using amorphie.token.Services.TransactionHandler;
 
 namespace amorphie.token.Services.User;
 
@@ -13,10 +12,10 @@ public class UserServiceLocal : IUserService
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<ServiceResponse<object>> CheckDevice(Guid userId, Guid clientId)
+    public async Task<ServiceResponse<object>> CheckDevice(Guid userId, string clientId, string deviceId, Guid installationId)
     {
         var httpClient = _httpClientFactory.CreateClient("User");
-        var httpResponseMessage = await httpClient.GetAsync($"userDevice/search?Page=0&PageSize=50&Keyword={userId}&&{clientId}&SortColumn=CreatedAt&SortDirection=Desc");
+        var httpResponseMessage = await httpClient.GetAsync($"userDevice/check-device/{clientId}/{userId}/{deviceId}/{installationId}");
 
         if (httpResponseMessage.IsSuccessStatusCode)
         {
@@ -87,18 +86,12 @@ public class UserServiceLocal : IUserService
         }
     }
 
-    public async Task<ServiceResponse> SaveDevice(Guid userId, Guid clientId)
+    public async Task<ServiceResponse> SaveDevice(UserSaveMobileDeviceDto userSaveMobileDeviceDto)
     {
         var httpClient = _httpClientFactory.CreateClient("User");
-        var request = new StringContent(JsonSerializer.Serialize(new
-        {
-            clientId = clientId,
-            userId = userId,
-            deviceId = Guid.NewGuid(),
-            installationId = Guid.NewGuid()
-        }), Encoding.UTF8, "application/json");
+        var request = new StringContent(JsonSerializer.Serialize(userSaveMobileDeviceDto), Encoding.UTF8, "application/json");
         var httpResponseMessage = await httpClient.PostAsync(
-            "userDevice/save-device", request);
+            "userDevice/save-mobile-device-client", request);
 
         if (httpResponseMessage.IsSuccessStatusCode)
         {

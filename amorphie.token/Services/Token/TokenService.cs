@@ -13,6 +13,7 @@ using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.TransactionHandler;
 using Google.Protobuf.WellKnownTypes;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.IdentityModel.Tokens;
 
@@ -33,10 +34,11 @@ public class TokenService : ServiceBase, ITokenService
     private LoginResponse? _user;
     private SimpleProfileResponse? _profile;
     private IInternetBankingUserService? _internetBankingUserService;
+    private IbDatabaseContext _ibContext;
     private IProfileService? _profileService;
     public TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, IClaimHandlerService claimService,
     ITransactionService transactionService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext
-    , IInternetBankingUserService internetBankingUserService, IProfileService profileService) : base(logger, configuration)
+    , IInternetBankingUserService internetBankingUserService, IProfileService profileService, IbDatabaseContext ibContext) : base(logger, configuration)
     {
         _clientService = clientService;
         _userService = userService;
@@ -46,6 +48,7 @@ public class TokenService : ServiceBase, ITokenService
         _claimService = claimService;
         _internetBankingUserService = internetBankingUserService;
         _profileService = profileService;
+        _ibContext = ibContext;
         _tokenInfoDetail = new();
     }
 
@@ -159,16 +162,15 @@ public class TokenService : ServiceBase, ITokenService
 
         if (accessInfo.claims != null && accessInfo.claims.Count() > 0)
         {
-            foreach (var accessClaim in accessInfo.claims)
-            {
-                var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user);
-                tokenClaims.AddRange(populatedClaims);
-                if (_tokenRequest.Scopes.Contains("temporary"))
-                    tokenClaims.Add(new Claim("isTemporary", "1"));
-            }
+
+            var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user, _profile);
+            tokenClaims.AddRange(populatedClaims);
+            if (_tokenRequest.Scopes.Contains("temporary"))
+                tokenClaims.Add(new Claim("isTemporary", "1"));
+
             if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
             {
-                tokenClaims.Add(new Claim("client_id", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                tokenClaims.Add(new Claim("client_id", _client.code ?? _client.id));
                 tokenClaims.Add(new Claim("email", _profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address));
                 tokenClaims.Add(new Claim("phone_number", _profile.data.phones.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString()));
                 tokenClaims.Add(new Claim("role", "FullAuthorized"));
@@ -430,8 +432,15 @@ public class TokenService : ServiceBase, ITokenService
     public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithPassword(GenerateTokenRequest tokenRequest)
     {
         _tokenRequest = tokenRequest;
-
-        var clientResponse = await _clientService.ValidateClient(_tokenRequest.ClientId!, _tokenRequest.ClientSecret!);
+        ServiceResponse<ClientResponse> clientResponse;
+        if (Guid.TryParse(_tokenRequest.ClientId!, out Guid _))
+        {
+            clientResponse = await _clientService.ValidateClient(_tokenRequest.ClientId!, _tokenRequest.ClientSecret!);
+        }
+        else
+        {
+            clientResponse = await _clientService.ValidateClientByCode(_tokenRequest.ClientId!, _tokenRequest.ClientSecret!);
+        }
 
         if (clientResponse.StatusCode != 200)
         {
@@ -473,6 +482,8 @@ public class TokenService : ServiceBase, ITokenService
             };
         }
         var user = userResponse.Response;
+
+        var userStatus = await _ibContext.Status.Where(s => s.UserId == user!.Id && (!s.State.HasValue || s.State.Value == 10)).OrderByDescending(s => s.CreatedAt).FirstOrDefaultAsync();
 
         var passwordResponse = await _internetBankingUserService.GetPassword(user!.Id);
         if (userResponse.StatusCode != 200)

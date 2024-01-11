@@ -28,7 +28,6 @@ namespace amorphie.token.Modules.Login
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = "Client Has No Authority To Use Requested Scopes";
-                variables.LastTransition = "amorphie-login-error";
                 return Results.Ok(variables);
             }
             else

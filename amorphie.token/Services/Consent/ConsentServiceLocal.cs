@@ -22,7 +22,7 @@ namespace amorphie.token.Services.Consent
             StringContent req = new StringContent("", System.Text.Encoding.UTF8, "application/json");
 
             var httpResponseMessage = await httpClient.PostAsync(
-                $"Authorization/CheckAuthorizationForLogin/clientId={clientId}&roleId={roleId}&userTCKN={citizenshipNo}?scopeTCKN={citizenshipNo}", req);
+                $"Authorization/CheckAuthorizationForLogin/clientCode={clientId}&roleId={roleId}&userTCKN={citizenshipNo}?scopeTCKN={citizenshipNo}", req);
 
             if (httpResponseMessage.IsSuccessStatusCode)
             {
