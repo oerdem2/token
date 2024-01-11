@@ -636,6 +636,9 @@
       <bpmn:serviceTask id="Activity_1eant2m" name="ClearOtp">
         <bpmn:extensionElements>
           <zeebe:taskDefinition type="amorphie-login-clear-otp-flow" />
+          <zeebe:ioMapping>
+            <zeebe:output source="=&#34;amorphie-mobile-login-send-otp&#34;" target="LastTransition" />
+          </zeebe:ioMapping>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_1yc194h</bpmn:incoming>
         <bpmn:outgoing>Flow_0bcwor9</bpmn:outgoing>
@@ -1286,10 +1289,6 @@
         <di:waypoint x="1440" y="1070" />
         <di:waypoint x="1388" y="1070" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1fo25of_di" bpmnElement="Flow_1fo25of">
-        <di:waypoint x="1415" y="990" />
-        <di:waypoint x="1308" y="990" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_13r934l_di" bpmnElement="Flow_13r934l">
         <di:waypoint x="1710" y="1135" />
         <di:waypoint x="1710" y="1220" />
@@ -1523,6 +1522,10 @@
       <bpmndi:BPMNEdge id="Flow_0wec3an_di" bpmnElement="Flow_0wec3an">
         <di:waypoint x="1843" y="528" />
         <di:waypoint x="1974" y="387" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1fo25of_di" bpmnElement="Flow_1fo25of">
+        <di:waypoint x="1415" y="990" />
+        <di:waypoint x="1308" y="990" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1q0va07_di" bpmnElement="Flow_1q0va07">
         <di:waypoint x="1440" y="1195" />

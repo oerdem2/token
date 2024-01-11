@@ -42,19 +42,7 @@ public static class CheckOtpFlow
             dynamic variables = new ExpandoObject();
             variables.otpMatch = true;
             
-            var deviceId = body.GetProperty("Headers").GetProperty("xdeviceid").ToString();
-            var installationId = body.GetProperty("Headers").GetProperty("xtokenid").ToString();
-            var platform = body.GetProperty("Headers").GetProperty("xdeployment").ToString();
-            var model = body.GetProperty("Headers").GetProperty("xdeviceinfo").ToString();
-            await userService.SaveDevice(new UserSaveMobileDeviceDto()
-            {
-                DeviceId = deviceId,
-                InstallationId = Guid.Parse(installationId),
-                DeviceModel = model,
-                DevicePlatform = platform,
-                ClientId = clientInfo.code ?? clientInfo.id,
-                UserId = userInfo.Id
-            });
+            
             return Results.Ok(variables);
         }
         else
