@@ -38,7 +38,7 @@ public class TokenService : ServiceBase, ITokenService
     private IProfileService? _profileService;
     public TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, IClaimHandlerService claimService,
     ITransactionService transactionService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext
-    , IInternetBankingUserService internetBankingUserService, IProfileService profileService,IbDatabaseContext ibContext) : base(logger, configuration)
+    , IInternetBankingUserService internetBankingUserService, IProfileService profileService, IbDatabaseContext ibContext) : base(logger, configuration)
     {
         _clientService = clientService;
         _userService = userService;
@@ -162,12 +162,12 @@ public class TokenService : ServiceBase, ITokenService
 
         if (accessInfo.claims != null && accessInfo.claims.Count() > 0)
         {
-            
+
             var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user, _profile);
             tokenClaims.AddRange(populatedClaims);
             if (_tokenRequest.Scopes.Contains("temporary"))
                 tokenClaims.Add(new Claim("isTemporary", "1"));
-            
+
             if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
             {
                 tokenClaims.Add(new Claim("client_id", _client.code ?? _client.id));
@@ -433,7 +433,7 @@ public class TokenService : ServiceBase, ITokenService
     {
         _tokenRequest = tokenRequest;
         ServiceResponse<ClientResponse> clientResponse;
-        if(Guid.TryParse(_tokenRequest.ClientId!,out Guid _))
+        if (Guid.TryParse(_tokenRequest.ClientId!, out Guid _))
         {
             clientResponse = await _clientService.ValidateClient(_tokenRequest.ClientId!, _tokenRequest.ClientSecret!);
         }

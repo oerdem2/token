@@ -7,6 +7,6 @@ namespace amorphie.token.core.Models.Client;
 
 public class ValidateClientByCodeRequest
 {
-    public string Code{get;set;}
-    public string Secret{get;set;}
+    public string Code { get; set; }
+    public string Secret { get; set; }
 }

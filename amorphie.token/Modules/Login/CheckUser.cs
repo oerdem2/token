@@ -70,20 +70,20 @@ namespace amorphie.token.Modules.Login
             {
                 variables.status = false;
                 variables.message = "Username or password doesn't match";
-                passwordRecord.AccessFailedCount = (passwordRecord.AccessFailedCount ?? 0 )+ 1;
+                passwordRecord.AccessFailedCount = (passwordRecord.AccessFailedCount ?? 0) + 1;
                 variables.PasswordTryCount = passwordRecord.AccessFailedCount;
                 variables.wrongCredentials = true;
-                if(passwordRecord.AccessFailedCount >= 5)
+                if (passwordRecord.AccessFailedCount >= 5)
                 {
                     variables.disableUser = true;
                 }
-                
+
                 await ibContext.SaveChangesAsync();
                 return Results.Ok(variables);
             }
             else
             {
-                if(passwordRecord.AccessFailedCount >= 5)
+                if (passwordRecord.AccessFailedCount >= 5)
                 {
                     variables.disableUser = true;
                     variables.status = false;
@@ -95,7 +95,7 @@ namespace amorphie.token.Modules.Login
                 await ibContext.SaveChangesAsync();
             }
 
-            
+
 
             var userInfoResult = await profileService.GetCustomerSimpleProfile(request.Username!);
             if (userInfoResult.StatusCode != 200)
@@ -121,7 +121,7 @@ namespace amorphie.token.Modules.Login
             {
                 variables.status = false;
                 variables.message = "Bad Phone Data";
-                
+
                 return Results.Ok(variables);
             }
 
@@ -161,7 +161,7 @@ namespace amorphie.token.Modules.Login
             var amorphieUser = amorphieUserResult.Response;
 
             variables.status = true;
-            
+
             variables.userInfoSerialized = JsonSerializer.Serialize(userInfo);
             variables.userSerialized = JsonSerializer.Serialize(amorphieUser);
             variables.passwordSerialized = JsonSerializer.Serialize(passwordRecord);

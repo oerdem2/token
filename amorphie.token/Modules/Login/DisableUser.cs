@@ -46,9 +46,9 @@ public static class DisableUser
         await ibContext.Status.AddAsync(status);
         await ibContext.SaveChangesAsync();
 
-        
+
         variables.status = true;
-        
+
         return Results.Ok(variables);
     }
 

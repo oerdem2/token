@@ -21,7 +21,7 @@ namespace amorphie.token.Modules.Login
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
 
             ServiceResponse<ClientResponse> clientResult;
-            if(Guid.TryParse(request.ClientId,out Guid _))
+            if (Guid.TryParse(request.ClientId, out Guid _))
             {
                 clientResult = await clientService.ValidateClient(request.ClientId!, request.ClientSecret!);
             }

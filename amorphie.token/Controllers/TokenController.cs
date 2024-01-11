@@ -259,7 +259,7 @@ public class TokenController : Controller
             return Results.Json(new { active = false });
 
         ServiceResponse<ClientResponse> clientInfo;
-        if(Guid.TryParse(accessTokenInfo.ClientId,out Guid _))
+        if (Guid.TryParse(accessTokenInfo.ClientId, out Guid _))
         {
             clientInfo = await _clientService.CheckClient(accessTokenInfo.ClientId);
         }
@@ -267,7 +267,7 @@ public class TokenController : Controller
         {
             clientInfo = await _clientService.CheckClientByCode(accessTokenInfo.ClientId);
         }
-        
+
         var client = clientInfo.Response;
 
         if (client == null)
@@ -277,7 +277,7 @@ public class TokenController : Controller
 
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(client.jwtSalt!));
 
-        if (!JwtHelper.ValidateToken(token, "BurganIam", client!.returnuri,secretKey, out JwtSecurityToken? validatedToken))
+        if (!JwtHelper.ValidateToken(token, "BurganIam", client!.returnuri, secretKey, out JwtSecurityToken? validatedToken))
         {
             return Results.Json(new { active = false });
         }
@@ -285,9 +285,9 @@ public class TokenController : Controller
         Dictionary<string, object> claimValues = new();
         foreach (Claim claim in validatedToken!.Claims)
         {
-            if(!claimValues.ContainsKey(claim.Type))
+            if (!claimValues.ContainsKey(claim.Type))
             {
-                if(validatedToken!.Claims.Count(c => c.Type == claim.Type) > 1)
+                if (validatedToken!.Claims.Count(c => c.Type == claim.Type) > 1)
                 {
                     claimValues.Add(claim.Type.Replace(".", "_"), validatedToken!.Claims.Where(c => c.Type == claim.Type).Select(c => c.Value));
                 }
@@ -299,14 +299,14 @@ public class TokenController : Controller
                         claimValues.Add(claim.Type.Replace(".", "_"), long.Parse(claim.Value));
                 }
             }
-            
+
         }
 
-        if(!claimValues.ContainsKey("client_id"))
+        if (!claimValues.ContainsKey("client_id"))
             claimValues.Add("client_id", client.code ?? client.id!);
-        if(!claimValues.ContainsKey("clientId"))
+        if (!claimValues.ContainsKey("clientId"))
             claimValues.Add("clientId", client.code ?? client.id!);
-        claimValues["aud"] = new List<string>(){"BackOfficeApi","WorkflowApi","RetailLoanApi","AutoQueryApi","CardApi","IntegrationLegacyApi","CallCenterApi","IbGwApi","Apisix","ScheduleApi","TransactionApi","IProvisionApi","EndorsementApi","QuerynetApi"};
+        claimValues["aud"] = new List<string>() { "BackOfficeApi", "WorkflowApi", "RetailLoanApi", "AutoQueryApi", "CardApi", "IntegrationLegacyApi", "CallCenterApi", "IbGwApi", "Apisix", "ScheduleApi", "TransactionApi", "IProvisionApi", "EndorsementApi", "QuerynetApi" };
         claimValues.Add("active", true);
         return Results.Json(claimValues);
     }
@@ -315,7 +315,7 @@ public class TokenController : Controller
     [HttpPost("public/Token")]
     public async Task<IActionResult> Token([FromBody] TokenRequest tokenRequest)
     {
-         string? xforwardedfor = HttpContext.Request.Headers.ContainsKey("X-Forwarded-For") ? HttpContext.Request.Headers.FirstOrDefault(h => h.Key.ToLower().Equals("x-forwarded-for")).Value.ToString() : HttpContext.Connection.RemoteIpAddress?.ToString();
+        string? xforwardedfor = HttpContext.Request.Headers.ContainsKey("X-Forwarded-For") ? HttpContext.Request.Headers.FirstOrDefault(h => h.Key.ToLower().Equals("x-forwarded-for")).Value.ToString() : HttpContext.Connection.RemoteIpAddress?.ToString();
         var ipAddress = xforwardedfor?.Split(",")[0].Trim() ?? xforwardedfor;
         _transactionService.IpAddress = ipAddress;
 

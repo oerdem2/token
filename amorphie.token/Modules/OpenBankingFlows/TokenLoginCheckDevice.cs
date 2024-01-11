@@ -25,7 +25,7 @@ public static class TokenLoginCheckDevice
         [FromServices] IUserService userService
         )
         {
-            return Results.Json(new{t="123"});
+            return Results.Json(new { t = "123" });
         }
 
     }

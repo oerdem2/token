@@ -14,7 +14,7 @@ namespace amorphie.token.Middlewares
             _next = next;
         }
 
-        public async Task InvokeAsync(HttpContext context,DaprClient daprClient,IConfiguration configuration)
+        public async Task InvokeAsync(HttpContext context, DaprClient daprClient, IConfiguration configuration)
         {
 
             var jobKey = context.Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Zeebe-Job-Key")).Value;
@@ -23,7 +23,7 @@ namespace amorphie.token.Middlewares
             {
                 await _next.Invoke(context);
             }
-            catch(ZeebeWorkerException ex)
+            catch (ZeebeWorkerException ex)
             {
                 variables.jobKey = long.Parse(jobKey);
                 variables.errorCode = "exception-error";
@@ -31,7 +31,7 @@ namespace amorphie.token.Middlewares
 
                 try
                 {
-                    await daprClient.InvokeBindingAsync(configuration["ZeebeCommand"],"throw-error",variables);
+                    await daprClient.InvokeBindingAsync(configuration["ZeebeCommand"], "throw-error", variables);
                 }
                 catch (System.Exception ex2)
                 {
@@ -46,12 +46,12 @@ namespace amorphie.token.Middlewares
                 variables.errorCode = "exception-error";
                 variables.errorMessage = ex.Message;
 
-                await daprClient.InvokeBindingAsync(configuration["ZeebeCommand"],"throw-error",variables);
+                await daprClient.InvokeBindingAsync(configuration["ZeebeCommand"], "throw-error", variables);
                 context.Response.StatusCode = 200;
                 context.Response.ContentType = "application/json";
             }
         }
-        
+
 
     }
 
@@ -59,7 +59,7 @@ namespace amorphie.token.Middlewares
     {
         public static IApplicationBuilder UseTransactionMiddleware(this IApplicationBuilder builder)
         {
-            return builder.UseWhen(c => c.Request.Path.ToString().StartsWith("/amorphie-login"),builder => builder.UseMiddleware<TransactionMiddleware>()); 
+            return builder.UseWhen(c => c.Request.Path.ToString().StartsWith("/amorphie-login"), builder => builder.UseMiddleware<TransactionMiddleware>());
         }
     }
 }

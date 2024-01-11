@@ -32,17 +32,17 @@ namespace amorphie.token.Modules.Login
                 CreatedByUserName = "Amorphie",
                 UserId = ibUser.Id
             };
-            
+
             Console.WriteLine("Step - 4");
             dynamic variables = new ExpandoObject();
             foreach (var pass in oldPasswords)
             {
                 Console.WriteLine("Step - 6");
-                Console.WriteLine("hashed pass: "+pass.HashedPassword);
-                Console.WriteLine("new password: "+newPassword);
-                Console.WriteLine("pass ID: "+pass.Id);
-                Console.WriteLine("pass result: "+internetBankingUserService.VerifyPassword(pass.HashedPassword,newPassword,pass.Id.ToString()));
-                if (passwordHasher.VerifyHashedPassword(pass.HashedPassword,newPassword,pass.Id.ToString()) != PasswordVerificationResult.Failed)
+                Console.WriteLine("hashed pass: " + pass.HashedPassword);
+                Console.WriteLine("new password: " + newPassword);
+                Console.WriteLine("pass ID: " + pass.Id);
+                Console.WriteLine("pass result: " + internetBankingUserService.VerifyPassword(pass.HashedPassword, newPassword, pass.Id.ToString()));
+                if (passwordHasher.VerifyHashedPassword(pass.HashedPassword, newPassword, pass.Id.ToString()) != PasswordVerificationResult.Failed)
                 {
                     Console.WriteLine("Step - 7");
                     variables.status = false;

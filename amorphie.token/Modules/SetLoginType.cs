@@ -38,7 +38,7 @@ namespace amorphie.token.Modules
                     PropertyNameCaseInsensitive = true
                 });
 
-                ServiceResponse<object> response = await userService.CheckDevice(userInfo.Id, clientInfo.id!,"123",userInfo.Id);
+                ServiceResponse<object> response = await userService.CheckDevice(userInfo.Id, clientInfo.id!, "123", userInfo.Id);
 
                 if (response.StatusCode == 200)
                 {

@@ -69,7 +69,7 @@ public static class LoginOtpFlow
 
             if (httpResponse.IsSuccessStatusCode)
             {
-                
+
                 variables.status = true;
                 variables.OtpTryCount = 0;
                 return Results.Ok(variables);

@@ -15,7 +15,7 @@ public static class ClearOtpFlow
     )
     {
         var transactionId = body.GetProperty("InstanceId").ToString();
-        
+
         await daprClient.DeleteStateAsync(configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code");
 
         dynamic variables = new ExpandoObject();

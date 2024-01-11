@@ -7,7 +7,7 @@ namespace amorphie.token.core.Models.Client;
 public class ClientResponse
 {
     public string? id { get; set; }
-    public string? code{get;set;}
+    public string? code { get; set; }
     public string? name { get; set; }
     public List<Flow>? flows { get; set; }
     [JsonPropertyName("allowedGrantTypes")]

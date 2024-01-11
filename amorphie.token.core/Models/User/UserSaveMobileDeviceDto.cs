@@ -8,7 +8,7 @@ namespace amorphie.token.core.Models.User
         public string? DeviceToken { get; set; }
         public string? DeviceModel { get; set; }
         public string? DevicePlatform { get; set; }
-        public Guid UserId{get;set;}
-        public string ClientId{get;set;}
+        public Guid UserId { get; set; }
+        public string ClientId { get; set; }
     }
 }

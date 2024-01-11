@@ -64,9 +64,9 @@ namespace amorphie.token.Modules.Login
             Console.WriteLine("step - 2");
             var installationId = body.GetProperty("Headers").GetProperty("xtokenid").ToString();
             Console.WriteLine("step - 3");
-            ServiceResponse<object> response = await userService.CheckDevice(userInfo.Id, clientInfo.code ?? clientInfo.id!,deviceId,Guid.Parse(installationId));
+            ServiceResponse<object> response = await userService.CheckDevice(userInfo.Id, clientInfo.code ?? clientInfo.id!, deviceId, Guid.Parse(installationId));
             Console.WriteLine("step - 4");
-            Console.WriteLine("resp code:"+response.StatusCode);
+            Console.WriteLine("resp code:" + response.StatusCode);
             dynamic variables = new Dictionary<string, dynamic>();
             dataChanged.additionalData = new ExpandoObject();
             dataChanged.additionalData.phoneNumber = "0" + userInfo.MobilePhone.Prefix.ToString().Substring(0, 2) + "******" + userInfo.MobilePhone.Number.ToString().Substring(userInfo.MobilePhone.Number.Length - 3, 2);

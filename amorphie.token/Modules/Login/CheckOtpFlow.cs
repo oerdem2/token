@@ -41,8 +41,8 @@ public static class CheckOtpFlow
         {
             dynamic variables = new ExpandoObject();
             variables.otpMatch = true;
-            
-            
+
+
             return Results.Ok(variables);
         }
         else
