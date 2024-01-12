@@ -70,7 +70,6 @@ public static class LoginOtpFlow
 
                 if (httpResponse.IsSuccessStatusCode)
                 {
-                    Console.WriteLine("LoginOtpFlow Success");
                     dynamic variables = new ExpandoObject();
                     variables.status = true;
                     return Results.Ok(variables);
@@ -81,13 +80,11 @@ public static class LoginOtpFlow
                     variables.status = false;
                     variables.message = "Otp Service Error";
                     variables.LastTransition = "token-error";
-                    Console.WriteLine("LoginOtpFlow Error " + JsonSerializer.Serialize(variables));
                     return Results.Ok(variables);
                 }
             }
             else
             {
-                Console.WriteLine("LoginOtpFlow Success");
                 dynamic variables = new ExpandoObject();
                 variables.status = true;
                 return Results.Ok(variables);

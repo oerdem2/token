@@ -71,7 +71,6 @@ namespace amorphie.token.Modules.Login
 
             var httpResponse = await httpClient.PostAsync(configuration["localAddress"] + "public/Token", request);
             var resp = await httpResponse.Content.ReadFromJsonAsync<TokenResponse>();
-            Console.WriteLine("resp token:" + resp.AccessToken);
             dynamic variables = new Dictionary<string, dynamic>();
 
             var documentsResponse = await consentService.CheckDocument(clientInfo.id!, "7b19daa2-8793-45d2-9d96-aa7540c9d1ab", userInfo.Reference);

@@ -20,7 +20,6 @@ public static class CheckPush
         DaprClient daprClient
         )
         {
-            Console.WriteLine("CheckPush Called");
             var transactionId = body.GetProperty("InstanceId").ToString();
             var entityData = body.GetProperty("TRX-send-push-login-flow").GetProperty("Data").GetProperty("entityData").ToString();
 
@@ -33,7 +32,6 @@ public static class CheckPush
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = true;
-                Console.WriteLine("CheckPush Success");
                 return Results.Ok(variables);
             }
             else
@@ -42,7 +40,6 @@ public static class CheckPush
                 variables.status = false;
                 variables.message = "Push Check Failed";
                 variables.LastTransition = "token-error";
-                Console.WriteLine("CheckPush Error " + JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
         }

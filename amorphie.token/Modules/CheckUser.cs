@@ -17,7 +17,6 @@ public static class CheckUser
         [FromServices] IUserService userService
         )
         {
-            Console.WriteLine("CheckUser called");
             var transitionName = body.GetProperty("LastTransition").ToString();
 
             var requestBodySerialized = body.GetProperty($"TRX-{transitionName}").GetProperty("Data").GetProperty("entityData").ToString();
@@ -35,7 +34,6 @@ public static class CheckUser
                 variables.status = false;
                 variables.message = userResponse.Detail;
                 variables.LastTransition = "token-error";
-                Console.WriteLine("CheckUser Error " + JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
             else
@@ -43,7 +41,6 @@ public static class CheckUser
                 dynamic variables = new ExpandoObject();
                 variables.status = true;
                 variables.userSerialized = userResponse.Response;
-                Console.WriteLine("CheckUser Success");
                 return Results.Ok(variables);
             }
 

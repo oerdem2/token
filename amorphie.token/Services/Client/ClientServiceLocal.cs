@@ -31,8 +31,6 @@ public class ClientServiceLocal : IClientService
         }
         else
         {
-            Console.WriteLine($"Client Status Code : {httpResponseMessage.StatusCode}");
-            Console.WriteLine($"Client Status Code : {await httpResponseMessage.Content.ReadAsStringAsync()}");
             throw new ServiceException((int)Errors.InvalidClient, "Client Endpoint Did Not Response Successfully");
         }
 
@@ -59,8 +57,6 @@ public class ClientServiceLocal : IClientService
         }
         else
         {
-            Console.WriteLine($"Client Status Code : {httpResponseMessage.StatusCode}");
-            Console.WriteLine($"Client Status Code : {await httpResponseMessage.Content.ReadAsStringAsync()}");
             throw new ServiceException((int)Errors.InvalidClient, "Client Endpoint Did Not Response Successfully");
         }
     }
@@ -86,8 +82,6 @@ public class ClientServiceLocal : IClientService
         }
         else
         {
-            Console.WriteLine($"Client Status Code : {httpResponseMessage.StatusCode}");
-            Console.WriteLine($"Client Status Code : {await httpResponseMessage.Content.ReadAsStringAsync()}");
             throw new ServiceException((int)Errors.InvalidClient, "Client Endpoint Did Not Response Successfully");
         }
 
@@ -114,8 +108,6 @@ public class ClientServiceLocal : IClientService
         }
         else
         {
-            Console.WriteLine($"Client Status Code : {httpResponseMessage.StatusCode}");
-            Console.WriteLine($"Client Status Code : {await httpResponseMessage.Content.ReadAsStringAsync()}");
             throw new ServiceException((int)Errors.InvalidClient, "Client Endpoint Did Not Response Successfully");
         }
     }

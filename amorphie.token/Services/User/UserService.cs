@@ -15,7 +15,6 @@ public class UserService : ServiceBase, IUserService
         try
         {
             await _daprClient.InvokeMethodAsync(HttpMethod.Get, Configuration["UserServiceAppName"], $"/userDevice/check-device/{clientId}/{userId}/{deviceId}/{installationId}");
-            Console.WriteLine("Device bulundu");
             return new ServiceResponse<object>()
             {
                 StatusCode = 200,
@@ -231,7 +230,6 @@ public class UserService : ServiceBase, IUserService
         try
         {
             await _daprClient.InvokeMethodAsync(Configuration["UserServiceAppName"], "/userDevice/save-mobile-device-client", userSaveMobileDeviceDto);
-            Console.WriteLine("Device bulundu");
             return new ServiceResponse()
             {
                 StatusCode = 200,

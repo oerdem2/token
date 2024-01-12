@@ -126,7 +126,6 @@ public static class ValidateClient
                     transaction.TransactionNextMessage = messages[1];
                 }
             }
-            Console.WriteLine("InWorker TransactionId: " + transaction.Id);
             transaction.TransactionNextEvent = TransactionNextEvent.PublishMessage;
             await transactionService.SaveTransaction(transaction);
             return Results.Ok(new { test = "123" });
@@ -188,7 +187,6 @@ public static class ValidateClient
             }
             catch (Exception ex)
             {
-                Console.WriteLine("ex t:" + ex.ToString());
             }
 
             return Results.Ok(new { test = "123" });
@@ -214,7 +212,6 @@ public static class ValidateClient
             }
             catch (Exception ex)
             {
-                Console.WriteLine("ex t:" + ex.ToString());
             }
 
             return Results.Ok(new { test = "123" });

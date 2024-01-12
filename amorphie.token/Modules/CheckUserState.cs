@@ -22,7 +22,6 @@ public static class CheckUserState
         )
         {
             await Task.CompletedTask;
-            Console.WriteLine("CheckUserState called");
             var userInfoSerialized = body.GetProperty("userSerialized").ToString();
 
             LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized, new JsonSerializerOptions
@@ -37,14 +36,12 @@ public static class CheckUserState
                 variables.status = false;
                 variables.message = "User is disabled";
                 variables.LastTransition = "token-error";
-                Console.WriteLine("CheckUserState Error " + JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
             else
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = true;
-                Console.WriteLine("CheckUserState Success");
                 return Results.Ok(variables);
             }
 

@@ -26,7 +26,6 @@ public static class MapperExtension
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex.ToString());
                     }
                 }
             }

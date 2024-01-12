@@ -52,7 +52,6 @@ public static class CheckOtpFlow
             variables.otpMatch = false;
             variables.OtpTryCount = otpTryCount++;
             variables.message = "Otp Check Failed";
-            Console.WriteLine("CheckOtp Error " + JsonSerializer.Serialize(variables));
             return Results.Ok(variables);
         }
     }

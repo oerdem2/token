@@ -33,9 +33,7 @@ public static class DaprTest
         {
             foreach (var header in request.Headers)
             {
-                Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
             }
-            Console.WriteLine("geldi oidc");
             await Task.CompletedTask;
             return Results.Content("test");
         }
@@ -50,7 +48,6 @@ public static class DaprTest
         // {
         //     foreach (var header in request.Headers)
         //     {
-        //         Console.WriteLine($"Introspect header {header.Key}:{header.Value} ");
         //     }
         //     return Results.Json(new{active = true,name="sercan"});
         // }

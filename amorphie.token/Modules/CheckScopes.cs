@@ -22,7 +22,6 @@ public static class CheckScopes
         )
         {
             await Task.CompletedTask;
-            Console.WriteLine("CheckScopes called");
             var transitionName = body.GetProperty("LastTransition").ToString();
 
             var requestBodySerialized = body.GetProperty($"TRX-{transitionName}").GetProperty("Data").GetProperty("entityData").ToString();
@@ -47,14 +46,12 @@ public static class CheckScopes
                 variables.status = false;
                 variables.message = "Client is Not Authorized For Requested Scopes";
                 variables.LastTransition = "token-error";
-                Console.WriteLine("CheckScopes Error " + JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
             else
             {
                 dynamic variables = new ExpandoObject();
                 variables.status = true;
-                Console.WriteLine("CheckScopes Success");
                 return Results.Ok(variables);
             }
 

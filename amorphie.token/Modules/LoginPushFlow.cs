@@ -23,7 +23,6 @@ namespace amorphie.token.Modules
             DaprClient daprClient
             )
             {
-                Console.WriteLine("LoginPushFlow called");
                 var transactionId = body.GetProperty("InstanceId").ToString();
 
                 var userInfoSerialized = body.GetProperty("userSerialized").ToString();
@@ -71,19 +70,16 @@ namespace amorphie.token.Modules
 
                     if (httpResponse.IsSuccessStatusCode)
                     {
-                        Console.WriteLine("LoginPushFlow Success");
                         dynamic variables = new ExpandoObject();
                         variables.status = true;
                         return Results.Ok(variables);
                     }
                     else
                     {
-                        Console.WriteLine("Push Service Error : " + await httpResponse.Content.ReadAsStringAsync());
                         dynamic variables = new ExpandoObject();
                         variables.status = false;
                         variables.message = "Push Service Error - Status Code : " + httpResponse.StatusCode;
                         variables.LastTransition = "token-error";
-                        Console.WriteLine("LoginPushFlow Error " + JsonSerializer.Serialize(variables));
                         return Results.Ok(variables);
                     }
                 }
@@ -91,7 +87,6 @@ namespace amorphie.token.Modules
                 {
                     dynamic variables = new ExpandoObject();
                     variables.status = true;
-                    Console.WriteLine("LoginPushFlow Success");
                     return Results.Ok(variables);
                 }
             }
