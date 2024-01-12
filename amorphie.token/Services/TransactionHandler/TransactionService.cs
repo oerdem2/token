@@ -62,8 +62,6 @@ namespace amorphie.token.Services.TransactionHandler
             try
             {
                 _transaction = await _daprClient.GetStateAsync<core.Models.Transaction.Transaction>(Configuration["DAPR_STATE_STORE_NAME"], "txn_" + _transaction!.Id.ToString());
-                Console.WriteLine("Reload Transaction Next Event: " + _transaction.TransactionNextEvent);
-                Console.WriteLine("Reload Transaction Next Page : " + _transaction.TransactionNextPage);
                 response.StatusCode = 200;
             }
             catch (Exception ex)

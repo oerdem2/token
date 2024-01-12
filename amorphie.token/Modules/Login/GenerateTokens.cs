@@ -21,7 +21,6 @@ namespace amorphie.token.Modules.Login
         [FromServices] IUserService userService
         )
         {
-            Console.WriteLine("GenerateTokens called");
             var transitionName = body.GetProperty("LastTransition").ToString();
 
             var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
@@ -89,7 +88,6 @@ namespace amorphie.token.Modules.Login
                 dynamic variables = new Dictionary<string, dynamic>();
                 variables.Add("status", true);
                 variables.Add($"TRX{transitionName.ToString().Replace("-", "")}", targetObject);
-                Console.WriteLine("GenerateTokens Success");
                 return Results.Ok(variables);
             }
             else
@@ -97,7 +95,6 @@ namespace amorphie.token.Modules.Login
                 dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.tokenResponse = result.Detail;
-                Console.WriteLine("GenerateTokens Error " + JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
 

@@ -130,8 +130,6 @@ public class AuthorizeController : Controller
             await Task.Delay(10);
         }
 
-        Console.WriteLine("Transaction Not Waited Anymore");
-        Console.WriteLine("Transaction Next State: " + transaction.TransactionNextEvent);
         if (transaction.TransactionNextEvent == TransactionNextEvent.ShowPage)
         {
             if (transaction.TransactionNextPage == TransactionNextPage.Login)

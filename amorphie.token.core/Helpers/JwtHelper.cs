@@ -88,7 +88,6 @@ public class JwtHelper
         }
         catch (SecurityTokenValidationException ex)
         {
-            Console.WriteLine(ex.ToString());
             jwt = null;
             return false;
         }

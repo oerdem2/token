@@ -23,9 +23,7 @@ public static class ValidateClient
         )
         {
             var transitionName = body.GetProperty("LastTransition").ToString();
-            Console.WriteLine("Client validate worker txn name:" + transitionName);
             var requestBodySerialized = body.GetProperty($"TRX-{transitionName}").GetProperty("Data").GetProperty("entityData").ToString();
-            Console.WriteLine("Client validate worker request body:" + requestBodySerialized);
             TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -39,7 +37,6 @@ public static class ValidateClient
                 variables.status = true;
                 variables.clientSerialized = clientResult.Response;
                 variables.loginFlow = "Otp";
-                Console.WriteLine("Client Validate Success");
                 return Results.Ok(variables);
             }
             else
@@ -48,7 +45,6 @@ public static class ValidateClient
                 variables.status = false;
                 variables.message = clientResult.Detail;
                 variables.LastTransition = "token-error";
-                Console.WriteLine("Client Validate Error " + JsonSerializer.Serialize(variables));
                 return Results.Ok(variables);
             }
         }
