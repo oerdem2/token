@@ -64,7 +64,7 @@ namespace amorphie.token.Modules.Login
             ServiceResponse<object> response = await userService.CheckDevice(userInfo.Id, clientInfo.code ?? clientInfo.id!, deviceId, Guid.Parse(installationId));
             dynamic variables = new Dictionary<string, dynamic>();
             dataChanged.additionalData = new ExpandoObject();
-            dataChanged.additionalData.phoneNumber = "0" + userInfo.MobilePhone.Prefix.ToString().Substring(0, 2) + "******" + userInfo.MobilePhone.Number.ToString().Substring(userInfo.MobilePhone.Number.Length - 3, 2);
+            dataChanged.additionalData.phoneNumber = "0" + userInfo.MobilePhone.Prefix.ToString().Substring(0, 2) + "******" + userInfo.MobilePhone.Number.ToString().Substring(userInfo.MobilePhone.Number.Length - 2, 2);
             dataChanged.additionalData.securityImage = securityImagePath;
             targetObject.Data = dataChanged;
             targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
