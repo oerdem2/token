@@ -34,6 +34,7 @@ builder.Services.AddCors(options =>
                 .AllowAnyMethod();
         });
 });
+builder.Services.AddHealthChecks();
 builder.Services.AddControllersWithViews();
 builder.Services.AddDaprClient();
 builder.Services.AddHttpContextAccessor();
@@ -101,7 +102,6 @@ builder.Services.AddRefitClient<ISimpleProfile>()
 
 builder.Services.AddRefitClient<IMessagingGateway>()
 .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["MessagingGatewayBaseAddress"]!));
-builder.Logging.ClearProviders();
 var app = builder.Build();
 app.UseTransactionMiddleware();
 
@@ -110,6 +110,8 @@ app.UseTransactionMiddleware();
 using var scope = app.Services.CreateScope();
 var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 db.Database.Migrate();
+
+app.MapHealthChecks("/health");
 
 app.MapLoginWorkflowEndpoints();
 
