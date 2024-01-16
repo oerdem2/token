@@ -243,7 +243,6 @@ public class TokenController : Controller
             }
         }
 
-
         var jti = JwtHelper.GetClaim(token, "jti");
 
         if (jti == null)
@@ -348,6 +347,19 @@ public class TokenController : Controller
         if (tokenRequest.GrantType == "refresh_token")
         {
             var token = await _tokenService.GenerateTokenWithRefreshToken(generateTokenRequest);
+            if (token.StatusCode == 200)
+            {
+                return Json(token.Response);
+            }
+            else
+            {
+                return Problem(detail: token.Detail, statusCode: token.StatusCode);
+            }
+        }
+
+        if (tokenRequest.GrantType == "client_credentials")
+        {
+            var token = await _tokenService.GenerateTokenWithClientCredentials(generateTokenRequest);
             if (token.StatusCode == 200)
             {
                 return Json(token.Response);
