@@ -233,6 +233,10 @@ public class TokenController : Controller
     [Consumes("application/x-www-form-urlencoded")]
     public async Task<IResult> Introspect([FromForm] string token, [FromQuery] bool isTemporary = false)
     {
+        foreach(var f in HttpContext.Request.Form)
+        {
+            Console.WriteLine("Key:"+f.Key+" Value:"+f.Value);
+        }
         var temporary = JwtHelper.GetClaim(token, "isTemporary");
 
         if (temporary != null && temporary.Equals("1"))
