@@ -12,6 +12,7 @@ namespace amorphie.token.Modules;
 
 public static class DisableUser
 {
+    [ApiExplorerSettings(IgnoreApi = true)]
     public static async Task<IResult> disableUser(
     [FromBody] dynamic body,
     IbDatabaseContext ibContext,

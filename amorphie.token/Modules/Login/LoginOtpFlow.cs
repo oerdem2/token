@@ -8,6 +8,7 @@ namespace amorphie.token.Modules.Login;
 
 public static class LoginOtpFlow
 {
+    [ApiExplorerSettings(IgnoreApi = true)]
     public static async Task<IResult> loginOtpFlow(
     [FromBody] dynamic body,
     [FromServices] IAuthorizationService authorizationService,

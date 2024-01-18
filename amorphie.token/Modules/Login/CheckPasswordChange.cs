@@ -12,6 +12,7 @@ namespace amorphie.token.Modules.Login
 {
     public static class CheckPasswordChange
     {
+        [ApiExplorerSettings(IgnoreApi = true)]
         public static async Task<IResult> checkPasswordChange(
         [FromBody] dynamic body,
         [FromServices] IbDatabaseContext ibDatabaseContext

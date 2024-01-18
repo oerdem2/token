@@ -59,13 +59,6 @@ public class TokenController : Controller
         return View("SignalR");
     }
 
-    [HttpGet("public/secured")]
-    public async Task<IActionResult> secured()
-    {
-        await Task.CompletedTask;
-        return Ok("secured");
-    }
-
     [HttpPut("public/Forget/{clientId}/{reference}")]
     public async Task<IActionResult> ForgetUser(string clientId,string reference)
     {
@@ -176,72 +169,6 @@ public class TokenController : Controller
 
 
 
-    [HttpPost("public/StartWorkflow")]
-    public async Task<IActionResult> StartWorkflow([FromBody] dynamic loginRequest)
-    {
-        var transactionId = Guid.NewGuid();
-
-        using var httpClient = new HttpClient();
-        var workflowRequest = new WorkflowPostTransitionRequest
-        {
-            EntityData = JsonSerializer.Serialize(loginRequest),
-            GetSignalRHub = true
-        };
-
-        StringContent request = new(JsonSerializer.Serialize(workflowRequest), Encoding.UTF8, "application/json");
-        request.Headers.Add("User", Guid.NewGuid().ToString());
-        request.Headers.Add("Behalf-Of-User", Guid.NewGuid().ToString());
-
-        var httpResponse = await httpClient.PostAsync(_configuration["workflowPostTransitionUri"]!.Replace("{{recordId}}", loginRequest.GetProperty("transaction_id").ToString()), request);
-
-        if (httpResponse.IsSuccessStatusCode)
-        {
-            var workflowResponse = await httpResponse.Content.ReadFromJsonAsync<WorkflowPostTransitionResponse>();
-            return Ok(workflowResponse.Result);
-        }
-        else
-        {
-            return Problem(detail: "Workflow Error", statusCode: 500);
-        }
-    }
-
-    [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpPost("public/Flow")]
-    public async Task<IActionResult> TokenWorkflow([FromBody] TokenRequest tokenRequest)
-    {
-        var clientReponse = await _clientService.ValidateClient(tokenRequest.ClientId!, tokenRequest.ClientSecret!);
-        if (clientReponse.StatusCode != 200)
-        {
-            return Problem(detail: clientReponse.Detail, statusCode: clientReponse.StatusCode);
-        }
-
-        var client = clientReponse.Response;
-        var flowType = client!.flows!.FirstOrDefault(f => f.type.ToLower().Equals("login"));
-
-        using var httpClient = new HttpClient();
-        var workflowRequest = new WorkflowPostTransitionRequest
-        {
-            EntityData = JsonSerializer.Serialize(tokenRequest),
-            GetSignalRHub = true
-        };
-
-        StringContent request = new(JsonSerializer.Serialize(workflowRequest), Encoding.UTF8, "application/json");
-        request.Headers.Add("User", Guid.NewGuid().ToString());
-        request.Headers.Add("Behalf-Of-User", Guid.NewGuid().ToString());
-
-        var httpResponse = await httpClient.PostAsync(_configuration["workflowPostTransitionUri"]!.Replace("{{recordId}}", tokenRequest.RecordId), request);
-
-        if (httpResponse.IsSuccessStatusCode)
-        {
-            var workflowResponse = await httpResponse.Content.ReadFromJsonAsync<WorkflowPostTransitionResponse>();
-            return Ok(workflowResponse!.Result);
-        }
-        else
-        {
-            return Problem(detail: "Workflow Error", statusCode: clientReponse.StatusCode);
-        }
-    }
-
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("private/Introspect")]
     [Consumes("application/x-www-form-urlencoded")]
@@ -323,6 +250,8 @@ public class TokenController : Controller
             claimValues.Add("client_id", client.code ?? client.id!);
         if (!claimValues.ContainsKey("clientId"))
             claimValues.Add("clientId", client.code ?? client.id!);
+        if (!claimValues.ContainsKey("clientIdReal"))
+            claimValues.Add("clientIdReal", client.id!);
         claimValues["aud"] = new List<string>() { "BackOfficeApi", "WorkflowApi", "RetailLoanApi", "AutoQueryApi", "CardApi", "IntegrationLegacyApi", "CallCenterApi", "IbGwApi", "Apisix", "ScheduleApi", "TransactionApi", "IProvisionApi", "EndorsementApi", "QuerynetApi" };
         claimValues.Add("active", true);
         return Results.Json(claimValues);

@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace amorphie.token.Modules.Login
 {
+    [ApiExplorerSettings(IgnoreApi = true)]
     public static class GenerateTokens
     {
         public static async Task<IResult> generateTokens(

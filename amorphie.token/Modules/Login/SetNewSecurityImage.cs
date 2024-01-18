@@ -9,6 +9,7 @@ namespace amorphie.token.Modules.Login
 {
     public static class SetNewSecurityImage
     {
+        [ApiExplorerSettings(IgnoreApi = true)]
         public static async Task<IResult> setNewSecurityImage(
         [FromBody] dynamic body,
         [FromServices] IbDatabaseContext ibContext

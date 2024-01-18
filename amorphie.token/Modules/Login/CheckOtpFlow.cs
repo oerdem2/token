@@ -8,6 +8,7 @@ namespace amorphie.token.Modules;
 
 public static class CheckOtpFlow
 {
+    [ApiExplorerSettings(IgnoreApi = true)]
     public static async Task<IResult> checkOtpFlow(
     [FromBody] dynamic body,
     [FromServices] IAuthorizationService authorizationService,

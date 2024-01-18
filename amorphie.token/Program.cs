@@ -5,8 +5,6 @@ using amorphie.core.security.Extensions;
 using amorphie.token.data;
 using amorphie.token.Middlewares;
 using amorphie.token.Modules.Login;
-using amorphie.token.Modules.OpenBankingFlows;
-using amorphie.token.Modules.ZeebeJobs;
 using amorphie.token.Services.ClaimHandler;
 using amorphie.token.Services.Consent;
 using amorphie.token.Services.FlowHandler;
@@ -114,27 +112,6 @@ db.Database.Migrate();
 app.MapHealthChecks("/health");
 
 app.MapLoginWorkflowEndpoints();
-
-app.MapCheckGrantTypesControlEndpoints();
-app.MapValidateClientControlEndpoints();
-app.MapCheckUserControlEndpoints();
-app.MapCheckScopesControlEndpoints();
-app.MapGenerateTokensControlEndpoints();
-app.MapCheckUserStateControlEndpoints();
-app.MapLoginOtpFlowControlEndpoints();
-app.MapDaprTestControlEndpoints();
-app.MapCheckOtpControlEndpoints();
-app.MapCheckPushControlEndpoints();
-app.MapSetLoginTypeControlEndpoints();
-app.MapLoginPushFlowControlEndpoints();
-
-app.MapTokenLoginCheckDevice();
-app.MapTokenLoginCheckSecondFactor();
-app.MapTokenLoginCheckUser();
-app.MapTokenLoginSendOtp();
-app.MapTokenLoginSetTransaction();
-
-app.MapAmorphieOauthCheckClientEndpoint();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

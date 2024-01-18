@@ -16,6 +16,7 @@ namespace amorphie.token.Modules.Login
 {
     public static class CheckUser
     {
+        [ApiExplorerSettings(IgnoreApi = true)]
         public static async Task<IResult> checkUser(
         [FromBody] dynamic body,
         [FromServices] IInternetBankingUserService internetBankingUserService,
