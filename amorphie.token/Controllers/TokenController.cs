@@ -59,7 +59,19 @@ public class TokenController : Controller
         {
             Console.WriteLine("Key:"+h.Key+" | Value:"+h.Value);
         }
-        return Unauthorized();
+        return Ok();
+        await Task.CompletedTask;
+        return View("SignalR");
+    }
+
+    [HttpPut("private/signalput")]
+    public async Task<IActionResult> SignalRPut(string reference)
+    {
+        foreach(var h in HttpContext.Request.Headers)
+        {
+            Console.WriteLine("Key:"+h.Key+" | Value:"+h.Value);
+        }
+        return Ok();
         await Task.CompletedTask;
         return View("SignalR");
     }
