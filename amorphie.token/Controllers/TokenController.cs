@@ -13,11 +13,8 @@ using amorphie.token.Services.FlowHandler;
 using amorphie.token.Services.Consent;
 using amorphie.token.Services.TransactionHandler;
 using amorphie.token.core.Extensions;
-using System.Dynamic;
 using System.Security.Claims;
-using Google.Api;
-using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
-using VaultSharp.V1.AuthMethods.Token.Models;
+
 
 namespace amorphie.token.core.Controllers;
 
@@ -67,6 +64,23 @@ public class TokenController : Controller
     {
         await Task.CompletedTask;
         return Ok("secured");
+    }
+
+    [HttpPut("public/Forget/{clientId}/{reference}")]
+    public async Task<IActionResult> ForgetUser(string clientId,string reference)
+    {
+        try
+        {
+            await _userService.RemoveDevice(reference,clientId);
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Remove Device Failed. Detail:" + ex.ToString());
+        }
+
+        return StatusCode(500);
     }
 
     [HttpPut("private/Revoke/{reference}")]
