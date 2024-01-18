@@ -55,6 +55,11 @@ public class TokenController : Controller
     [HttpGet("private/signalr")]
     public async Task<IActionResult> SignalR(string reference)
     {
+        foreach(var h in HttpContext.Request.Headers)
+        {
+            Console.WriteLine("Key:"+h.Key+" | Value:"+h.Value);
+        }
+        return Unauthorized();
         await Task.CompletedTask;
         return View("SignalR");
     }
