@@ -74,28 +74,23 @@ public class AuthorizeController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> OpenBankingAuthorize(OpenBankingAuthorizationRequest authorizationRequest)
     {
-        Console.WriteLine("Step-1");
+        
         var consentResult = await _consentService.GetConsent(authorizationRequest.riza_no);
         if (consentResult.StatusCode != 200)
         {
             ViewBag.ErrorDetail = consentResult.Detail;
             return View("Error");
         }
-        Console.WriteLine("Step-2");
         var consent = consentResult.Response;
 
         var consentData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent!.additionalData!);
-        Console.WriteLine("Step-3");
         string kmlkNo = consentData!.kmlk.kmlkVrs.ToString();
-        Console.WriteLine("Step-4");
         var customerInfoResult = await _profileService.GetCustomerSimpleProfile(kmlkNo);
-        Console.WriteLine("Step-5");
         if (customerInfoResult.StatusCode != 200)
         {
             ViewBag.ErrorDetail = customerInfoResult.Detail;
             return View("Error");
         }
-        Console.WriteLine("Step-6");
         var customerInfo = customerInfoResult.Response; 
 
         var loginModel = new OpenBankingLogin

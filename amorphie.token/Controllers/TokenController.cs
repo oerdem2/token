@@ -169,7 +169,6 @@ public class TokenController : Controller
     {
         foreach(var f in HttpContext.Request.Form)
         {
-            Console.WriteLine("Key:"+f.Key+" Value:"+f.Value);
         }
         var temporary = JwtHelper.GetClaim(token, "isTemporary");
 

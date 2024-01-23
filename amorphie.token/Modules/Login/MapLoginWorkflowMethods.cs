@@ -1,4 +1,5 @@
 
+using System.Dynamic;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
@@ -77,8 +78,18 @@ namespace amorphie.token.Modules.Login
             app.MapPost("/amorphie-login-generate-tokens", GenerateTokens.generateTokens)
             .ExcludeFromDescription()
             .Produces(StatusCodes.Status200OK);
+
+            app.MapGet("/amorphie-login-test", () => {
+                dynamic dd = new ExpandoObject();
+                var t = dd.GetProperty("test");
+                return Results.Ok();
+            })
+            .ExcludeFromDescription()
+            .Produces(StatusCodes.Status200OK);
       
         }
+
+        
 
     }
 }
