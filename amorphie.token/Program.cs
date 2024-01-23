@@ -80,6 +80,7 @@ else
     builder.Services.AddScoped<IUserService, UserService>();
     builder.Services.AddScoped<ITagService, TagService>();
     //builder.Services.AddScoped<IConsentService, ConsentService>();
+    builder.Services.AddScoped<IConsentService, ConsentServiceLocal>();
     builder.Services.AddHttpClient("Consent", httpClient =>
     {
         httpClient.BaseAddress = new Uri(builder.Configuration["ConsentBaseAddress"]!);
