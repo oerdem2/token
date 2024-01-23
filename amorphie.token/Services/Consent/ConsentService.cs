@@ -60,6 +60,7 @@ namespace amorphie.token.Services.Consent
             }
             catch (InvocationException ex)
             {
+                Console.WriteLine(ex.ToString());
                 return new ServiceResponse<ConsentResponse>()
                 {
                     StatusCode = (int)ex.Response.StatusCode,
@@ -68,6 +69,7 @@ namespace amorphie.token.Services.Consent
             }
             catch (System.Exception ex)
             {
+                Console.WriteLine(ex.ToString());
                 return new ServiceResponse<ConsentResponse>()
                 {
                     StatusCode = 500,
