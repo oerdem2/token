@@ -15,7 +15,7 @@ namespace amorphie.token.Services.TransactionHandler
         private readonly DaprClient _daprClient;
         private Transaction? _transaction;
         public Transaction? Transaction => _transaction;
-
+        public string PhoneNumber {get;set;}
         private string _ip;
         public string IpAddress { get => _ip; set => _ip = value; }
 

@@ -39,7 +39,7 @@ public static class LoginOtpFlow
 
         var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
 
-        await daprClient.SaveStateAsync(configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code", code);
+        await daprClient.SaveStateAsync(configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code", code,metadata: new Dictionary<string, string> { { "ttlInSeconds", "180" } });
 
         dynamic variables = new ExpandoObject();
         variables.otpTimeout = false;

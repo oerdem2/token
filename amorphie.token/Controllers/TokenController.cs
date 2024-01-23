@@ -52,30 +52,6 @@ public class TokenController : Controller
 
     }
 
-    [HttpGet("private/signalr")]
-    public async Task<IActionResult> SignalR(string reference)
-    {
-        foreach(var h in HttpContext.Request.Headers)
-        {
-            Console.WriteLine("Key:"+h.Key+" | Value:"+h.Value);
-        }
-        return Ok();
-        await Task.CompletedTask;
-        return View("SignalR");
-    }
-
-    [HttpPut("private/signalput")]
-    public async Task<IActionResult> SignalRPut(string reference)
-    {
-        foreach(var h in HttpContext.Request.Headers)
-        {
-            Console.WriteLine("Key:"+h.Key+" | Value:"+h.Value);
-        }
-        return Ok();
-        await Task.CompletedTask;
-        return View("SignalR");
-    }
-
     [HttpPut("public/Forget/{clientId}/{reference}")]
     public async Task<IActionResult> ForgetUser(string clientId,string reference)
     {

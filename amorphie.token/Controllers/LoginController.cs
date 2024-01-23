@@ -10,6 +10,7 @@ using System.Dynamic;
 using amorphie.token.Services.TransactionHandler;
 using amorphie.core.Enums;
 using System.Reflection.Metadata.Ecma335;
+using System.Text;
 
 namespace amorphie.token.core.Controllers;
 
@@ -27,9 +28,10 @@ public class LoginController : Controller
     private readonly ITransactionService _transactionService;
     private readonly IConsentService _consentService;
     private readonly IProfileService _profileService;
+    private readonly IbDatabaseContext _ibContext;
     public LoginController(ILogger<TokenController> logger, IAuthorizationService authorizationService, IUserService userService, DatabaseContext databaseContext
     , IConfiguration configuration, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService, ITransactionService transactionService,
-    IFlowHandler flowHandler, IConsentService consentService, IProfileService profileService)
+    IFlowHandler flowHandler, IConsentService consentService, IProfileService profileService,IbDatabaseContext ibContext)
     {
         _logger = logger;
         _authorizationService = authorizationService;
@@ -43,57 +45,19 @@ public class LoginController : Controller
         _daprClient = daprClient;
         _consentService = consentService;
         _profileService = profileService;
+        _ibContext = ibContext;
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpPost("public/LoginFlow")]
-    public async Task<IActionResult> LoginFlow(Login loginRequest)
+    [HttpGet("public/Authorize")]
+    public async Task<IActionResult> OpenBankingAuthorize(Guid riza_no)
     {
-        try
-        {
-            await _transactionService.GetTransaction(loginRequest.TransactionId);
-            var transaction = _transactionService.Transaction;
-            dynamic message = new ExpandoObject();
-            message.messageName = "amorphie-oauth-first-factor";
-            message.correlationKey = transaction!.Id.ToString();
-            dynamic variables = new ExpandoObject();
-            variables.username = loginRequest.UserName;
-            variables.password = loginRequest.Password;
-            message.variables = variables;
-            await _daprClient.InvokeBindingAsync("zeebe-local", "publish-message", message);
+        var consent = await _consentService.GetConsent(riza_no);
 
-            return await WorkflowProcess();
-        }
-        catch (Exception ex)
-        {
-            return BadRequest();
-        }
+        return View();
     }
 
-    [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpPost("public/OtpFlow")]
-    public async Task<IActionResult> OtpFlow(Otp otpRequest)
-    {
-        try
-        {
-            await _transactionService.GetTransaction(otpRequest.transactionId);
-            var transaction = _transactionService.Transaction;
-            dynamic message = new ExpandoObject();
-            message.messageName = "amorphie-oauth-first-factor";
-            message.correlationKey = transaction!.Id.ToString();
-            dynamic variables = new ExpandoObject();
-            variables.otpValue = otpRequest.OtpValue;
-
-            message.variables = variables;
-            await _daprClient.InvokeBindingAsync("zeebe-local", "publish-message", message);
-
-            return await WorkflowProcess();
-        }
-        catch (Exception ex)
-        {
-            return BadRequest();
-        }
-    }
+    
 
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("public/Login")]
@@ -154,53 +118,178 @@ public class LoginController : Controller
     {
         try
         {
-            dynamic message = new ExpandoObject();
-
-            message.messageName = "openbanking-login-process";
-            message.variables = openBankingLoginRequest;
-
-            _daprClient.InvokeBindingAsync("zeebe-local", "publish-message", message);
-            await _transactionService.GetTransaction(Guid.Parse(openBankingLoginRequest.transactionId));
-            while (_transactionService.Transaction!.TransactionState == TransactionState.Active && _transactionService.Transaction.Next == false)
+            var userResponse = await _ibUserService.GetUser(openBankingLoginRequest.username!);
+            if (userResponse.StatusCode != 200)
             {
-                await _transactionService.GetTransaction(Guid.Parse(openBankingLoginRequest.transactionId));
-                await Task.Delay(100);
+                //TODO
+                return StatusCode(500);
             }
-            if (_transactionService.Transaction.TransactionState == TransactionState.Error)
+            
+            var passwordResponse = await _ibUserService.GetPassword(userResponse.Response.Id);
+            if (passwordResponse.StatusCode != 200)
             {
-                ViewBag.ErrorDetail = "Bir hata oluştu. Daha sonra tekrar deneyiniz";
-                return View("error");
+                //TODO
+                return StatusCode(500);
             }
-            if (_transactionService.Transaction.Next)
+            var passwordRecord = passwordResponse.Response;
+
+            var isVerified = _ibUserService.VerifyPassword(passwordRecord!.HashedPassword!, openBankingLoginRequest.password!, passwordRecord.Id.ToString());
+            //Consider SuccessRehashNeeded
+            if (isVerified != PasswordVerificationResult.Success)
             {
-                var transaction = _transactionService.Transaction;
-                transaction.Next = false;
-                await _transactionService.SaveTransaction(transaction);
+                passwordRecord.AccessFailedCount = (passwordRecord.AccessFailedCount ?? 0) + 1;
+                //TODO - Disable User After Several Failed Login Attemps
+                await _ibContext.SaveChangesAsync();
+                return StatusCode(500);
+            }
+            else
+            {
+                passwordRecord.AccessFailedCount = 0;
+                await _ibContext.SaveChangesAsync();
+            }
 
-                var otpModel = new Otp
+
+
+            var userInfoResult = await _profileService.GetCustomerSimpleProfile(openBankingLoginRequest.username!);
+            if (userInfoResult.StatusCode != 200)
+            {
+                //TODO
+                return StatusCode(500);
+            }
+
+            var userInfo = userInfoResult.Response;
+
+            if (userInfo!.data!.profile!.Equals("customer") || !userInfo!.data!.profile!.status!.Equals("active"))
+            {
+                //TODO
+                return StatusCode(500);
+            }
+
+            var mobilePhoneCount = userInfo!.data!.phones!.Count(p => p.type!.Equals("mobile"));
+            if (mobilePhoneCount != 1)
+            {
+                //TODO
+                return StatusCode(500);
+            }
+
+            var mobilePhone = userInfo!.data!.phones!.FirstOrDefault(p => p.type!.Equals("mobile"));
+            if (string.IsNullOrWhiteSpace(mobilePhone!.prefix) || string.IsNullOrWhiteSpace(mobilePhone!.number))
+            {
+                //TODO
+                return StatusCode(500);
+            }
+
+            var userRequest = new UserInfo
+            {
+                firstName = userInfo!.data.profile!.name!,
+                lastName = userInfo!.data.profile!.name!,
+                phone = new core.Models.User.UserPhone()
                 {
-                    transactionId = _transactionService.Transaction.Id,
-                    Phone = _transactionService.Transaction.User!.MobilePhone!.ToString()
-                };
+                    countryCode = mobilePhone!.countryCode!,
+                    prefix = mobilePhone!.prefix,
+                    number = mobilePhone!.number
+                },
+                state = "Active",
+                salt = passwordRecord.Id.ToString(),
+                password = openBankingLoginRequest.password!,
+                explanation = "Migrated From IB",
+                reason = "Amorphie Login",
+                isArgonHash = true
+            };
+
+            var verifiedMailAddress = userInfo.data.emails!.FirstOrDefault(m => m.isVerified == true);
+            userRequest.eMail = verifiedMailAddress?.address ?? "";
+            userRequest.reference = openBankingLoginRequest.username!;
+
+            var migrateResult = await _userService.SaveUser(userRequest);
+
+            var amorphieUserResult = await _userService.Login(new LoginRequest() { Reference = openBankingLoginRequest.username!, Password = openBankingLoginRequest.password! });
+            var amorphieUser = amorphieUserResult.Response;
+
+            var rand = new Random();
+            var code = String.Empty;
+
+            for (int i = 0; i < 6; i++)
+            {
+                code += rand.Next(10);
+            }
+
+            var transactionId = Guid.NewGuid();
+            await _daprClient.SaveStateAsync(_configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code", code);
 
 
-                if (_transactionService.Transaction.SecondFactorMethod == SecondFactorMethod.Otp)
+            var otpRequest = new
+            {
+                Sender = "AutoDetect",
+                SmsType = "Otp",
+                Phone = new
                 {
-                    return View("Otp", otpModel);
+                    CountryCode = amorphieUser.MobilePhone!.CountryCode,
+                    Prefix = amorphieUser.MobilePhone.Prefix,
+                    Number = amorphieUser.MobilePhone.Number
+                },
+                Content = $"{code} şifresi ile giriş yapabilirsiniz",
+                Process = new
+                {
+                    Name = "Token Login Flow",
+                    Identity = "Otp Login"
                 }
-                else
-                {
-                    return View("Otp", otpModel);
-                }
+            };
+
+            StringContent request = new(JsonSerializer.Serialize(otpRequest), Encoding.UTF8, "application/json");
+
+            using var httpClient = new HttpClient();
+            var httpResponse = await httpClient.PostAsync(_configuration["MessagingGatewayUri"], request);
+
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                //TODO
             }
 
-            ViewBag.ErrorDetail = "Bir hata oluştu. Daha sonra tekrar deneyiniz";
-            return View("error");
+            
+
+            return View("Otp",new Otp
+            {
+                Phone = "0" + amorphieUser.MobilePhone.Prefix.ToString().Substring(0, 2) + "******" + amorphieUser.MobilePhone.Number.ToString().Substring(amorphieUser.MobilePhone.Number.Length - 2, 2),
+                transactionId = transactionId,
+                consentId = openBankingLoginRequest.consentId,
+            });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex.ToString());
             return StatusCode(500);
+        }
+    }
+
+    [HttpPost("public/ValidateOtp")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> ValidateOtp(Otp otpRequest)
+    {
+        var consentResult = await _consentService.GetConsent(otpRequest.consentId);
+        if (consentResult.StatusCode != 200)
+        {
+            ViewBag.ErrorDetail = consentResult.Detail;
+            return View("Error");
+        }
+        var consent = consentResult.Response;
+
+        var sendedOtpValue = await _daprClient.GetStateAsync<string>(_configuration["DAPR_STATE_STORE_NAME"], $"{otpRequest.transactionId}_Login_Otp_Code");
+        if (sendedOtpValue.Equals(otpRequest.OtpValue))
+        {
+            if(consent.consentType.Equals("OB_Account"))
+            {
+                return Redirect(_configuration["OpenBankingAccount"]+otpRequest.consentId);
+            }
+            if(consent.consentType.Equals("OB_Payment"))
+            {
+                return Redirect(_configuration["OpenBankingPayment"]+otpRequest.consentId);
+            }
+            return Forbid();
+        }
+        else
+        {
+            return Forbid();
         }
     }
 

@@ -27,7 +27,7 @@
         </div>
       </div>
       <div class="content two-columns mb-2 has-divider">
-        <form id="login-form" asp-action="OpenBankingLoginTest" asp-controller="Token" method="post">
+        <form id="login-form" asp-action="OpenBankingLogin" asp-controller="Login" method="post">
             <div class="content-inner">
             <div class="title mb-4">
                 Bireysel İnternet Bankacılığına Hoşgeldiniz
@@ -48,7 +48,7 @@
                 </div>
 
                 <input asp-for="password" size="12" class="flex-1" placeholder="Şifre" type="password" />
-                <input type="hidden" asp-for="transactionId" size="12" class="flex-1" placeholder="Şifre"  />
+                <input type="hidden" asp-for="consentId" size="12" class="flex-1"   />
                 <div class="forgot-password">
                     Unuttum
                 </div>
