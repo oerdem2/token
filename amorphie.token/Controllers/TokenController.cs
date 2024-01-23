@@ -343,7 +343,7 @@ public class TokenController : Controller
     public async Task<IActionResult> OpenBankingToken([FromBody] OpenBankingTokenRequest openBankingTokenRequest)
     {
         var generateTokenRequest = new GenerateTokenRequest();
-
+        
         var clientResult = await _clientService.CheckClient(_configuration["OpenBankingClientId"]!);
         if (clientResult.StatusCode != 200)
         {
