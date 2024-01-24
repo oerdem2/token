@@ -11,6 +11,7 @@ namespace amorphie.token.Modules.Login
 {
     public static class SetNewPassword
     {
+        [ApiExplorerSettings(IgnoreApi = true)]
         public static async Task<IResult> setNewPassword(
         [FromBody] dynamic body,
         [FromServices] IbDatabaseContext ibContext,

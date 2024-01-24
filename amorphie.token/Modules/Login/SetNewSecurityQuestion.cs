@@ -9,6 +9,7 @@ namespace amorphie.token.Modules.Login
 {
     public static class SetNewSecurityQuestion
     {
+        [ApiExplorerSettings(IgnoreApi = true)]
         public static async Task<IResult> setNewSecurityQuestion(
         [FromBody] dynamic body,
         [FromServices] IbDatabaseContext ibContext

@@ -17,6 +17,7 @@ namespace amorphie.token.Modules.Login
 {
     public static class CheckDocuments
     {
+        [ApiExplorerSettings(IgnoreApi = true)]
         public static async Task<IResult> checkDocuments(
         [FromBody] dynamic body,
         [FromServices] IConsentService consentService,

@@ -5,8 +5,6 @@ using amorphie.core.security.Extensions;
 using amorphie.token.data;
 using amorphie.token.Middlewares;
 using amorphie.token.Modules.Login;
-using amorphie.token.Modules.OpenBankingFlows;
-using amorphie.token.Modules.ZeebeJobs;
 using amorphie.token.Services.ClaimHandler;
 using amorphie.token.Services.Consent;
 using amorphie.token.Services.FlowHandler;
@@ -81,7 +79,12 @@ else
     builder.Services.AddScoped<IClientService, ClientService>();
     builder.Services.AddScoped<IUserService, UserService>();
     builder.Services.AddScoped<ITagService, TagService>();
-    builder.Services.AddScoped<IConsentService, ConsentService>();
+    //builder.Services.AddScoped<IConsentService, ConsentService>();
+    builder.Services.AddScoped<IConsentService, ConsentServiceLocal>();
+    builder.Services.AddHttpClient("Consent", httpClient =>
+    {
+        httpClient.BaseAddress = new Uri(builder.Configuration["ConsentBaseAddress"]!);
+    });
 }
 
 builder.Services.AddScoped<IInternetBankingUserService, InternetBankingUserService>();
@@ -115,31 +118,10 @@ app.MapHealthChecks("/health");
 
 app.MapLoginWorkflowEndpoints();
 
-app.MapCheckGrantTypesControlEndpoints();
-app.MapValidateClientControlEndpoints();
-app.MapCheckUserControlEndpoints();
-app.MapCheckScopesControlEndpoints();
-app.MapGenerateTokensControlEndpoints();
-app.MapCheckUserStateControlEndpoints();
-app.MapLoginOtpFlowControlEndpoints();
-app.MapDaprTestControlEndpoints();
-app.MapCheckOtpControlEndpoints();
-app.MapCheckPushControlEndpoints();
-app.MapSetLoginTypeControlEndpoints();
-app.MapLoginPushFlowControlEndpoints();
-
-app.MapTokenLoginCheckDevice();
-app.MapTokenLoginCheckSecondFactor();
-app.MapTokenLoginCheckUser();
-app.MapTokenLoginSendOtp();
-app.MapTokenLoginSetTransaction();
-
-app.MapAmorphieOauthCheckClientEndpoint();
-
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    //app.UseExceptionHandler("/Home/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }

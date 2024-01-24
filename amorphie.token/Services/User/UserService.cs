@@ -256,4 +256,35 @@ public class UserService : ServiceBase, IUserService
         }
 
     }
+
+    public async Task<ServiceResponse> RemoveDevice(string reference, string clientId)
+    {
+        try
+        {
+            await _daprClient.InvokeMethodAsync(HttpMethod.Put, Configuration["UserServiceAppName"], "/public/device/remove/" + clientId + "/" + reference);
+            return new ServiceResponse()
+            {
+                StatusCode = 200,
+                Detail = "",
+            };
+        }
+        catch (InvocationException ex)
+        {
+            Logger.LogError("An Error Occured At User Invocation Remove Device | Detail:" + ex.ToString());
+            return new ServiceResponse()
+            {
+                StatusCode = (int)ex.Response.StatusCode,
+                Detail = await ex.Response.Content.ReadAsStringAsync()
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("An Error Occured At User Invocation Remove Device | Detail:" + ex.ToString());
+            return new ServiceResponse()
+            {
+                StatusCode = 500,
+                Detail = "Dapr Remove Device Invoke Method Error"
+            };
+        }
+    }
 }

@@ -11,6 +11,7 @@ namespace amorphie.token.Modules.Login
 {
     public static class CheckScopes
     {
+        [ApiExplorerSettings(IgnoreApi = true)]
         public static async Task<IResult> checkScopes(
         [FromBody] dynamic body,
         [FromServices] IbDatabaseContext ibDatabaseContext

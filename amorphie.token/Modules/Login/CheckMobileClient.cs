@@ -10,6 +10,7 @@ namespace amorphie.token.Modules.Login
 {
     public static class CheckMobileClient
     {
+        [ApiExplorerSettings(IgnoreApi = true)]
         public static async Task<IResult> checkMobileClient(
         [FromBody] dynamic body,
         [FromServices] IClientService clientService,

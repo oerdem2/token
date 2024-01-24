@@ -13,6 +13,7 @@ namespace amorphie.token.Modules.Login
 {
     public static class SetLoginType
     {
+        [ApiExplorerSettings(IgnoreApi = true)]
 
         public static async Task<IResult> setLoginType(
         [FromBody] dynamic body,

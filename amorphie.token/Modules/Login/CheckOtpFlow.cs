@@ -8,6 +8,7 @@ namespace amorphie.token.Modules;
 
 public static class CheckOtpFlow
 {
+    [ApiExplorerSettings(IgnoreApi = true)]
     public static async Task<IResult> checkOtpFlow(
     [FromBody] dynamic body,
     [FromServices] IAuthorizationService authorizationService,
@@ -22,6 +23,14 @@ public static class CheckOtpFlow
         var entityObj = JsonSerializer.Deserialize<Dictionary<string, object>>(entityData);
         var providedCode = entityObj["otpValue"].ToString();
         var generatedCode = await daprClient.GetStateAsync<string?>(configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code");
+
+        dynamic variables = new ExpandoObject();
+        if (generatedCode == null)
+        {
+            variables.otpTimeout = true;
+            return Results.Ok(variables);
+        }
+        variables.otpTimeout = false;
 
         var clientInfoSerialized = body.GetProperty("clientSerialized").ToString();
 
@@ -39,16 +48,13 @@ public static class CheckOtpFlow
 
         if (generatedCode != null && providedCode == generatedCode)
         {
-            dynamic variables = new ExpandoObject();
             variables.otpMatch = true;
-
 
             return Results.Ok(variables);
         }
         else
         {
             var otpTryCount = Convert.ToInt32(body.GetProperty("OtpTryCount").ToString());
-            dynamic variables = new ExpandoObject();
             variables.otpMatch = false;
             variables.OtpTryCount = otpTryCount++;
             variables.message = "Otp Check Failed";

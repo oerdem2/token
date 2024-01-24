@@ -10,6 +10,8 @@ namespace amorphie.token.core.Models.Account
         public string OtpValue { get; set; }
         public string Phone { get; set; }
         public Guid transactionId { get; set; }
+        public Guid consentId { get; set; }
+        public string consentType { get; set; }
         public bool HasError { get; set; } = false;
         public string ErrorMessage { get; set; } = String.Empty;
     }

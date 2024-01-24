@@ -9,6 +9,7 @@ namespace amorphie.token.Modules.Login
 {
     public static class CheckSecurityQuestionChange
     {
+        [ApiExplorerSettings(IgnoreApi = true)]
         public static async Task<IResult> checkSecurityQuestionChange(
         [FromBody] dynamic body,
         [FromServices] IbDatabaseContext ibContext

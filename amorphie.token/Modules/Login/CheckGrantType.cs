@@ -11,6 +11,7 @@ namespace amorphie.token.Modules.Login
 {
     public static class CheckGrantType
     {
+        [ApiExplorerSettings(IgnoreApi = true)]
         public static async Task<IResult> checkGrantType(
         [FromBody] dynamic body,
         [FromServices] IbDatabaseContext ıbDatabaseContext

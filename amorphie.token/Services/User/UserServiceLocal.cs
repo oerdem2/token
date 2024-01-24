@@ -102,4 +102,20 @@ public class UserServiceLocal : IUserService
             throw new ServiceException((int)Errors.InvalidUser, "User Endpoint Did Not Response Successfully");
         }
     }
+
+    public async Task<ServiceResponse> RemoveDevice(string reference, string clientId)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var httpResponseMessage = await httpClient.PutAsync(
+            "public/device/remove/" + clientId + "/" + reference, null);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            return new ServiceResponse() { StatusCode = 200 };
+        }
+        else
+        {
+            throw new ServiceException((int)Errors.InvalidUser, "User Endpoint Did Not Response Successfully");
+        }
+    }
 }

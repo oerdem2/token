@@ -48,15 +48,34 @@ public class AuthorizeController : Controller
         _profileService = profileService;
     }
 
+    [HttpGet("/public/OpenBankingAuthCode")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> OpenBankingAuthCode(Guid consentId)
+    {
+        var consentResponse = await _consentService.GetConsent(consentId);
+        if (consentResponse.StatusCode == 200)
+        {
+            var consent = consentResponse.Response;
+            var deserializedData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent.additionalData);
+            var redirectUri = deserializedData.gkd.yonAdr;
+            var authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest()
+            {
+                ResponseType = "code",
+                ClientId = "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                Scope = new string[] { "openbanking-customer" },
+                ConsentId = consentId
+            });
+            var authCode = authResponse.Response.Code;
+            return Redirect($"{redirectUri}&rizaDrm=Y&yetKod={authCode}&rizaNo={consentId}&rizaTip=H");
+        }
+        return Forbid();
+    }
+
     [HttpGet("public/OpenBankingAuthorize")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> OpenBankingAuthorize(OpenBankingAuthorizationRequest authorizationRequest)
     {
-        Models.Transaction.Transaction transaction = new()
-        {
-            Id = Guid.NewGuid(),
-            TransactionState = TransactionState.Active
-        };
+
         var consentResult = await _consentService.GetConsent(authorizationRequest.riza_no);
         if (consentResult.StatusCode != 200)
         {
@@ -66,28 +85,21 @@ public class AuthorizeController : Controller
         var consent = consentResult.Response;
 
         var consentData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent!.additionalData!);
-
         string kmlkNo = consentData!.kmlk.kmlkVrs.ToString();
-
-        var customerInfoResult = await _profileService.GetCustomerProfile(kmlkNo);
+        var customerInfoResult = await _profileService.GetCustomerSimpleProfile(kmlkNo);
         if (customerInfoResult.StatusCode != 200)
         {
             ViewBag.ErrorDetail = customerInfoResult.Detail;
             return View("Error");
         }
         var customerInfo = customerInfoResult.Response;
-        transaction.Profile = customerInfo!;
-        transaction.ConsentData = consent;
-        ViewBag.TransactionId = transaction.Id;
-
-        await _transactionService.SaveTransaction(transaction);
 
         var loginModel = new OpenBankingLogin
         {
-            transactionId = _transactionService.Transaction!.Id.ToString()
+            consentId = authorizationRequest.riza_no
         };
 
-        if (customerInfo!.businessLine == "X")
+        if (customerInfo!.data!.profile!.businessLine == "X")
         {
             return View("OpenBankingLoginOn", loginModel);
         }

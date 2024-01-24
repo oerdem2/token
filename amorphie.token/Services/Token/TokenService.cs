@@ -160,7 +160,7 @@ public class TokenService : ServiceBase, ITokenService
             return string.Empty;
         }
 
-        if (accessInfo.claims != null && accessInfo.claims.Count() > 0)
+        if (accessInfo.claims != null && accessInfo.claims.Count() > 0 && !_tokenRequest.GrantType.Equals("client_credentials"))
         {
 
             var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user, _profile);
@@ -181,7 +181,10 @@ public class TokenService : ServiceBase, ITokenService
             }
         }
         tokenClaims.Add(new Claim("jti", _tokenInfoDetail.AccessTokenId.ToString()));
-        tokenClaims.Add(new Claim("userId", _user!.Id.ToString()));
+        if (_user != null)
+            tokenClaims.Add(new Claim("userId", _user!.Id.ToString()));
+        else
+            tokenClaims.Add(new Claim("clientAuthorized", "1"));
         tokenClaims.Add(new Claim("iat", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()));
 
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_client.jwtSalt!));
@@ -192,8 +195,8 @@ public class TokenService : ServiceBase, ITokenService
         string access_token = JwtHelper.GenerateJwt("BurganIam", _client.returnuri, tokenClaims,
             expires: expires, signingCredentials: signinCredentials);
 
-        _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.AccessToken, _tokenInfoDetail.AccessTokenId, _client.id!, DateTime.UtcNow.AddSeconds(accessDuration), true, _user.Reference
-        , _tokenRequest.Scopes!.ToArray().Except(excludedScopes).ToList(), _user.Id, null, _tokenRequest!.ConsentId));
+        _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.AccessToken, _tokenInfoDetail.AccessTokenId, _client.id!, DateTime.UtcNow.AddSeconds(accessDuration), true, _user?.Reference ?? ""
+        , _tokenRequest.Scopes!.ToArray().Except(excludedScopes).ToList(), _user?.Id ?? null, null, _tokenRequest!.ConsentId));
 
         return access_token;
     }
@@ -207,7 +210,8 @@ public class TokenService : ServiceBase, ITokenService
         if (refreshInfo != null)
         {
             tokenClaims.Add(new Claim("jti", _tokenInfoDetail.RefreshTokenId.ToString()));
-            tokenClaims.Add(new Claim("userId", _user!.Id.ToString()));
+            if (_user != null)
+                tokenClaims.Add(new Claim("userId", _user!.Id.ToString()));
         }
         if (refreshInfo == null)
             return string.Empty;
@@ -231,8 +235,8 @@ public class TokenService : ServiceBase, ITokenService
         string refresh_token = JwtHelper.GenerateJwt("BurganIam", _client.returnuri, tokenClaims,
             expires: refreshExpires, signingCredentials: signinCredentials);
 
-        _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.RefreshToken, _tokenInfoDetail.RefreshTokenId, _client.id!, DateTime.UtcNow.AddSeconds(refreshDuration), true, _user!.Reference
-        , new List<string>(), _user!.Id, _tokenInfoDetail.AccessTokenId, _tokenRequest!.ConsentId));
+        _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.RefreshToken, _tokenInfoDetail.RefreshTokenId, _client.id!, DateTime.UtcNow.AddSeconds(refreshDuration), true, _user?.Reference ?? ""
+        , new List<string>(), _user?.Id ?? null, _tokenInfoDetail.AccessTokenId, _tokenRequest!.ConsentId));
 
         return refresh_token;
     }
@@ -249,9 +253,12 @@ public class TokenService : ServiceBase, ITokenService
         };
 
         //openId Section
-        if (_tokenRequest!.Scopes!.Contains("openId") || _tokenRequest!.Scopes!.Contains("profile"))
+        if (!_tokenRequest.GrantType.Equals("client_credentials"))
         {
-            tokenResponse.IdToken = await CreateIdToken();
+            if (_tokenRequest!.Scopes!.Contains("openId") || _tokenRequest!.Scopes!.Contains("profile"))
+            {
+                tokenResponse.IdToken = await CreateIdToken();
+            }
         }
 
         return tokenResponse;
@@ -363,6 +370,11 @@ public class TokenService : ServiceBase, ITokenService
                     Detail = "User is disabled"
                 };
             }
+        }
+        else
+        {
+            _user = null;
+            _tokenRequest.GrantType = "client_credentials";
         }
 
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_client.jwtSalt!));
@@ -590,6 +602,70 @@ public class TokenService : ServiceBase, ITokenService
             {
                 StatusCode = 470,
                 Detail = "User is disabled"
+            };
+        }
+
+        var tokenResponse = await GenerateTokenResponse();
+
+        if (tokenResponse.IdToken == string.Empty && tokenResponse.AccessToken == string.Empty)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 500,
+                Detail = "Access Token And Id Token Couldn't Be Generated"
+            };
+        }
+
+        await PersistTokenInfo();
+
+        return new ServiceResponse<TokenResponse>()
+        {
+            StatusCode = 200,
+            Response = tokenResponse
+        };
+    }
+
+    public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithClientCredentials(GenerateTokenRequest tokenRequest)
+    {
+        _tokenRequest = tokenRequest;
+        _user = null;
+        ServiceResponse<ClientResponse> clientResponse;
+        if (Guid.TryParse(_tokenRequest.ClientId!, out Guid _))
+        {
+            clientResponse = await _clientService.ValidateClient(_tokenRequest.ClientId!, _tokenRequest.ClientSecret!);
+        }
+        else
+        {
+            clientResponse = await _clientService.ValidateClientByCode(_tokenRequest.ClientId!, _tokenRequest.ClientSecret!);
+        }
+
+        if (clientResponse.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = clientResponse.StatusCode,
+                Detail = clientResponse.Detail
+            };
+        }
+
+        _client = clientResponse.Response;
+        if (!_client!.allowedgranttypes!.Any(g => g.GrantType == tokenRequest.GrantType))
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "Client Has No Authorize To Use Requested Grant Type"
+            };
+        }
+
+        var requestedScopes = tokenRequest.Scopes!.ToList();
+
+        if (!requestedScopes.All(_client.allowedscopetags!.Contains))
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 473,
+                Detail = "Client is Not Authorized For Requested Scopes"
             };
         }
 

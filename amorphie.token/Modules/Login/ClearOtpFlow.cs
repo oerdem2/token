@@ -8,6 +8,7 @@ namespace amorphie.token.Modules;
 
 public static class ClearOtpFlow
 {
+    [ApiExplorerSettings(IgnoreApi = true)]
     public static async Task<IResult> clearOtpFlow(
     [FromBody] dynamic body,
     IConfiguration configuration,

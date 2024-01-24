@@ -13,11 +13,8 @@ using amorphie.token.Services.FlowHandler;
 using amorphie.token.Services.Consent;
 using amorphie.token.Services.TransactionHandler;
 using amorphie.token.core.Extensions;
-using System.Dynamic;
 using System.Security.Claims;
-using Google.Api;
-using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
-using VaultSharp.V1.AuthMethods.Token.Models;
+
 
 namespace amorphie.token.core.Controllers;
 
@@ -55,18 +52,21 @@ public class TokenController : Controller
 
     }
 
-    [HttpGet("private/signalr")]
-    public async Task<IActionResult> SignalR(string reference)
+    [HttpPut("public/Forget/{clientId}/{reference}")]
+    public async Task<IActionResult> ForgetUser(string clientId, string reference)
     {
-        await Task.CompletedTask;
-        return View("SignalR");
-    }
+        try
+        {
+            await _userService.RemoveDevice(reference, clientId);
 
-    [HttpGet("public/secured")]
-    public async Task<IActionResult> secured()
-    {
-        await Task.CompletedTask;
-        return Ok("secured");
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Remove Device Failed. Detail:" + ex.ToString());
+        }
+
+        return StatusCode(500);
     }
 
     [HttpPut("private/Revoke/{reference}")]
@@ -162,77 +162,14 @@ public class TokenController : Controller
 
 
 
-    [HttpPost("public/StartWorkflow")]
-    public async Task<IActionResult> StartWorkflow([FromBody] dynamic loginRequest)
-    {
-        var transactionId = Guid.NewGuid();
-
-        using var httpClient = new HttpClient();
-        var workflowRequest = new WorkflowPostTransitionRequest
-        {
-            EntityData = JsonSerializer.Serialize(loginRequest),
-            GetSignalRHub = true
-        };
-
-        StringContent request = new(JsonSerializer.Serialize(workflowRequest), Encoding.UTF8, "application/json");
-        request.Headers.Add("User", Guid.NewGuid().ToString());
-        request.Headers.Add("Behalf-Of-User", Guid.NewGuid().ToString());
-
-        var httpResponse = await httpClient.PostAsync(_configuration["workflowPostTransitionUri"]!.Replace("{{recordId}}", loginRequest.GetProperty("transaction_id").ToString()), request);
-
-        if (httpResponse.IsSuccessStatusCode)
-        {
-            var workflowResponse = await httpResponse.Content.ReadFromJsonAsync<WorkflowPostTransitionResponse>();
-            return Ok(workflowResponse.Result);
-        }
-        else
-        {
-            return Problem(detail: "Workflow Error", statusCode: 500);
-        }
-    }
-
-    [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpPost("public/Flow")]
-    public async Task<IActionResult> TokenWorkflow([FromBody] TokenRequest tokenRequest)
-    {
-        var clientReponse = await _clientService.ValidateClient(tokenRequest.ClientId!, tokenRequest.ClientSecret!);
-        if (clientReponse.StatusCode != 200)
-        {
-            return Problem(detail: clientReponse.Detail, statusCode: clientReponse.StatusCode);
-        }
-
-        var client = clientReponse.Response;
-        var flowType = client!.flows!.FirstOrDefault(f => f.type.ToLower().Equals("login"));
-
-        using var httpClient = new HttpClient();
-        var workflowRequest = new WorkflowPostTransitionRequest
-        {
-            EntityData = JsonSerializer.Serialize(tokenRequest),
-            GetSignalRHub = true
-        };
-
-        StringContent request = new(JsonSerializer.Serialize(workflowRequest), Encoding.UTF8, "application/json");
-        request.Headers.Add("User", Guid.NewGuid().ToString());
-        request.Headers.Add("Behalf-Of-User", Guid.NewGuid().ToString());
-
-        var httpResponse = await httpClient.PostAsync(_configuration["workflowPostTransitionUri"]!.Replace("{{recordId}}", tokenRequest.RecordId), request);
-
-        if (httpResponse.IsSuccessStatusCode)
-        {
-            var workflowResponse = await httpResponse.Content.ReadFromJsonAsync<WorkflowPostTransitionResponse>();
-            return Ok(workflowResponse!.Result);
-        }
-        else
-        {
-            return Problem(detail: "Workflow Error", statusCode: clientReponse.StatusCode);
-        }
-    }
-
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("private/Introspect")]
     [Consumes("application/x-www-form-urlencoded")]
     public async Task<IResult> Introspect([FromForm] string token, [FromQuery] bool isTemporary = false)
     {
+        foreach (var f in HttpContext.Request.Form)
+        {
+        }
         var temporary = JwtHelper.GetClaim(token, "isTemporary");
 
         if (temporary != null && temporary.Equals("1"))
@@ -242,7 +179,6 @@ public class TokenController : Controller
                 return Results.Json(new { active = false });
             }
         }
-
 
         var jti = JwtHelper.GetClaim(token, "jti");
 
@@ -306,6 +242,8 @@ public class TokenController : Controller
             claimValues.Add("client_id", client.code ?? client.id!);
         if (!claimValues.ContainsKey("clientId"))
             claimValues.Add("clientId", client.code ?? client.id!);
+        if (!claimValues.ContainsKey("clientIdReal"))
+            claimValues.Add("clientIdReal", client.id!);
         claimValues["aud"] = new List<string>() { "BackOfficeApi", "WorkflowApi", "RetailLoanApi", "AutoQueryApi", "CardApi", "IntegrationLegacyApi", "CallCenterApi", "IbGwApi", "Apisix", "ScheduleApi", "TransactionApi", "IProvisionApi", "EndorsementApi", "QuerynetApi" };
         claimValues.Add("active", true);
         return Results.Json(claimValues);
@@ -348,6 +286,19 @@ public class TokenController : Controller
         if (tokenRequest.GrantType == "refresh_token")
         {
             var token = await _tokenService.GenerateTokenWithRefreshToken(generateTokenRequest);
+            if (token.StatusCode == 200)
+            {
+                return Json(token.Response);
+            }
+            else
+            {
+                return Problem(detail: token.Detail, statusCode: token.StatusCode);
+            }
+        }
+
+        if (tokenRequest.GrantType == "client_credentials")
+        {
+            var token = await _tokenService.GenerateTokenWithClientCredentials(generateTokenRequest);
             if (token.StatusCode == 200)
             {
                 return Json(token.Response);

@@ -46,9 +46,10 @@
 
           <div class="login-form mb-4">
             <label class="input mb-2">
-                <form id="otp-form" asp-action="OtpFlow" asp-controller="Login" method="post">
+                <form id="otp-form" asp-action="ValidateOtp" asp-controller="Login" method="post">
                     <input asp-for="OtpValue" type="password" placeholder="SMS Doğrulama Kodu"/>
                     <input asp-for="transactionId" type="hidden" />
+                    <input asp-for="consentId" type="hidden" />
                 </form>
             </label>
               <div id="otp-submit" class="button login-button flex-1 flex items-center justify-center show-cursor">
