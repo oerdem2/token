@@ -53,11 +53,11 @@ public class TokenController : Controller
     }
 
     [HttpPut("public/Forget/{clientId}/{reference}")]
-    public async Task<IActionResult> ForgetUser(string clientId,string reference)
+    public async Task<IActionResult> ForgetUser(string clientId, string reference)
     {
         try
         {
-            await _userService.RemoveDevice(reference,clientId);
+            await _userService.RemoveDevice(reference, clientId);
 
             return Ok();
         }
@@ -167,7 +167,7 @@ public class TokenController : Controller
     [Consumes("application/x-www-form-urlencoded")]
     public async Task<IResult> Introspect([FromForm] string token, [FromQuery] bool isTemporary = false)
     {
-        foreach(var f in HttpContext.Request.Form)
+        foreach (var f in HttpContext.Request.Form)
         {
         }
         var temporary = JwtHelper.GetClaim(token, "isTemporary");
@@ -342,7 +342,7 @@ public class TokenController : Controller
     public async Task<IActionResult> OpenBankingToken([FromBody] OpenBankingTokenRequest openBankingTokenRequest)
     {
         var generateTokenRequest = new GenerateTokenRequest();
-        
+
         var clientResult = await _clientService.CheckClient(_configuration["OpenBankingClientId"]!);
         if (clientResult.StatusCode != 200)
         {

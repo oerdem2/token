@@ -53,15 +53,16 @@ public class AuthorizeController : Controller
     public async Task<IActionResult> OpenBankingAuthCode(Guid consentId)
     {
         var consentResponse = await _consentService.GetConsent(consentId);
-        if(consentResponse.StatusCode == 200)
+        if (consentResponse.StatusCode == 200)
         {
             var consent = consentResponse.Response;
             var deserializedData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent.additionalData);
             var redirectUri = deserializedData.gkd.yonAdr;
-            var authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest(){
+            var authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest()
+            {
                 ResponseType = "code",
                 ClientId = "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                Scope = new string[]{"openbanking-customer"},
+                Scope = new string[] { "openbanking-customer" },
                 ConsentId = consentId
             });
             var authCode = authResponse.Response.Code;
@@ -74,7 +75,7 @@ public class AuthorizeController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> OpenBankingAuthorize(OpenBankingAuthorizationRequest authorizationRequest)
     {
-        
+
         var consentResult = await _consentService.GetConsent(authorizationRequest.riza_no);
         if (consentResult.StatusCode != 200)
         {
@@ -91,7 +92,7 @@ public class AuthorizeController : Controller
             ViewBag.ErrorDetail = customerInfoResult.Detail;
             return View("Error");
         }
-        var customerInfo = customerInfoResult.Response; 
+        var customerInfo = customerInfoResult.Response;
 
         var loginModel = new OpenBankingLogin
         {

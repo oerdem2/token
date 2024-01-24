@@ -31,7 +31,7 @@ public class LoginController : Controller
     private readonly IbDatabaseContext _ibContext;
     public LoginController(ILogger<TokenController> logger, IAuthorizationService authorizationService, IUserService userService, DatabaseContext databaseContext
     , IConfiguration configuration, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService, ITransactionService transactionService,
-    IFlowHandler flowHandler, IConsentService consentService, IProfileService profileService,IbDatabaseContext ibContext)
+    IFlowHandler flowHandler, IConsentService consentService, IProfileService profileService, IbDatabaseContext ibContext)
     {
         _logger = logger;
         _authorizationService = authorizationService;
@@ -57,7 +57,7 @@ public class LoginController : Controller
         return View();
     }
 
-    
+
 
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("public/Login")]
@@ -124,7 +124,7 @@ public class LoginController : Controller
                 //TODO
                 return StatusCode(500);
             }
-            
+
             var passwordResponse = await _ibUserService.GetPassword(userResponse.Response.Id);
             if (passwordResponse.StatusCode != 200)
             {
@@ -246,9 +246,9 @@ public class LoginController : Controller
                 //TODO
             }
 
-            
 
-            return View("Otp",new Otp
+
+            return View("Otp", new Otp
             {
                 Phone = "0" + amorphieUser.MobilePhone.Prefix.ToString().Substring(0, 2) + "******" + amorphieUser.MobilePhone.Number.ToString().Substring(amorphieUser.MobilePhone.Number.Length - 2, 2),
                 transactionId = transactionId,
@@ -277,13 +277,13 @@ public class LoginController : Controller
         var sendedOtpValue = await _daprClient.GetStateAsync<string>(_configuration["DAPR_STATE_STORE_NAME"], $"{otpRequest.transactionId}_Login_Otp_Code");
         if (sendedOtpValue.Equals(otpRequest.OtpValue))
         {
-            if(consent.consentType.Equals("OB_Account"))
+            if (consent.consentType.Equals("OB_Account"))
             {
-                return Redirect(_configuration["OpenBankingAccount"]+otpRequest.consentId);
+                return Redirect(_configuration["OpenBankingAccount"] + otpRequest.consentId);
             }
-            if(consent.consentType.Equals("OB_Payment"))
+            if (consent.consentType.Equals("OB_Payment"))
             {
-                return Redirect(_configuration["OpenBankingPayment"]+otpRequest.consentId);
+                return Redirect(_configuration["OpenBankingPayment"] + otpRequest.consentId);
             }
             return Forbid();
         }

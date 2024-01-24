@@ -181,7 +181,7 @@ public class TokenService : ServiceBase, ITokenService
             }
         }
         tokenClaims.Add(new Claim("jti", _tokenInfoDetail.AccessTokenId.ToString()));
-        if(_user != null)
+        if (_user != null)
             tokenClaims.Add(new Claim("userId", _user!.Id.ToString()));
         else
             tokenClaims.Add(new Claim("clientAuthorized", "1"));
@@ -210,7 +210,7 @@ public class TokenService : ServiceBase, ITokenService
         if (refreshInfo != null)
         {
             tokenClaims.Add(new Claim("jti", _tokenInfoDetail.RefreshTokenId.ToString()));
-            if(_user != null)
+            if (_user != null)
                 tokenClaims.Add(new Claim("userId", _user!.Id.ToString()));
         }
         if (refreshInfo == null)
@@ -253,7 +253,7 @@ public class TokenService : ServiceBase, ITokenService
         };
 
         //openId Section
-        if(!_tokenRequest.GrantType.Equals("client_credentials"))
+        if (!_tokenRequest.GrantType.Equals("client_credentials"))
         {
             if (_tokenRequest!.Scopes!.Contains("openId") || _tokenRequest!.Scopes!.Contains("profile"))
             {

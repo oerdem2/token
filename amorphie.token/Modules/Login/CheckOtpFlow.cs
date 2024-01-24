@@ -23,15 +23,15 @@ public static class CheckOtpFlow
         var entityObj = JsonSerializer.Deserialize<Dictionary<string, object>>(entityData);
         var providedCode = entityObj["otpValue"].ToString();
         var generatedCode = await daprClient.GetStateAsync<string?>(configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code");
-        
+
         dynamic variables = new ExpandoObject();
-        if(generatedCode == null)
+        if (generatedCode == null)
         {
             variables.otpTimeout = true;
             return Results.Ok(variables);
         }
         variables.otpTimeout = false;
-        
+
         var clientInfoSerialized = body.GetProperty("clientSerialized").ToString();
 
         ClientResponse clientInfo = JsonSerializer.Deserialize<ClientResponse>(clientInfoSerialized, new JsonSerializerOptions

@@ -107,7 +107,7 @@ public class UserServiceLocal : IUserService
     {
         var httpClient = _httpClientFactory.CreateClient("User");
         var httpResponseMessage = await httpClient.PutAsync(
-            "public/device/remove/"+clientId+"/"+reference,null);
+            "public/device/remove/" + clientId + "/" + reference, null);
 
         if (httpResponseMessage.IsSuccessStatusCode)
         {

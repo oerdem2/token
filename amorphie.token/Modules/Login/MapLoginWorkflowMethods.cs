@@ -10,7 +10,7 @@ namespace amorphie.token.Modules.Login
     {
         public static void MapLoginWorkflowEndpoints(this WebApplication app)
         {
-            
+
             app.MapPost("/amorphie-login-check-mobile-client", CheckMobileClient.checkMobileClient)
             .ExcludeFromDescription()
             .Produces(StatusCodes.Status200OK);
@@ -79,17 +79,18 @@ namespace amorphie.token.Modules.Login
             .ExcludeFromDescription()
             .Produces(StatusCodes.Status200OK);
 
-            app.MapGet("/amorphie-login-test", () => {
+            app.MapGet("/amorphie-login-test", () =>
+            {
                 dynamic dd = new ExpandoObject();
                 var t = dd.GetProperty("test");
                 return Results.Ok();
             })
             .ExcludeFromDescription()
             .Produces(StatusCodes.Status200OK);
-      
+
         }
 
-        
+
 
     }
 }

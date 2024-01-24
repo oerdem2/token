@@ -261,7 +261,7 @@ public class UserService : ServiceBase, IUserService
     {
         try
         {
-            await _daprClient.InvokeMethodAsync(HttpMethod.Put,Configuration["UserServiceAppName"], "/public/device/remove/"+clientId+"/"+reference);
+            await _daprClient.InvokeMethodAsync(HttpMethod.Put, Configuration["UserServiceAppName"], "/public/device/remove/" + clientId + "/" + reference);
             return new ServiceResponse()
             {
                 StatusCode = 200,
