@@ -52,7 +52,7 @@ public class TokenController : Controller
 
     }
 
-    [HttpPut("public/Forget/{clientId}/{reference}")]
+    [HttpPut("public/Forget/{clientId}")]
     public async Task<IActionResult> ForgetUser(string clientId, string reference)
     {
         try
