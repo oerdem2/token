@@ -384,10 +384,11 @@ public class TokenController : Controller
             {
                 Console.WriteLine($"OpenBanking Header Key:{h.Key} | Value:{h.Value}");
             }
-            var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Request-ID"));
-            var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Group-ID"));
-            var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-ASPSP-Code"));
-            var tppCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-TPP-Code"));
+            var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-request-id"));
+            var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-group-id"));
+            var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-aspsp-code"));
+            var tppCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-tpp-code"));
+            
             
             HttpContext.Response.Headers.Add("X-Request-ID",string.IsNullOrWhiteSpace(requestId.Value) ?  Guid.NewGuid().ToString() : requestId.Value);
             HttpContext.Response.Headers.Add("X-Group-ID",string.IsNullOrWhiteSpace(groupId.Value) ?  Guid.NewGuid().ToString() : groupId.Value);
@@ -414,10 +415,10 @@ public class TokenController : Controller
                 RefreshToken = token.Response.RefreshToken,
                 RefreshTokenExpiresIn = token.Response.RefreshTokenExpiresIn
             };
-            var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Request-ID"));
-            var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Group-ID"));
-            var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-ASPSP-Code"));
-            var tppCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-TPP-Code"));
+            var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-request-id"));
+            var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-group-id"));
+            var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-aspsp-code"));
+            var tppCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-tpp-code"));
             
             HttpContext.Response.Headers.Add("X-Request-ID",string.IsNullOrWhiteSpace(requestId.Value) ?  Guid.NewGuid().ToString() : requestId.Value);
             HttpContext.Response.Headers.Add("X-Group-ID",string.IsNullOrWhiteSpace(groupId.Value) ?  Guid.NewGuid().ToString() : groupId.Value);
