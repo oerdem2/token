@@ -397,6 +397,10 @@ public class TokenController : Controller
                 RefreshToken = token.Response.RefreshToken,
                 RefreshTokenExpiresIn = token.Response.RefreshTokenExpiresIn
             };
+            HttpContext.Response.Headers.Add("X-Request-ID",String.IsNullOrWhiteSpace(Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Request-ID")).Value) ?Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Request-ID")).Value : Guid.NewGuid().ToString());
+            HttpContext.Response.Headers.Add("X-Group-ID",String.IsNullOrWhiteSpace(Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Group-ID")).Value) ?Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Request-ID")).Value : Guid.NewGuid().ToString());
+            HttpContext.Response.Headers.Add("X-ASPSP-Code",String.IsNullOrWhiteSpace(Request.Headers.FirstOrDefault(h => h.Key.Equals("X-ASPSP-Code")).Value) ?Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Request-ID")).Value : Guid.NewGuid().ToString());
+            HttpContext.Response.Headers.Add("X-TPP-Code",String.IsNullOrWhiteSpace(Request.Headers.FirstOrDefault(h => h.Key.Equals("X-TPP-Code")).Value) ?Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Request-ID")).Value : Guid.NewGuid().ToString());
             return Ok(openBankingTokenResponse);
         }
 
