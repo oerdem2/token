@@ -377,6 +377,17 @@ public class TokenController : Controller
             await _daprClient.DeleteStateAsync(_configuration["DAPR_STATE_STORE_NAME"], "AuthCodeInfo_" + openBankingTokenRequest.ConsentNo);
 
             await _consentService.UpdateConsentForUsage(Guid.Parse(openBankingTokenRequest.ConsentNo!));
+
+            var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Request-ID"));
+            var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Group-ID"));
+            var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-ASPSP-Code"));
+            var tppCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-TPP-Code"));
+            
+            HttpContext.Response.Headers.Add("X-Request-ID",string.IsNullOrWhiteSpace(requestId.Value) ?  Guid.NewGuid().ToString() : requestId.Value);
+            HttpContext.Response.Headers.Add("X-Group-ID",string.IsNullOrWhiteSpace(groupId.Value) ?  Guid.NewGuid().ToString() : groupId.Value);
+            HttpContext.Response.Headers.Add("X-ASPSP-Code",string.IsNullOrWhiteSpace(aspspCode.Value) ?  Guid.NewGuid().ToString() : aspspCode.Value);
+            HttpContext.Response.Headers.Add("X-TPP-Code",string.IsNullOrWhiteSpace(tppCode.Value) ?  Guid.NewGuid().ToString() : tppCode.Value);
+            
             return Ok(openBankingTokenResponse);
         }
         if (openBankingTokenRequest.AuthType.Equals("yenileme_belirteci"))
@@ -397,10 +408,15 @@ public class TokenController : Controller
                 RefreshToken = token.Response.RefreshToken,
                 RefreshTokenExpiresIn = token.Response.RefreshTokenExpiresIn
             };
-            HttpContext.Response.Headers.Add("X-Request-ID",String.IsNullOrWhiteSpace(Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Request-ID")).Value) ?Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Request-ID")).Value : Guid.NewGuid().ToString());
-            HttpContext.Response.Headers.Add("X-Group-ID",String.IsNullOrWhiteSpace(Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Group-ID")).Value) ?Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Request-ID")).Value : Guid.NewGuid().ToString());
-            HttpContext.Response.Headers.Add("X-ASPSP-Code",String.IsNullOrWhiteSpace(Request.Headers.FirstOrDefault(h => h.Key.Equals("X-ASPSP-Code")).Value) ?Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Request-ID")).Value : Guid.NewGuid().ToString());
-            HttpContext.Response.Headers.Add("X-TPP-Code",String.IsNullOrWhiteSpace(Request.Headers.FirstOrDefault(h => h.Key.Equals("X-TPP-Code")).Value) ?Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Request-ID")).Value : Guid.NewGuid().ToString());
+            var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Request-ID"));
+            var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Group-ID"));
+            var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-ASPSP-Code"));
+            var tppCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-TPP-Code"));
+            
+            HttpContext.Response.Headers.Add("X-Request-ID",string.IsNullOrWhiteSpace(requestId.Value) ?  Guid.NewGuid().ToString() : requestId.Value);
+            HttpContext.Response.Headers.Add("X-Group-ID",string.IsNullOrWhiteSpace(groupId.Value) ?  Guid.NewGuid().ToString() : groupId.Value);
+            HttpContext.Response.Headers.Add("X-ASPSP-Code",string.IsNullOrWhiteSpace(aspspCode.Value) ?  Guid.NewGuid().ToString() : aspspCode.Value);
+            HttpContext.Response.Headers.Add("X-TPP-Code",string.IsNullOrWhiteSpace(tppCode.Value) ?  Guid.NewGuid().ToString() : tppCode.Value);
             return Ok(openBankingTokenResponse);
         }
 
