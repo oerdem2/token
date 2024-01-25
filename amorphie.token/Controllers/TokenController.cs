@@ -378,6 +378,10 @@ public class TokenController : Controller
 
             await _consentService.UpdateConsentForUsage(Guid.Parse(openBankingTokenRequest.ConsentNo!));
 
+            foreach(var h in Request.Headers)
+            {
+                Console.WriteLine($"OpenBanking Header Key:{h.Key} | Value:{h.Value}");
+            }
             var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Request-ID"));
             var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Group-ID"));
             var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("X-ASPSP-Code"));
