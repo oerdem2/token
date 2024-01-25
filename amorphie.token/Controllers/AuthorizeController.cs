@@ -53,17 +53,21 @@ public class AuthorizeController : Controller
     public async Task<IActionResult> OpenBankingAuthCode(Guid consentId)
     {
         var consentResponse = await _consentService.GetConsent(consentId);
+        var user = await _daprClient.GetStateAsync<LoginResponse>(_configuration["DAPR_STATE_STORE_NAME"], $"{consentId}_User");
+
         if (consentResponse.StatusCode == 200)
         {
             var consent = consentResponse.Response;
             var deserializedData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent.additionalData);
             var redirectUri = deserializedData.gkd.yonAdr;
+            
             var authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest()
             {
                 ResponseType = "code",
-                ClientId = "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                Scope = new string[] { "openbanking-customer" },
-                ConsentId = consentId
+                ClientId = _configuration["OpenBankingClientId"],
+                Scope = new string[] { "open-banking" },
+                ConsentId = consentId,
+                User = user
             });
             var authCode = authResponse.Response.Code;
             return Redirect($"{redirectUri}&rizaDrm=Y&yetKod={authCode}&rizaNo={consentId}&rizaTip=H");

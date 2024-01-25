@@ -5,6 +5,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using amorphie.token.core.Models.Consent;
 using amorphie.token.core.Models.Profile;
 using amorphie.token.data;
 using amorphie.token.Services.ClaimHandler;
@@ -31,6 +32,7 @@ public class TokenService : ServiceBase, ITokenService
     private TokenInfoDetail _tokenInfoDetail;
     private GenerateTokenRequest? _tokenRequest;
     private ClientResponse? _client;
+    private ConsentResponse? _consent;
     private LoginResponse? _user;
     private SimpleProfileResponse? _profile;
     private IInternetBankingUserService? _internetBankingUserService;
@@ -693,6 +695,85 @@ public class TokenService : ServiceBase, ITokenService
     {
         _tokenRequest = tokenRequest;
 
+        var clientResponse = await _clientService.ValidateClient(tokenRequest.ClientId!, tokenRequest.ClientSecret!);
+        if (clientResponse.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = clientResponse.StatusCode,
+                Detail = clientResponse.Detail
+            };
+        }
+
+        _client = clientResponse.Response;
+
+        if (!_client!.allowedgranttypes!.Any(g => g.GrantType == tokenRequest.GrantType))
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "Client Has No Authorize To Use Requested Grant Type"
+            };
+        }
+
+        var authorizationCodeInfo = await _daprClient.GetStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"], tokenRequest.Code);
+
+        if (authorizationCodeInfo == null)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 470,
+                Detail = "Invalid Authorization Code"
+            };
+        }
+
+        _user = authorizationCodeInfo.Subject;
+
+        if (!authorizationCodeInfo.ClientId!.Equals(tokenRequest.ClientId, StringComparison.OrdinalIgnoreCase))
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "ClientId Not Matched"
+            };
+        }
+
+        if (_client.pkce == "must")
+        {
+            if (!authorizationCodeInfo.CodeChallenge!.Equals(GetHashedCodeVerifier(tokenRequest.CodeVerifier!)))
+            {
+                return new ServiceResponse<TokenResponse>()
+                {
+                    StatusCode = 472,
+                    Detail = "Code Verifier Not Matched"
+                };
+            }
+        }
+
+        var tokenResponse = await GenerateTokenResponse();
+
+        if (tokenResponse.IdToken == string.Empty && tokenResponse.AccessToken == string.Empty)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 500,
+                Detail = "Access Token And Id Token Couldn't Be Generated"
+            };
+        }
+
+        await PersistTokenInfo();
+        return new ServiceResponse<TokenResponse>()
+        {
+            StatusCode = 200,
+            Response = tokenResponse
+        };
+    }
+
+    public async Task<ServiceResponse<TokenResponse>> GenerateOpenBankingToken(GenerateTokenRequest tokenRequest,ConsentResponse consent)
+    {
+        _tokenRequest = tokenRequest;
+        _consent = consent;
+        
         var clientResponse = await _clientService.ValidateClient(tokenRequest.ClientId!, tokenRequest.ClientSecret!);
         if (clientResponse.StatusCode != 200)
         {

@@ -343,7 +343,7 @@ public class TokenController : Controller
     public async Task<IActionResult> OpenBankingToken([FromBody] OpenBankingTokenRequest openBankingTokenRequest)
     {
         var generateTokenRequest = new GenerateTokenRequest();
-
+        var consent = await _consentService.GetConsent(Guid.Parse(openBankingTokenRequest.ConsentNo!));
         var clientResult = await _clientService.CheckClient(_configuration["OpenBankingClientId"]!);
         if (clientResult.StatusCode != 200)
         {
@@ -360,7 +360,7 @@ public class TokenController : Controller
             generateTokenRequest.Scopes = new List<string>() { "open-banking" };
             generateTokenRequest.Code = openBankingTokenRequest.AuthCode;
 
-            var token = await _tokenService.GenerateToken(generateTokenRequest);
+            var token = await _tokenService.GenerateOpenBankingToken(generateTokenRequest,consent.Response);
             if (token.StatusCode != 200)
             {
                 return Problem(statusCode: token.StatusCode, detail: token.Detail);

@@ -216,7 +216,8 @@ public class LoginController : Controller
 
             var transactionId = Guid.NewGuid();
             await _daprClient.SaveStateAsync(_configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code", code);
-
+            
+            await _daprClient.SaveStateAsync(_configuration["DAPR_STATE_STORE_NAME"], $"{openBankingLoginRequest.consentId}_User", amorphieUser);
 
             var otpRequest = new
             {
