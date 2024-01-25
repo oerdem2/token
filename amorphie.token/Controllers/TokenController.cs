@@ -57,6 +57,7 @@ public class TokenController : Controller
     {
         try
         {
+            Console.WriteLine("Remove Device Arg: "+clientId);
             await _userService.RemoveDevice(reference, clientId);
 
             return Ok();
