@@ -79,6 +79,10 @@ namespace amorphie.token.Modules.Login
             .ExcludeFromDescription()
             .Produces(StatusCodes.Status200OK);
 
+            app.MapPost("/amorphie-remember-password-validate-username-phone", CheckUserPhone.checkUserPhone)
+            .ExcludeFromDescription()
+            .Produces(StatusCodes.Status200OK);
+
             app.MapGet("/amorphie-login-test", () =>
             {
                 dynamic dd = new ExpandoObject();

@@ -15,7 +15,6 @@ namespace amorphie.token.Modules.Login
         [FromServices] IbDatabaseContext ibContext
         )
         {
-            await Task.CompletedTask;
 
             var ibUserSerialized = body.GetProperty("ibUserSerialized").ToString();
             IBUser ibUser = JsonSerializer.Deserialize<IBUser>(ibUserSerialized);

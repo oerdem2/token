@@ -17,8 +17,7 @@ namespace amorphie.token.Modules.Login
         [FromServices] IbDatabaseContext ibDatabaseContext
         )
         {
-            await Task.CompletedTask;
-            var requestBodySerialized = body.GetProperty($"TRXamorphiemobilelogin").GetProperty("Data").GetProperty("entityData").ToString();
+            var requestBodySerialized = body.GetProperty("requestBody").GetProperty("Data").GetProperty("entityData").ToString();
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
 
             var clientInfoSerialized = body.GetProperty("clientSerialized").ToString();

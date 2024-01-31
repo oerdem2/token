@@ -10,6 +10,8 @@ public class TokenRequest
     public string? Username { get; set; }
     [JsonPropertyName("password")]
     public string? Password { get; set; }
+    [JsonPropertyName("phone")]
+    public string? Phone { get; set; }
     [JsonPropertyName("client_id")]
     public string? ClientId { get; set; }
     [JsonPropertyName("client_secret")]

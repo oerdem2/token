@@ -118,4 +118,25 @@ public class UserServiceLocal : IUserService
             throw new ServiceException((int)Errors.InvalidUser, "User Endpoint Did Not Response Successfully");
         }
     }
+
+    public async Task<ServiceResponse<LoginResponse>> GetUserByReference(string reference)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var httpResponseMessage = await httpClient.GetAsync(
+            "user/reference/" + reference.ToString());
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            var user = await httpResponseMessage.Content.ReadFromJsonAsync<LoginResponse>();
+            if (user == null)
+            {
+                throw new ServiceException((int)Errors.InvalidUser, "User not found with provided info");
+            }
+            return new ServiceResponse<LoginResponse>() { StatusCode = 200, Response = user };
+        }
+        else
+        {
+            throw new ServiceException((int)Errors.InvalidUser, "User Endpoint Did Not Response Successfully");
+        }
+    }
 }

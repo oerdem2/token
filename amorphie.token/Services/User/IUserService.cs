@@ -8,5 +8,6 @@ public interface IUserService
     public Task<ServiceResponse> RemoveDevice(string reference, string clientId);
     public Task<ServiceResponse> SaveDevice(UserSaveMobileDeviceDto userSaveMobileDeviceDto);
     public Task<ServiceResponse<LoginResponse>> GetUserById(Guid userId);
+    public Task<ServiceResponse<LoginResponse>> GetUserByReference(string reference);
     public Task<ServiceResponse> SaveUser(UserInfo userInfo);
 }

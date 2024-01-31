@@ -14,10 +14,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace amorphie.token.Modules.Login
 {
-    public static class CheckUser
+    public static class CheckUserPhone
     {
         [ApiExplorerSettings(IgnoreApi = true)]
-        public static async Task<IResult> checkUser(
+        public static async Task<IResult> checkUserPhone(
         [FromBody] dynamic body,
         [FromServices] IInternetBankingUserService internetBankingUserService,
         [FromServices] IProfileService profileService,
@@ -25,8 +25,7 @@ namespace amorphie.token.Modules.Login
         [FromServices] IbDatabaseContext ibContext
         )
         {
-            await Task.CompletedTask;
-            var requestBodySerialized = body.GetProperty($"TRXamorphiemobilelogin").GetProperty("Data").GetProperty("entityData").ToString();
+            var requestBodySerialized = body.GetProperty("requestBody").GetProperty("Data").GetProperty("entityData").ToString();
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
 
             dynamic variables = new ExpandoObject();
@@ -37,7 +36,6 @@ namespace amorphie.token.Modules.Login
             var userResponse = await internetBankingUserService.GetUser(request.Username!);
             if (userResponse.StatusCode != 200)
             {
-                variables.status = false;
                 variables.message = "User Not Found";
                 variables.wrongCredentials = true;
                 return Results.Ok(variables);
@@ -48,60 +46,15 @@ namespace amorphie.token.Modules.Login
             var userStatus = await ibContext.Status.Where(s => s.UserId == user!.Id && (!s.State.HasValue || s.State.Value == 10)).OrderByDescending(s => s.CreatedAt).FirstOrDefaultAsync();
             if (userStatus?.Type == 30 || userStatus?.Type == 40)
             {
-                variables.status = false;
                 variables.message = "User Not Active";
                 variables.wrongCredentials = true;
                 variables.disableUser = true;
                 return Results.Ok(variables);
             }
 
-            var passwordResponse = await internetBankingUserService.GetPassword(user!.Id);
-            if (passwordResponse.StatusCode != 200)
-            {
-                variables.status = false;
-                variables.message = "Password not found";
-                variables.wrongCredentials = true;
-                return Results.Ok(variables);
-            }
-            var passwordRecord = passwordResponse.Response;
-
-            var isVerified = internetBankingUserService.VerifyPassword(passwordRecord!.HashedPassword!, request.Password!, passwordRecord.Id.ToString());
-            //Consider SuccessRehashNeeded
-            if (isVerified != PasswordVerificationResult.Success)
-            {
-                variables.status = false;
-                variables.message = "Username or password doesn't match";
-                passwordRecord.AccessFailedCount = (passwordRecord.AccessFailedCount ?? 0) + 1;
-                variables.PasswordTryCount = passwordRecord.AccessFailedCount;
-                variables.wrongCredentials = true;
-                if (passwordRecord.AccessFailedCount >= 5)
-                {
-                    variables.disableUser = true;
-                }
-
-                await ibContext.SaveChangesAsync();
-                return Results.Ok(variables);
-            }
-            else
-            {
-                if (passwordRecord.AccessFailedCount >= 5)
-                {
-                    variables.disableUser = true;
-                    variables.status = false;
-                    variables.wrongCredentials = true;
-                    variables.message = "User Not Active";
-                    return Results.Ok(variables);
-                }
-                passwordRecord.AccessFailedCount = 0;
-                await ibContext.SaveChangesAsync();
-            }
-
-
-
             var userInfoResult = await profileService.GetCustomerSimpleProfile(request.Username!);
             if (userInfoResult.StatusCode != 200)
             {
-                variables.status = false;
                 variables.message = "UserInfo Not Found";
                 variables.wrongCredentials = true;
                 return Results.Ok(variables);
@@ -111,7 +64,6 @@ namespace amorphie.token.Modules.Login
 
             if (userInfo!.data!.profile!.Equals("customer") || !userInfo!.data!.profile!.status!.Equals("active"))
             {
-                variables.status = false;
                 variables.message = "User is Not Customer Or Not Active";
                 variables.wrongCredentials = true;
                 return Results.Ok(variables);
@@ -120,7 +72,6 @@ namespace amorphie.token.Modules.Login
             var mobilePhoneCount = userInfo!.data!.phones!.Count(p => p.type!.Equals("mobile"));
             if (mobilePhoneCount != 1)
             {
-                variables.status = false;
                 variables.message = "Bad Phone Data";
 
                 return Results.Ok(variables);
@@ -129,8 +80,14 @@ namespace amorphie.token.Modules.Login
             var mobilePhone = userInfo!.data!.phones!.FirstOrDefault(p => p.type!.Equals("mobile"));
             if (string.IsNullOrWhiteSpace(mobilePhone!.prefix) || string.IsNullOrWhiteSpace(mobilePhone!.number))
             {
-                variables.status = false;
                 variables.message = "Bad Phone Format";
+                return Results.Ok(variables);
+            }
+
+            if(!mobilePhone.ToRememberPasswordString().Equals(request.Phone))
+            {
+                variables.wrongCredentials = true;
+                variables.message = "Phone Number Doesnt Match";
                 return Results.Ok(variables);
             }
 
@@ -145,8 +102,6 @@ namespace amorphie.token.Modules.Login
                     number = mobilePhone!.number
                 },
                 state = "Active",
-                salt = passwordRecord.Id.ToString(),
-                password = request.Password!,
                 explanation = "Migrated From IB",
                 reason = "Amorphie Login",
                 isArgonHash = true
@@ -158,14 +113,13 @@ namespace amorphie.token.Modules.Login
 
             var migrateResult = await userService.SaveUser(userRequest);
 
-            var amorphieUserResult = await userService.Login(new LoginRequest() { Reference = request.Username!, Password = request.Password! });
+            var amorphieUserResult = await userService.GetUserByReference(request.Username);
             var amorphieUser = amorphieUserResult.Response;
 
-            variables.status = true;
+            variables.wrongCredentials = false;
 
             variables.userInfoSerialized = JsonSerializer.Serialize(userInfo);
             variables.userSerialized = JsonSerializer.Serialize(amorphieUser);
-            variables.passwordSerialized = JsonSerializer.Serialize(passwordRecord);
 
             await ibContext.SaveChangesAsync();
             return Results.Ok(variables);

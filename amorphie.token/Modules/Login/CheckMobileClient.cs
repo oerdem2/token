@@ -17,9 +17,12 @@ namespace amorphie.token.Modules.Login
         HttpContext context
         )
         {
-
-            var requestBodySerialized = body.GetProperty($"TRXamorphiemobilelogin").GetProperty("Data").GetProperty("entityData").ToString();
+            var transitionName = body.GetProperty("LastTransition").ToString();
+            var requestBodySerialized = body.GetProperty(transitionName).GetProperty("Data").GetProperty("entityData").ToString();
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
+
+            dynamic variables = new ExpandoObject();
+            variables.requestBody = requestBodySerialized;
 
             ServiceResponse<ClientResponse> clientResult;
             if (Guid.TryParse(request.ClientId, out Guid _))
@@ -33,14 +36,12 @@ namespace amorphie.token.Modules.Login
 
             if (clientResult.StatusCode == 200)
             {
-                dynamic variables = new ExpandoObject();
                 variables.status = true;
                 variables.clientSerialized = clientResult.Response;
                 return Results.Ok(variables);
             }
             else
             {
-                dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = clientResult.Detail;
                 variables.LastTransition = "amorphie-login-error";

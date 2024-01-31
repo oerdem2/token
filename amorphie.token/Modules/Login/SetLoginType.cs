@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using amorphie.token.core.Models.InternetBanking;
 using amorphie.token.data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.EntityFrameworkCore;
 
 namespace amorphie.token.Modules.Login
@@ -18,26 +19,32 @@ namespace amorphie.token.Modules.Login
         public static async Task<IResult> setLoginType(
         [FromBody] dynamic body,
         [FromServices] IUserService userService,
+        [FromServices] IClientService clientService,
         [FromServices] IbDatabaseContext ibContext
         )
         {
+            LoginResponse userInfo;
+            
             var userInfoSerialized = body.GetProperty("userSerialized").ToString();
 
-            LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized, new JsonSerializerOptions
+            userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
-
+            
+            
             var ibUserSerialized = body.GetProperty("ibUserSerialized").ToString();
             IBUser ibUser = JsonSerializer.Deserialize<IBUser>(ibUserSerialized);
-
+            
+            ClientResponse clientInfo;
+            
             var clientInfoSerialized = body.GetProperty("clientSerialized").ToString();
 
-            ClientResponse clientInfo = JsonSerializer.Deserialize<ClientResponse>(clientInfoSerialized, new JsonSerializerOptions
+            clientInfo = JsonSerializer.Deserialize<ClientResponse>(clientInfoSerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
-
+            
             string securityImagePath = string.Empty;
             var securityImage = await ibContext.SecurityImage.Where(i => i.UserId == ibUser.Id)
                 .OrderByDescending(i => i.CreatedAt).FirstOrDefaultAsync();
