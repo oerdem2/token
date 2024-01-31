@@ -19,7 +19,8 @@ namespace amorphie.token.Modules.Login
             var ibUserSerialized = body.GetProperty("ibUserSerialized").ToString();
             IBUser ibUser = JsonSerializer.Deserialize<IBUser>(ibUserSerialized);
 
-            var securityImageId = body.GetProperty("TRXamorphiemobileloginsetnewsecurityimage").GetProperty("Data").GetProperty("entityData").GetProperty("imageId").ToString();
+            var transitionName = body.GetProperty("LastTransition").ToString();
+            var securityImageId = body.GetProperty("TRX-"+transitionName).GetProperty("Data").GetProperty("entityData").GetProperty("imageId").ToString();
             var instanceId = body.GetProperty("InstanceId").ToString();
 
             var securityImage = new IBSecurityImage()

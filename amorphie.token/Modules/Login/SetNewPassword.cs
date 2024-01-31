@@ -18,7 +18,9 @@ namespace amorphie.token.Modules.Login
         [FromServices] IInternetBankingUserService internetBankingUserService
         )
         {
-            var newPassword = body.GetProperty("TRXamorphiemobileloginsetnewpassword").GetProperty("Data").GetProperty("entityData").GetProperty("newPassword").ToString();
+            var transitionName = body.GetProperty("LastTransition").ToString();
+            var newPassword = body.GetProperty("TRX-"+transitionName).GetProperty("Data").GetProperty("entityData").GetProperty("newPassword").ToString();
+            
             var ibUserSerialized = body.GetProperty("ibUserSerialized").ToString();
             IBUser ibUser = JsonSerializer.Deserialize<IBUser>(ibUserSerialized);
             var oldPasswords = await ibContext.Password.Where(p => p.UserId == ibUser.Id).OrderByDescending(p => p.CreatedAt).Take(5).ToListAsync();
