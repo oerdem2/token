@@ -17,7 +17,7 @@ namespace amorphie.token.Modules.Login
         [FromServices] IbDatabaseContext ibDatabaseContext
         )
         {
-            var requestBodySerialized = body.GetProperty("requestBody").GetProperty("Data").GetProperty("entityData").ToString();
+            var requestBodySerialized = body.GetProperty("requestBody").ToString(); 
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
 
             var clientInfoSerialized = body.GetProperty("clientSerialized").ToString();

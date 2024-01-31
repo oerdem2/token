@@ -32,8 +32,7 @@ namespace amorphie.token.Modules.Login
 
             targetObject.Data = dataChanged;
 
-            var requestBodySerialized = body.GetProperty("requestBody").GetProperty("Data").GetProperty("entityData").ToString();
-
+            var requestBodySerialized = body.GetProperty("requestBody").ToString();
             TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true

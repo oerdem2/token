@@ -51,8 +51,7 @@ namespace amorphie.token.Modules.Login
                 PropertyNameCaseInsensitive = true
             });
 
-            var requestBodySerialized = body.GetProperty("TRXamorphiemobilelogin").GetProperty("Data").GetProperty("entityData").ToString();
-
+            var requestBodySerialized = body.GetProperty("requestBody").ToString();
             TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true

@@ -25,8 +25,7 @@ namespace amorphie.token.Modules.Login
         [FromServices] IbDatabaseContext ibContext
         )
         {
-            await Task.CompletedTask;
-            var requestBodySerialized = body.GetProperty($"TRXamorphiemobilelogin").GetProperty("Data").GetProperty("entityData").ToString();
+            var requestBodySerialized = body.GetProperty("requestBody").ToString();
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
 
             dynamic variables = new ExpandoObject();
