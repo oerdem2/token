@@ -2,6 +2,7 @@
 using System.Globalization;
 using amorphie.token.core.Models.Profile;
 using Refit;
+using amorphie.token.core.Extensions;
 
 namespace amorphie.token.Services.Profile
 {
@@ -57,9 +58,9 @@ namespace amorphie.token.Services.Profile
             try
             {
                 var apiResponse = await _simpleProfile.GetProfile(reference, Configuration["SimpleProfilePassword"]!);
-                apiResponse.data.profile.name = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(apiResponse?.data?.profile?.name);
-                apiResponse.data.profile.surname = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(apiResponse?.data?.profile?.surname);
-                
+                apiResponse.data.profile.name = apiResponse?.data?.profile?.name?.ToTitleCase();
+                apiResponse.data.profile.surname = apiResponse.data.profile.surname?.ToTitleCase();
+
                 result.Response = apiResponse;
                 result.StatusCode = 200;
                 _simpleProfileResponse = result;
