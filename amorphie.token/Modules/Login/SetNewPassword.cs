@@ -46,9 +46,21 @@ namespace amorphie.token.Modules.Login
 
             password.HashedPassword = passwordHasher.HashPassword(newPassword, password.Id.ToString());
             await ibContext.Password.AddAsync(password);
+
+            try
+            {
+                //Check Process is Remember Password or Not
+                var isValidated = body.GetProperty("isValidated");
+                var securityImage = await ibContext.SecurityImage.Where(i => i.UserId == ibUser.Id)
+                .OrderByDescending(i => i.CreatedAt).FirstOrDefaultAsync();
+                securityImage.RequireChange = true;
+            }
+            catch (Exception)
+            {
+                
+            }
+
             await ibContext.SaveChangesAsync();
-
-
             variables.status = true;
             return Results.Ok(variables);
         }
