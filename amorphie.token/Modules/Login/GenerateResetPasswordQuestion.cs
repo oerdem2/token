@@ -16,7 +16,7 @@ public static class GenerateResetPasswordQuestion
     IbDatabaseContext ibContext
     )
     {
-        dynamic variables = new ExpandoObject();
+        dynamic variables = new Dictionary<string, dynamic>();
 
         var ibUserSerialized = body.GetProperty("ibUserSerialized").ToString();
         IBUser ibUser = JsonSerializer.Deserialize<IBUser>(ibUserSerialized);
@@ -27,20 +27,38 @@ public static class GenerateResetPasswordQuestion
         PasswordHasher passwordHasher = new();
         var answer =  passwordHasher.DecryptString(securityQuestion.EncryptedAnswer,securityQuestion.Id.ToString("N")).Trim();
 
+        var transitionName = body.GetProperty("LastTransition").ToString();
+        var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
+
+        dynamic dataChanged = Newtonsoft.Json.JsonConvert.DeserializeObject<ExpandoObject>(dataBody.ToString());
+
+        dynamic targetObject = new System.Dynamic.ExpandoObject();
+
+        targetObject.Data = dataChanged;
+
+        var deviceId = body.GetProperty("Headers").GetProperty("xdeviceid").ToString();
+        var installationId = body.GetProperty("Headers").GetProperty("xtokenid").ToString();
+        dataChanged.additionalData = new ExpandoObject();
+
         if(answer.Length == 2)
         {
-            variables.answerFirstCharIndex = 1;
-            variables.answerSecondCharIndex = 2;
+            dataChanged.additionalData.answerFirstCharIndex = 1;
+            dataChanged.additionalData.answerSecondCharIndex = 2;
         }
         else
         {
             var rnd = new Random();
             int seperator = answer.Length / 2;
-            variables.answerFirstCharIndex = rnd.Next(1,seperator);
-            variables.answerSecondCharIndex = rnd.Next(seperator,answer.Length+1);
+            dataChanged.additionalData.answerFirstCharIndex = rnd.Next(1,seperator);
+            dataChanged.additionalData.answerSecondCharIndex = rnd.Next(seperator,answer.Length+1);
         }
-        
 
+        targetObject.Data = dataChanged;
+        targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
+        targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
+        variables.Add($"TRX{transitionName.ToString().Replace("-", "")}", targetObject);
+        variables.Add("answerFirstCharIndex",dataChanged.additionalData.answerFirstCharIndex);
+        variables.Add("answerSecondCharIndex",dataChanged.additionalData.answerSecondCharIndex);
         return Results.Ok(variables);
     }
 
