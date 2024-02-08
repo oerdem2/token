@@ -27,8 +27,8 @@ namespace amorphie.token.Modules.Login
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
 
             transactionService.Logon.LogonStatus = LogonStatus.Active;
-            transactionService.Logon.LogonType = !string.IsNullOrWhiteSpace(requestBodySerialized.password) ? LogonType.Password : LogonType.Phone;
-            transactionService.Logon.Reference = requestBodySerialized.reference;
+            transactionService.Logon.LogonType = !string.IsNullOrWhiteSpace(request.Password) ? LogonType.Password : LogonType.Phone;
+            transactionService.Logon.Reference = request.Username;
             
             dynamic variables = new ExpandoObject();
             variables.requestBody = requestBodySerialized;
