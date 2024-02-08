@@ -7,8 +7,6 @@ using System.Threading.Tasks;
 using amorphie.token.data;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
-using Azure.Core.Pipeline;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,7 +23,8 @@ namespace amorphie.token.Modules.Login
         [FromServices] IbDatabaseContext ibContext
         )
         {
-            var requestBodySerialized = body.GetProperty("requestBody").ToString(); 
+            var transitionName = body.GetProperty("LastTransition").ToString();
+            var requestBodySerialized = body.GetProperty("TRX-"+transitionName).GetProperty("Data").GetProperty("entityData").ToString();
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
 
             dynamic variables = new ExpandoObject();

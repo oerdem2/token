@@ -76,9 +76,39 @@ namespace amorphie.token.Services.Consent
             }
         }
 
-        public Task<ServiceResponse> UpdateConsentForUsage(Guid consentId)
+        public async Task<ServiceResponse> UpdateConsentForUsage(Guid consentId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                await _daprClient.InvokeMethodAsync<dynamic,dynamic>(Configuration["ConsentServiceAppName"], "OpenBankingConsentHHS/UpdatePaymentConsentStatusForUsage",new
+                {
+                    id = consentId,
+                    state = "K"
+                });
+
+                return new ServiceResponse()
+                {
+                    StatusCode = 200,
+                    Detail = ""
+                };
+            }
+            catch (InvocationException ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = (int)ex.Response.StatusCode,
+                    Detail = await ex.Response.Content.ReadAsStringAsync()
+                };
+            }
+            catch (System.Exception ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = 500,
+                    Detail = ex.ToString()
+                };
+            }
+           
         }
     }
 }

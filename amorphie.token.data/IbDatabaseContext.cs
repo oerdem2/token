@@ -15,6 +15,7 @@ namespace amorphie.token.data
         public DbSet<IBSecurityImageDefinition> SecurityImageDefinition { get; set; }
         public DbSet<IBSecurityImage> SecurityImage { get; set; }
         public DbSet<IBStatus> Status { get; set; }
+        public DbSet<IBUserDevice> UserDevice { get; set; }
         public IbDatabaseContext(DbContextOptions<IbDatabaseContext> options) : base(options)
         {
 

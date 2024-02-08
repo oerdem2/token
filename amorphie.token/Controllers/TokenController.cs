@@ -6,7 +6,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using amorphie.token.data;
-using amorphie.token.core.Models.Workflow;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.FlowHandler;
@@ -380,10 +379,7 @@ public class TokenController : Controller
 
             await _consentService.UpdateConsentForUsage(Guid.Parse(openBankingTokenRequest.ConsentNo!));
 
-            foreach(var h in Request.Headers)
-            {
-                Console.WriteLine($"OpenBanking Header Key:{h.Key} | Value:{h.Value}");
-            }
+        
             var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-request-id"));
             var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-group-id"));
             var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-aspsp-code"));
@@ -395,6 +391,8 @@ public class TokenController : Controller
             HttpContext.Response.Headers.Add("X-ASPSP-Code",string.IsNullOrWhiteSpace(aspspCode.Value) ?  Guid.NewGuid().ToString() : aspspCode.Value);
             HttpContext.Response.Headers.Add("X-TPP-Code",string.IsNullOrWhiteSpace(tppCode.Value) ?  Guid.NewGuid().ToString() : tppCode.Value);
             
+            SignatureHelper.SetXJwsSignatureHeader(HttpContext,_configuration,openBankingTokenResponse);
+
             return Ok(openBankingTokenResponse);
         }
         if (openBankingTokenRequest.AuthType.Equals("yenileme_belirteci"))
@@ -424,6 +422,8 @@ public class TokenController : Controller
             HttpContext.Response.Headers.Add("X-Group-ID",string.IsNullOrWhiteSpace(groupId.Value) ?  Guid.NewGuid().ToString() : groupId.Value);
             HttpContext.Response.Headers.Add("X-ASPSP-Code",string.IsNullOrWhiteSpace(aspspCode.Value) ?  Guid.NewGuid().ToString() : aspspCode.Value);
             HttpContext.Response.Headers.Add("X-TPP-Code",string.IsNullOrWhiteSpace(tppCode.Value) ?  Guid.NewGuid().ToString() : tppCode.Value);
+            
+            SignatureHelper.SetXJwsSignatureHeader(HttpContext,_configuration,openBankingTokenResponse);
             return Ok(openBankingTokenResponse);
         }
 

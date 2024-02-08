@@ -38,6 +38,7 @@ public class TokenService : ServiceBase, ITokenService
     private IInternetBankingUserService? _internetBankingUserService;
     private IbDatabaseContext _ibContext;
     private IProfileService? _profileService;
+    private string _deviceId;
     public TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, IClaimHandlerService claimService,
     ITransactionService transactionService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext
     , IInternetBankingUserService internetBankingUserService, IProfileService profileService, IbDatabaseContext ibContext) : base(logger, configuration)
@@ -131,7 +132,7 @@ public class TokenService : ServiceBase, ITokenService
 
         _tokenInfoDetail!.IdTokenId = Guid.NewGuid();
         _tokenInfoDetail!.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.IdToken, _tokenInfoDetail.IdTokenId, _client.id!, DateTime.UtcNow.AddSeconds(idDuration), true, _user!.Reference
-        , new List<string>(), _user!.Id, _tokenInfoDetail.AccessTokenId, null));
+        , new List<string>(), _user!.Id, _tokenInfoDetail.AccessTokenId, null,_deviceId));
 
         return idToken;
     }
@@ -165,7 +166,7 @@ public class TokenService : ServiceBase, ITokenService
         if (accessInfo.claims != null && accessInfo.claims.Count() > 0 && !_tokenRequest.GrantType.Equals("client_credentials"))
         {
 
-            var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user, _profile);
+            var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user, _profile, _consent);
             tokenClaims.AddRange(populatedClaims);
             if (_tokenRequest.Scopes.Contains("temporary"))
                 tokenClaims.Add(new Claim("isTemporary", "1"));
@@ -187,6 +188,7 @@ public class TokenService : ServiceBase, ITokenService
             tokenClaims.Add(new Claim("userId", _user!.Id.ToString()));
         else
             tokenClaims.Add(new Claim("clientAuthorized", "1"));
+        
         tokenClaims.Add(new Claim("iat", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()));
 
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_client.jwtSalt!));
@@ -198,7 +200,7 @@ public class TokenService : ServiceBase, ITokenService
             expires: expires, signingCredentials: signinCredentials);
 
         _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.AccessToken, _tokenInfoDetail.AccessTokenId, _client.id!, DateTime.UtcNow.AddSeconds(accessDuration), true, _user?.Reference ?? ""
-        , _tokenRequest.Scopes!.ToArray().Except(excludedScopes).ToList(), _user?.Id ?? null, null, _tokenRequest!.ConsentId));
+        , _tokenRequest.Scopes!.ToArray().Except(excludedScopes).ToList(), _user?.Id ?? null, null, _tokenRequest!.ConsentId,_deviceId));
 
         return access_token;
     }
@@ -238,7 +240,7 @@ public class TokenService : ServiceBase, ITokenService
             expires: refreshExpires, signingCredentials: signinCredentials);
 
         _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.RefreshToken, _tokenInfoDetail.RefreshTokenId, _client.id!, DateTime.UtcNow.AddSeconds(refreshDuration), true, _user?.Reference ?? ""
-        , new List<string>(), _user?.Id ?? null, _tokenInfoDetail.AccessTokenId, _tokenRequest!.ConsentId));
+        , new List<string>(), _user?.Id ?? null, _tokenInfoDetail.AccessTokenId, _tokenRequest!.ConsentId, _deviceId));
 
         return refresh_token;
     }
@@ -415,13 +417,14 @@ public class TokenService : ServiceBase, ITokenService
 
     }
 
-    public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithPasswordFromWorkflow(GenerateTokenRequest tokenRequest, ClientResponse client, LoginResponse user, SimpleProfileResponse? profile)
+    public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithPasswordFromWorkflow(GenerateTokenRequest tokenRequest, ClientResponse client, LoginResponse user, SimpleProfileResponse? profile, string deviceId = "")
     {
         _tokenRequest = tokenRequest;
 
         _client = client;
         _user = user;
         _profile = profile;
+        _deviceId = deviceId;
 
         var tokenResponse = await GenerateTokenResponse();
 

@@ -11,8 +11,6 @@ public static class CheckOtpFlow
     [ApiExplorerSettings(IgnoreApi = true)]
     public static async Task<IResult> checkOtpFlow(
     [FromBody] dynamic body,
-    [FromServices] IAuthorizationService authorizationService,
-    [FromServices] IUserService userService,
     IConfiguration configuration,
     DaprClient daprClient
     )

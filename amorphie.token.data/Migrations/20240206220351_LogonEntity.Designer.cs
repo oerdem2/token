@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using amorphie.token.data;
@@ -12,9 +13,11 @@ using amorphie.token.data;
 namespace amorphie.token.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20240206220351_LogonEntity")]
+    partial class LogonEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -72,9 +75,6 @@ namespace amorphie.token.Migrations
 
                     b.Property<Guid?>("ConsentId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("DeviceId")
-                        .HasColumnType("text");
 
                     b.Property<DateTime>("ExpiredAt")
                         .HasColumnType("timestamp with time zone");

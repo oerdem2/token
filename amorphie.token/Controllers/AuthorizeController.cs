@@ -58,7 +58,7 @@ public class AuthorizeController : Controller
         if (consentResponse.StatusCode == 200)
         {
             var consent = consentResponse.Response;
-            var deserializedData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent.additionalData);
+            var deserializedData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent.additionalData!);
             var redirectUri = deserializedData.gkd.yonAdr;
             
             var authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest()
@@ -134,47 +134,5 @@ public class AuthorizeController : Controller
     }
 
 
-    private async Task<IActionResult> WorkflowProcess()
-    {
-        var transaction = _transactionService.Transaction;
-
-        while (transaction!.TransactionNextEvent == TransactionNextEvent.Waiting)
-        {
-            await _transactionService.ReloadTransaction();
-            transaction = _transactionService.Transaction;
-
-            await Task.Delay(10);
-        }
-
-        if (transaction.TransactionNextEvent == TransactionNextEvent.ShowPage)
-        {
-            if (transaction.TransactionNextPage == TransactionNextPage.Login)
-            {
-                var loginModel = new Login()
-                {
-                    TransactionId = transaction.Id
-                };
-                ViewBag.HasError = false;
-
-                transaction.TransactionNextEvent = TransactionNextEvent.Waiting;
-                await _transactionService.SaveTransaction(transaction);
-
-                return View("LoginPage", loginModel);
-            }
-        }
-
-        if (transaction.TransactionNextEvent == TransactionNextEvent.PublishMessage)
-        {
-            dynamic zeebeMessage = new ExpandoObject();
-            zeebeMessage.messageName = "amorphie-oauth-session-off";
-            zeebeMessage.correlationKey = transaction.Id;
-            await _daprClient.InvokeBindingAsync("zeebe-local", "publish-message", zeebeMessage);
-        }
-
-        transaction.TransactionNextEvent = TransactionNextEvent.Waiting;
-        await _transactionService.SaveTransaction(transaction);
-
-        return await WorkflowProcess();
-    }
-
+   
 }

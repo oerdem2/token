@@ -113,6 +113,28 @@ public class LoginController : Controller
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
+    [HttpPost("public/CheckDevice/{reference}")]
+    public async Task<IActionResult> CheckDevice(string reference)
+    {
+        var userResponse = await _ibUserService.GetUser(reference);
+        if (userResponse.StatusCode != 200)
+        {
+            return StatusCode(404);
+        }
+        var user = userResponse.Response;
+        var device = _ibContext.UserDevice.OrderByDescending(u=> u.RegistrationDate).FirstOrDefault(u => u.UserId == user.Id);
+
+        if(device != null && device.Status == 10 && !string.IsNullOrEmpty(device.DeviceToken))
+        {
+            return Ok();
+        }
+        else
+        {
+            return NotFound();
+        }
+    }
+
+    [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("public/OpenBankingLogin")]
     public async Task<IActionResult> OpenBankingLogin(OpenBankingLogin openBankingLoginRequest)
     {
@@ -294,56 +316,5 @@ public class LoginController : Controller
         }
     }
 
-    private async Task<IActionResult> WorkflowProcess()
-    {
-        var transaction = _transactionService.Transaction;
-
-        while (transaction!.TransactionNextEvent == TransactionNextEvent.Waiting)
-        {
-            await _transactionService.ReloadTransaction();
-            transaction = _transactionService.Transaction;
-
-            await Task.Delay(100);
-        }
-
-        if (transaction.TransactionNextEvent == TransactionNextEvent.ShowPage)
-        {
-            if (transaction.TransactionNextPage == TransactionNextPage.Login)
-            {
-                var loginModel = new Login()
-                {
-
-                };
-                ViewBag.HasError = false;
-                return View("LoginPage", loginModel);
-            }
-            if (transaction.TransactionNextPage == TransactionNextPage.Otp)
-            {
-                var otpModel = new Otp()
-                {
-                    transactionId = transaction.Id
-                };
-                ViewBag.HasError = false;
-
-                transaction.TransactionNextEvent = TransactionNextEvent.Waiting;
-                await _transactionService.SaveTransaction(transaction);
-
-                return View("Otp", otpModel);
-            }
-        }
-
-        if (transaction.TransactionNextEvent == TransactionNextEvent.PublishMessage)
-        {
-            dynamic zeebeMessage = new ExpandoObject();
-            zeebeMessage.messageName = transaction.TransactionNextMessage;
-            zeebeMessage.correlationKey = transaction.Id;
-            await _daprClient.InvokeBindingAsync("zeebe-local", "publish-message", zeebeMessage);
-
-            transaction.TransactionNextEvent = TransactionNextEvent.Waiting;
-            await _transactionService.SaveTransaction(transaction);
-        }
-
-
-        return await WorkflowProcess();
-    }
+        
 }

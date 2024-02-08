@@ -24,4 +24,5 @@ public class TokenInfo
     public DateTime ExpiredAt { get; set; }
     public Guid? RelatedTokenId { get; set; }
     public Guid? ConsentId { get; set; }
+    public string? DeviceId{get;set;}
 }

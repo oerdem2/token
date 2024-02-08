@@ -63,14 +63,15 @@ namespace amorphie.token.Modules.Login
             var ipAddress = xforwardedfor.Split(",")[0].Trim();
 
             transactionService.IpAddress = ipAddress;
-            ServiceResponse<TokenResponse> result = await tokenService.GenerateTokenWithPasswordFromWorkflow(requestBody.MapTo<GenerateTokenRequest>(), clientInfo, userInfo, profile);
+            var deviceId = body.GetProperty("Headers").GetProperty("xdeviceid").ToString();
+            var installationId = body.GetProperty("Headers").GetProperty("xtokenid").ToString();
+            var platform = body.GetProperty("Headers").GetProperty("xdeployment").ToString();
+            var model = body.GetProperty("Headers").GetProperty("xdeviceinfo").ToString();
+            ServiceResponse<TokenResponse> result = await tokenService.GenerateTokenWithPasswordFromWorkflow(requestBody.MapTo<GenerateTokenRequest>(), clientInfo, userInfo, profile, deviceId);
 
             if (result.StatusCode == 200)
             {
-                var deviceId = body.GetProperty("Headers").GetProperty("xdeviceid").ToString();
-                var installationId = body.GetProperty("Headers").GetProperty("xtokenid").ToString();
-                var platform = body.GetProperty("Headers").GetProperty("xdeployment").ToString();
-                var model = body.GetProperty("Headers").GetProperty("xdeviceinfo").ToString();
+                
                 await userService.SaveDevice(new UserSaveMobileDeviceDto()
                 {
                     DeviceId = deviceId,
@@ -88,6 +89,7 @@ namespace amorphie.token.Modules.Login
                 dynamic variables = new Dictionary<string, dynamic>();
                 variables.Add("status", true);
                 variables.Add($"TRX{transitionName.ToString().Replace("-", "")}", targetObject);
+                transactionService.Logon.LogonStatus = LogonStatus.Completed;
                 return Results.Ok(variables);
             }
             else
