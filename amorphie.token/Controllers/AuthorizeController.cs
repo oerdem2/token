@@ -2,16 +2,11 @@
 using System.Text.Json;
 using System.Text;
 using amorphie.token.data;
-using Login = amorphie.token.core.Models.Account.Login;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.FlowHandler;
 using amorphie.token.Services.Consent;
 using amorphie.token.Services.TransactionHandler;
-using amorphie.token.core.Extensions;
-using System.Dynamic;
-using Azure;
-using amorphie.token.core.Models.Transaction;
 using amorphie.token.core.Models.Workflow;
 
 namespace amorphie.token.core.Controllers;

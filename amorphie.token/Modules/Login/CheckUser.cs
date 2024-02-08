@@ -1,14 +1,8 @@
-using System;
-using System.Collections.Generic;
 using System.Dynamic;
-using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
 using amorphie.token.data;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
-using Azure.Core.Pipeline;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,6 +24,7 @@ namespace amorphie.token.Modules.Login
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
 
             dynamic variables = new ExpandoObject();
+            variables.requestBody = requestBodySerialized;
             variables.PasswordTryCount = 0;
             variables.wrongCredentials = false;
             variables.disableUser = false;

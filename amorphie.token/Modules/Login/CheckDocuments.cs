@@ -64,7 +64,6 @@ namespace amorphie.token.Modules.Login
                 PropertyNameCaseInsensitive = true
             });
 
-            ServiceResponse<TokenResponse> result = await tokenService.GenerateTokenWithPasswordFromWorkflow(requestBody.MapTo<GenerateTokenRequest>(), clientInfo, userInfo, profile);
 
             using var httpClient = new HttpClient();
             StringContent request = new(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
