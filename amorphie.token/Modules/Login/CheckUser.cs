@@ -19,6 +19,7 @@ namespace amorphie.token.Modules.Login
         [FromServices] IbDatabaseContext ibContext
         )
         {
+            Console.WriteLine(JsonSerializer.Serialize(body));
             var transitionName = body.GetProperty("LastTransition").ToString();
             var requestBodySerialized = body.GetProperty("TRX-"+transitionName).GetProperty("Data").GetProperty("entityData").ToString();
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
