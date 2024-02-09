@@ -15,8 +15,10 @@ namespace amorphie.token.Middlewares
 
         public async Task InvokeAsync(HttpContext context, DaprClient daprClient, IConfiguration configuration, ITransactionService transactionService)
         {
+            
             var instanceKey = Convert.ToInt64(context.Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Zeebe-Process-Instance-Key")).Value);
             var jobKey = Convert.ToInt64(context.Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Zeebe-Job-Key")).Value);
+            
             await transactionService.InitLogon(instanceKey,jobKey);
 
             dynamic variables = new ExpandoObject();

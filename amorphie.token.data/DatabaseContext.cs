@@ -19,6 +19,8 @@ namespace amorphie.token.data
     {
         public DbSet<TokenInfo> Tokens{get;set;}
         public DbSet<Logon> Logon{get;set;}
+        public DbSet<FailedLogon> FailedLogon{get;set;}
+
 
         public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
         {

@@ -3,6 +3,7 @@ using System.Text.Json;
 using amorphie.token.data;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
+using amorphie.token.Services.TransactionHandler;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,10 +17,10 @@ namespace amorphie.token.Modules.Login
         [FromServices] IInternetBankingUserService internetBankingUserService,
         [FromServices] IProfileService profileService,
         [FromServices] IUserService userService,
-        [FromServices] IbDatabaseContext ibContext
+        [FromServices] IbDatabaseContext ibContext,
+        [FromServices] ITransactionService transactionService
         )
         {
-            Console.WriteLine(JsonSerializer.Serialize(body));
             var transitionName = body.GetProperty("LastTransition").ToString();
             var requestBodySerialized = body.GetProperty("TRX-"+transitionName).GetProperty("Data").GetProperty("entityData").ToString();
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
@@ -29,7 +30,7 @@ namespace amorphie.token.Modules.Login
             variables.PasswordTryCount = 0;
             variables.wrongCredentials = false;
             variables.disableUser = false;
-            
+
             var userResponse = await internetBankingUserService.GetUser(request.Username!);
             if (userResponse.StatusCode != 200)
             {
@@ -65,6 +66,15 @@ namespace amorphie.token.Modules.Login
             //Consider SuccessRehashNeeded
             if (isVerified != PasswordVerificationResult.Success)
             {
+                if(transactionService.Logon.FailedLogons == null)
+                {
+                    transactionService.Logon.FailedLogons = new List<FailedLogon>();
+                }
+                transactionService.Logon.FailedLogons.Add(new FailedLogon{
+                    ClientId = request.ClientId,
+                    Reference = request.Username
+                });
+
                 variables.status = false;
                 variables.message = "Username or password doesn't match";
                 passwordRecord.AccessFailedCount = (passwordRecord.AccessFailedCount ?? 0) + 1;
