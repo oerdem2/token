@@ -26,5 +26,9 @@ namespace amorphie.token.data
         {
             
         }
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            builder.Entity<Logon>().OwnsMany(i => i.FailedLogons);
+        }
     }
 }

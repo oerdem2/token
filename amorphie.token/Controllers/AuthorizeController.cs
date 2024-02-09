@@ -41,6 +41,7 @@ public class AuthorizeController : Controller
         _daprClient = daprClient;
         _consentService = consentService;
         _profileService = profileService;
+        
     }
 
     [HttpGet("/public/OpenBankingAuthCode")]
@@ -74,7 +75,6 @@ public class AuthorizeController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> OpenBankingAuthorize(OpenBankingAuthorizationRequest authorizationRequest)
     {
-
         var consentResult = await _consentService.GetConsent(authorizationRequest.riza_no);
         if (consentResult.StatusCode != 200)
         {

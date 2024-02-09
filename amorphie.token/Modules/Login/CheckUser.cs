@@ -66,10 +66,6 @@ namespace amorphie.token.Modules.Login
             //Consider SuccessRehashNeeded
             if (isVerified != PasswordVerificationResult.Success)
             {
-                if(transactionService.Logon.FailedLogons == null)
-                {
-                    transactionService.Logon.FailedLogons = new List<FailedLogon>();
-                }
                 transactionService.Logon.FailedLogons.Add(new FailedLogon{
                     ClientId = request.ClientId,
                     Reference = request.Username

@@ -20,6 +20,6 @@ namespace amorphie.token.core.Models.Token
         public long LastJobKey{get;set;}
         public LogonStatus LogonStatus{get;set;}
         public string? Error{get;set;}
-        public ICollection<FailedLogon>? FailedLogons{get;set;} 
+        public ICollection<FailedLogon>? FailedLogons{get;set;} = new List<FailedLogon>();
     }
 }
