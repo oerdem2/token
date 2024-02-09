@@ -29,7 +29,7 @@ namespace amorphie.token.Modules.Login
             variables.PasswordTryCount = 0;
             variables.wrongCredentials = false;
             variables.disableUser = false;
-
+            
             var userResponse = await internetBankingUserService.GetUser(request.Username!);
             if (userResponse.StatusCode != 200)
             {
