@@ -66,7 +66,7 @@ namespace amorphie.token.Services.Consent
             }), System.Text.Encoding.UTF8, "application/json");
             Console.WriteLine("Consent Id For Usage Id : "+JsonSerializer.Serialize(req));
             var httpResponseMessage = await httpClient.PostAsync(
-                "OpenBankingConsentHHS/UpdateConsenStatusForUsage", req);
+                "OpenBankingConsentHHS/UpdateConsentStatusForUsage", req);
             Console.WriteLine("Consent Id For Usage Response Code : "+httpResponseMessage.IsSuccessStatusCode);
             if (httpResponseMessage.IsSuccessStatusCode)
             {
