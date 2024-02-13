@@ -260,6 +260,18 @@ public class TokenController : Controller
         _transactionService.IpAddress = ipAddress;
 
         var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
+        if (tokenRequest.GrantType == "device")
+        {
+            var token = await _tokenService.GenerateTokenWithDevice(generateTokenRequest);
+            if (token.StatusCode == 200)
+            {
+                return Json(token.Response);
+            }
+            else
+            {
+                return Problem(detail: token.Detail, statusCode: token.StatusCode);
+            }
+        }
         if (tokenRequest.GrantType == "authorization_code")
         {
             var token = await _tokenService.GenerateToken(generateTokenRequest);
@@ -274,6 +286,9 @@ public class TokenController : Controller
         }
         if (tokenRequest.GrantType == "password")
         {
+            if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")!.Equals("Prod"))
+                return StatusCode(403);
+
             var token = await _tokenService.GenerateTokenWithPassword(generateTokenRequest);
             if (token.StatusCode == 200)
             {
@@ -314,6 +329,27 @@ public class TokenController : Controller
         return Problem(detail: "Invalid Grant Type", statusCode: 480);
     }
 
+    [HttpGet("public/Logon/{clientId}/{reference}")]
+    [SwaggerResponse(200, "Logons Returned Successfully", typeof(LogonDto))]
+    public async Task<IActionResult> GetLastLogons(string clientId,string reference)
+    {
+
+        var lastSuccessfulLogon = await _databaseContext.Logon.OrderByDescending(l => l.CreatedAt).FirstOrDefaultAsync(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference));
+        var lastFailedLogon = await _databaseContext.FailedLogon.OrderByDescending(l => l.CreatedAt).FirstOrDefaultAsync(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference));
+
+        return Ok(new LogonDto{
+            LastSuccessfullLogonDate = lastSuccessfulLogon?.CreatedAt,
+            LastFailedLogonDate = lastFailedLogon?.CreatedAt
+        });
+    }
+
+    [HttpGet("public/FailedLogons/{clientId}/{reference}")]
+    [SwaggerResponse(200, "Logons Returned Successfully", typeof(LogonDto))]
+    public async Task<IActionResult> GetLastUnsuccessfullLogons(string clientId,string reference)
+    {
+        var lastFailedLogon = await _databaseContext.FailedLogon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference)).Select(l => new FailedLogonDto{LastFailedLogonDate = l.CreatedAt}).ToListAsync();
+        return Ok(lastFailedLogon);
+    }
 
     [HttpGet("private/Token/User/{UserId}")]
     [SwaggerResponse(200, "Sms was sent successfully", typeof(List<TokenInfoDto>))]

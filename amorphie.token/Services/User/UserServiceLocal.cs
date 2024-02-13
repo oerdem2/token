@@ -1,6 +1,7 @@
 
 using System.Text;
 using System.Text.Json;
+using MongoDB.Bson;
 
 namespace amorphie.token.Services.User;
 
@@ -24,6 +25,23 @@ public class UserServiceLocal : IUserService
         else
         {
             return new ServiceResponse<object>() { StatusCode = 404, Response = "Device Not Found" };
+        }
+    }
+
+    public async Task<ServiceResponse<CheckDeviceWithoutUserResponseDto>> CheckDeviceWithoutUser(string clientId, string deviceId, Guid installationId)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var httpResponseMessage = await httpClient.GetAsync($"userDevice/check-device-without-user/{clientId}/{deviceId}/{installationId}");
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            var response = await httpResponseMessage.Content.ReadAsStringAsync();
+            var responseObject = JsonSerializer.Deserialize<CheckDeviceWithoutUserResponseDto>(response);
+            return new ServiceResponse<CheckDeviceWithoutUserResponseDto>() { StatusCode = 200, Response =  responseObject};
+        }
+        else
+        {
+            return new ServiceResponse<CheckDeviceWithoutUserResponseDto>() { StatusCode = 404, Response = null };
         }
     }
 

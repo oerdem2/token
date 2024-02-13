@@ -30,5 +30,10 @@ public class TokenRequest
     public string? RecordId { get; set; }
     [JsonPropertyName("scopes")]
     public IEnumerable<string>? Scopes { get; set; }
+    [JsonPropertyName("device_id")]
+    public string? DeviceId { get; set; }
+    [JsonPropertyName("installation_id")]
+    public string? InstallationId { get; set; }
+
 
 }

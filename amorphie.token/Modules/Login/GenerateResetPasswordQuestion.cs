@@ -26,7 +26,14 @@ public static class GenerateResetPasswordQuestion
         
         PasswordHasher passwordHasher = new();
         var answer =  passwordHasher.DecryptString(securityQuestion.EncryptedAnswer,securityQuestion.Id.ToString("N")).Trim();
-
+        
+        var securityQuestionDefined = await ibContext.QuestionDefinition.Where(q => q.IsActive && q.Id == securityQuestion.DefinitionId).Select(
+                    q => new
+                    {
+                        DescriptionTr = q.DescriptionTr,
+                        DescriptionEn = q.DescriptionEn,
+                    }
+                ).ToListAsync();
         var transitionName = body.GetProperty("LastTransition").ToString();
         var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
 
@@ -52,7 +59,7 @@ public static class GenerateResetPasswordQuestion
             dataChanged.additionalData.answerFirstCharIndex = rnd.Next(1,seperator);
             dataChanged.additionalData.answerSecondCharIndex = rnd.Next(seperator,answer.Length+1);
         }
-
+        dataChanged.additionalData.question = securityQuestionDefined;
         targetObject.Data = dataChanged;
         targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
         targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());

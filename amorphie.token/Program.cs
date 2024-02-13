@@ -12,6 +12,7 @@ using amorphie.token.Services.Profile;
 using amorphie.token.Services.TransactionHandler;
 using Elastic.Apm.NetCoreAll;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using Refit;
 using Serilog;
 using Serilog.Formatting.Compact;
@@ -22,7 +23,22 @@ internal class Program
     {
         var builder = WebApplication.CreateBuilder(args);
         builder.Configuration.AddEnvironmentVariables();
-
+        var client = new DaprClientBuilder().Build();
+        using (var tokenSource = new CancellationTokenSource(20000))
+        {
+            try
+            {
+                await client.WaitForSidecarAsync(tokenSource.Token);
+            }
+            catch (System.Exception)
+            {
+                Console.WriteLine("Dapr Sidecar Doesn't Respond");
+                return;
+            }
+            
+        }
+        
+        
         await builder.Configuration.AddVaultSecrets(builder.Configuration["DAPR_SECRET_STORE_NAME"], new string[] { "ServiceConnections" });
 
         // Add services to the container.

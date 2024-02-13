@@ -26,9 +26,20 @@ namespace amorphie.token.data
         {
             
         }
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        => optionsBuilder.LogTo(Console.WriteLine);
+        
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            builder.Entity<Logon>().OwnsMany(i => i.FailedLogons);
+            builder.Entity<Logon>()
+                .HasMany(l => l.FailedLogons)
+                .WithOne(l => l.Logon)
+                .HasForeignKey(l => l.LogonId);
+            
+            builder
+                .Entity<FailedLogon>()
+                .Property(l => l.Id)
+                .ValueGeneratedNever();
         }
     }
 }

@@ -49,7 +49,7 @@ namespace amorphie.token.Migrations
 
                     b.HasIndex("Reference");
 
-                    b.ToTable("FailedLogon");
+                    b.ToTable("FailedLogon", (string)null);
                 });
 
             modelBuilder.Entity("amorphie.token.core.Models.Token.Logon", b =>
@@ -90,7 +90,7 @@ namespace amorphie.token.Migrations
 
                     b.HasIndex("WorkflowInstanceId");
 
-                    b.ToTable("Logon");
+                    b.ToTable("Logon", (string)null);
                 });
 
             modelBuilder.Entity("amorphie.token.core.Models.Token.TokenInfo", b =>
@@ -142,7 +142,7 @@ namespace amorphie.token.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Tokens");
+                    b.ToTable("Tokens", (string)null);
                 });
 
             modelBuilder.Entity("amorphie.token.core.Models.Token.FailedLogon", b =>
