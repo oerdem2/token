@@ -84,7 +84,16 @@ public class AuthorizeController : Controller
         var consent = consentResult.Response;
 
         var consentData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent!.additionalData!);
-        string kmlkNo = consentData!.kmlk.kmlkVrs.ToString();
+        string kmlkNo = string.Empty;
+        if(consent.consentType.Equals("OB_Account"))
+        {
+            kmlkNo = consentData!.kmlk.kmlkVrs.ToString();
+        }
+        if(consent.consentType.Equals("OB_Payment"))
+        {
+            kmlkNo = consentData!.odmBsltm.kmlk.kmlkVrs.ToString();
+        }
+        
         var customerInfoResult = await _profileService.GetCustomerSimpleProfile(kmlkNo);
         if (customerInfoResult.StatusCode != 200)
         {
