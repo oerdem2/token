@@ -8,6 +8,7 @@ using amorphie.token.Services.FlowHandler;
 using amorphie.token.Services.Consent;
 using amorphie.token.Services.TransactionHandler;
 using amorphie.token.core.Models.Workflow;
+using amorphie.token.core.Constants;
 
 namespace amorphie.token.core.Controllers;
 
@@ -66,7 +67,8 @@ public class AuthorizeController : Controller
                 User = user
             });
             var authCode = authResponse.Response.Code;
-            return Redirect($"{redirectUri}&rizaDrm=Y&yetKod={authCode}&rizaNo={consentId}&rizaTip=H");
+            
+            return Redirect($"{redirectUri}&rizaDrm=Y&yetKod={authCode}&rizaNo={consentId}&rizaTip={OpenBankingConstants.ConsentTypeMap[consent.consentType]}");
         }
         return Forbid();
     }
