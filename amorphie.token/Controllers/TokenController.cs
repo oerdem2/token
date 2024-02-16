@@ -345,9 +345,12 @@ public class TokenController : Controller
 
     [HttpGet("public/FailedLogons/{clientId}/{reference}")]
     [SwaggerResponse(200, "Logons Returned Successfully", typeof(LogonDto))]
-    public async Task<IActionResult> GetLastUnsuccessfullLogons(string clientId,string reference)
+    public async Task<IActionResult> GetLastLogonsList(string clientId,string reference)
     {
-        var lastFailedLogon = await _databaseContext.FailedLogon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference)).Select(l => new FailedLogonDto{LastFailedLogonDate = l.CreatedAt}).ToListAsync();
+        var lastSuccessLogon = await _databaseContext.Logon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference) && l.LogonStatus == LogonStatus.Completed).Select(l => new FailedLogonDto{LastFailedLogonDate = l.CreatedAt, Channel = "ON Mobil"}).ToListAsync();
+        var lastFailedLogon = await _databaseContext.FailedLogon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference)).Select(l => new FailedLogonDto{LastFailedLogonDate = l.CreatedAt, Channel = "ON Mobil"}).ToListAsync();
+        lastFailedLogon.AddRange(lastSuccessLogon);
+        lastFailedLogon = lastFailedLogon.OrderByDescending(l => l.LastFailedLogonDate).ToList();
         return Ok(lastFailedLogon);
     }
 
