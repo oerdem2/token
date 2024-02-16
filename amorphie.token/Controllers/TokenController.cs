@@ -347,8 +347,8 @@ public class TokenController : Controller
     [SwaggerResponse(200, "Logons Returned Successfully", typeof(LogonDto))]
     public async Task<IActionResult> GetLastLogonsList(string clientId,string reference)
     {
-        var lastSuccessLogon = await _databaseContext.Logon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference) && l.LogonStatus == LogonStatus.Completed).Select(l => new FailedLogonDto{LastFailedLogonDate = l.CreatedAt, Channel = "ON Mobil"}).ToListAsync();
-        var lastFailedLogon = await _databaseContext.FailedLogon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference)).Select(l => new FailedLogonDto{LastFailedLogonDate = l.CreatedAt, Channel = "ON Mobil"}).ToListAsync();
+        var lastSuccessLogon = await _databaseContext.Logon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference) && l.LogonStatus == LogonStatus.Completed).Select(l => new FailedLogonDto{LastFailedLogonDate = l.CreatedAt, Channel = "ON Mobil",Status = 1}).ToListAsync();
+        var lastFailedLogon = await _databaseContext.FailedLogon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference)).Select(l => new FailedLogonDto{LastFailedLogonDate = l.CreatedAt, Channel = "ON Mobil",Status = 0}).ToListAsync();
         lastFailedLogon.AddRange(lastSuccessLogon);
         lastFailedLogon = lastFailedLogon.OrderByDescending(l => l.LastFailedLogonDate).ToList();
         return Ok(lastFailedLogon);

@@ -9,5 +9,6 @@ namespace amorphie.token.core.Models.Token
     {
         public DateTime LastFailedLogonDate{get;set;}
         public string Channel{get;set;}
+        public int Status{get;set;}
     }
 }
