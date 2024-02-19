@@ -146,6 +146,15 @@ public class TokenService : ServiceBase, ITokenService
         foreach (var scope in _tokenRequest!.Scopes!.ToArray().Except(excludedScopes))
             tokenClaims.Add(new Claim("scope", scope));
 
+        if(_tokenRequest.GrantType == "client_credentials")
+        {
+            tokenClaims.Add(new Claim("scope", "client_credentials"));
+        }
+
+        if(_tokenRequest.GrantType == "device")
+        {
+            tokenClaims.Add(new Claim("scope", "device"));
+        }
 
         var accessInfo = _client!.tokens!.FirstOrDefault(t => t.type == 0);
         if (accessInfo == null)
@@ -199,8 +208,11 @@ public class TokenService : ServiceBase, ITokenService
         string access_token = JwtHelper.GenerateJwt("BurganIam", _client.returnuri, tokenClaims,
             expires: expires, signingCredentials: signinCredentials);
 
+        var scopes = _tokenRequest.Scopes!.ToArray().Except(excludedScopes).ToList();
+        
+
         _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.AccessToken, _tokenInfoDetail.AccessTokenId, _client.id!, DateTime.UtcNow.AddSeconds(accessDuration), true, _user?.Reference ?? ""
-        , _tokenRequest.Scopes!.ToArray().Except(excludedScopes).ToList(), _user?.Id ?? null, null, _tokenRequest!.ConsentId,_deviceId));
+        , scopes, _user?.Id ?? null, null, _tokenRequest!.ConsentId,_deviceId));
 
         return access_token;
     }
@@ -458,7 +470,14 @@ public class TokenService : ServiceBase, ITokenService
                 Detail = checkDeviceResponse.Detail
             };
         }
-        _tokenRequest.Username = checkDeviceResponse.Response.Reference;
+        if(!_tokenRequest.Username.Equals(checkDeviceResponse.Response.Reference))
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 490,
+                Detail = "User Has No Authorize On Requested Device"
+            };
+        }
 
         ServiceResponse<ClientResponse> clientResponse;
         if (Guid.TryParse(_tokenRequest.ClientId!, out Guid _))

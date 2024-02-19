@@ -13,6 +13,7 @@ using amorphie.token.Services.Consent;
 using amorphie.token.Services.TransactionHandler;
 using amorphie.token.core.Extensions;
 using System.Security.Claims;
+using Elastic.CommonSchema;
 
 
 namespace amorphie.token.core.Controllers;
@@ -329,6 +330,18 @@ public class TokenController : Controller
         return Problem(detail: "Invalid Grant Type", statusCode: 480);
     }
 
+    [HttpGet("private/CheckScope/{reference}/{scope}")]
+    [SwaggerResponse(200, "Check Token Authorize")]
+    public async Task<IActionResult> CheckScope(string reference,string scope,[FromHeader(Name = "scope")] string[] scopes)
+    {
+        if(!scopes.Contains(scope))
+        {
+            return StatusCode(401);
+        }
+        else
+            return Ok();   
+    }
+
     [HttpGet("public/Logon/{clientId}/{reference}")]
     [SwaggerResponse(200, "Logons Returned Successfully", typeof(LogonDto))]
     public async Task<IActionResult> GetLastLogons(string clientId,string reference)
@@ -343,14 +356,14 @@ public class TokenController : Controller
         });
     }
 
-    [HttpGet("public/FailedLogons/{clientId}/{reference}")]
+    [HttpGet("public/Logons/{clientId}/{reference}")]
     [SwaggerResponse(200, "Logons Returned Successfully", typeof(LogonDto))]
     public async Task<IActionResult> GetLastLogonsList(string clientId,string reference)
     {
-        var lastSuccessLogon = await _databaseContext.Logon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference) && l.LogonStatus == LogonStatus.Completed).Select(l => new FailedLogonDto{LastFailedLogonDate = l.CreatedAt, Channel = "ON Mobil",Status = 1}).ToListAsync();
-        var lastFailedLogon = await _databaseContext.FailedLogon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference)).Select(l => new FailedLogonDto{LastFailedLogonDate = l.CreatedAt, Channel = "ON Mobil",Status = 0}).ToListAsync();
+        var lastSuccessLogon = await _databaseContext.Logon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference) && l.LogonStatus == LogonStatus.Completed).Select(l => new LogonDetailDto{LogonDate = l.CreatedAt, Channel = "ON Mobil",Status = 1}).ToListAsync();
+        var lastFailedLogon = await _databaseContext.FailedLogon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference)).Select(l => new LogonDetailDto{LogonDate = l.CreatedAt, Channel = "ON Mobil",Status = 0}).ToListAsync();
         lastFailedLogon.AddRange(lastSuccessLogon);
-        lastFailedLogon = lastFailedLogon.OrderByDescending(l => l.LastFailedLogonDate).ToList();
+        lastFailedLogon = lastFailedLogon.OrderByDescending(l => l.LogonDate).ToList();
         return Ok(lastFailedLogon);
     }
 
