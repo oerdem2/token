@@ -13,7 +13,6 @@ using amorphie.token.Services.Consent;
 using amorphie.token.Services.TransactionHandler;
 using amorphie.token.core.Extensions;
 using System.Security.Claims;
-using Elastic.CommonSchema;
 
 
 namespace amorphie.token.core.Controllers;
@@ -360,6 +359,7 @@ public class TokenController : Controller
     [SwaggerResponse(200, "Logons Returned Successfully", typeof(LogonDto))]
     public async Task<IActionResult> GetLastLogonsList(string clientId,string reference, int page = 0,int pageSize = 20)
     {
+        Console.WriteLine("Environment : "+Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"));
         var lastSuccessLogon = await _databaseContext.Logon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference) && l.LogonStatus == LogonStatus.Completed).Select(l => new LogonDetailDto{LogonDate = l.CreatedAt, Channel = "ON Mobil",Status = 1}).ToListAsync();
         var lastFailedLogon = await _databaseContext.FailedLogon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference)).Select(l => new LogonDetailDto{LogonDate = l.CreatedAt, Channel = "ON Mobil",Status = 0}).ToListAsync();
         lastFailedLogon.AddRange(lastSuccessLogon);

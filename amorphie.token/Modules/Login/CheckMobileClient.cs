@@ -29,7 +29,6 @@ namespace amorphie.token.Modules.Login
             transactionService.Logon.LogonStatus = LogonStatus.Active;
             transactionService.Logon.LogonType = !string.IsNullOrWhiteSpace(request.Password) ? LogonType.Password : LogonType.Phone;
             transactionService.Logon.Reference = request.Username;
-            transactionService.Logon.ClientId = request.ClientId;
 
             dynamic variables = new ExpandoObject();
             variables.requestBody = requestBodySerialized;
@@ -48,6 +47,7 @@ namespace amorphie.token.Modules.Login
             {
                 variables.status = true;
                 variables.clientSerialized = clientResult.Response;
+                transactionService.Logon.ClientId = clientResult.Response.id;
             }
             else
             {
