@@ -358,12 +358,12 @@ public class TokenController : Controller
 
     [HttpGet("public/Logons/{clientId}/{reference}")]
     [SwaggerResponse(200, "Logons Returned Successfully", typeof(LogonDto))]
-    public async Task<IActionResult> GetLastLogonsList(string clientId,string reference)
+    public async Task<IActionResult> GetLastLogonsList(string clientId,string reference, int page = 0,int pageSize = 20)
     {
         var lastSuccessLogon = await _databaseContext.Logon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference) && l.LogonStatus == LogonStatus.Completed).Select(l => new LogonDetailDto{LogonDate = l.CreatedAt, Channel = "ON Mobil",Status = 1}).ToListAsync();
         var lastFailedLogon = await _databaseContext.FailedLogon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference)).Select(l => new LogonDetailDto{LogonDate = l.CreatedAt, Channel = "ON Mobil",Status = 0}).ToListAsync();
         lastFailedLogon.AddRange(lastSuccessLogon);
-        lastFailedLogon = lastFailedLogon.OrderByDescending(l => l.LogonDate).ToList();
+        lastFailedLogon = lastFailedLogon.OrderByDescending(l => l.LogonDate).Skip(page*pageSize).Take(pageSize).ToList();
         return Ok(lastFailedLogon);
     }
 
