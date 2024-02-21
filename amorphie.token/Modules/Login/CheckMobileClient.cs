@@ -21,6 +21,7 @@ namespace amorphie.token.Modules.Login
         ITransactionService transactionService
         )
         {
+            Console.WriteLine("Check Client Called");
             var instanceId  = Guid.Parse(body.GetProperty("InstanceId").ToString());
             var transitionName = body.GetProperty("LastTransition").ToString();
             var requestBodySerialized = body.GetProperty("TRX-"+transitionName).GetProperty("Data").GetProperty("entityData").ToString();
