@@ -166,6 +166,8 @@ namespace amorphie.token.Modules.Login
             variables.status = true;
 
             variables.userInfo = userInfo;
+            variables.BusinessLine = userInfo.data.profile.businessLine.Equals("X") ? "On" : "Burgan";
+            variables.Reference = amorphieUser.Reference;
             variables.userInfoSerialized = JsonSerializer.Serialize(userInfo);
             variables.userSerialized = JsonSerializer.Serialize(amorphieUser);
             variables.passwordSerialized = JsonSerializer.Serialize(passwordRecord);
