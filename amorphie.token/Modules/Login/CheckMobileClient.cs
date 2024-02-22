@@ -17,12 +17,9 @@ namespace amorphie.token.Modules.Login
         public static async Task<IResult> checkMobileClient(
         [FromBody] dynamic body,
         [FromServices] IClientService clientService,
-        DatabaseContext databaseContext,
         ITransactionService transactionService
         )
         {
-            Console.WriteLine("Check Client Called");
-            var instanceId  = Guid.Parse(body.GetProperty("InstanceId").ToString());
             var transitionName = body.GetProperty("LastTransition").ToString();
             var requestBodySerialized = body.GetProperty("TRX-"+transitionName).GetProperty("Data").GetProperty("entityData").ToString();
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
