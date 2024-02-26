@@ -13,6 +13,8 @@ using amorphie.token.Services.Consent;
 using amorphie.token.Services.TransactionHandler;
 using amorphie.token.core.Extensions;
 using System.Security.Claims;
+using Newtonsoft.Json.Linq;
+using MongoDB.Bson.IO;
 
 
 namespace amorphie.token.core.Controllers;
@@ -144,6 +146,28 @@ public class TokenController : Controller
         }
 
         return StatusCode(500);
+    }
+
+    [HttpPost]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> JsonTest()
+    {
+
+        await Task.CompletedTask;
+        var body = "[{\"test\":\"mest\"}]";        
+
+        JToken t = Newtonsoft.Json.JsonConvert.DeserializeObject<JToken>(body);
+        if(t.Type == JTokenType.Object)
+        {
+            int i = 5;
+        }
+        if(t.Type == JTokenType.Array)
+        {
+            int i = 5;
+        }
+
+        JObject k = t.ToObject<JObject>();
+        return Ok();
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]

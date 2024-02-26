@@ -14,22 +14,21 @@ namespace amorphie.token.Services.Consent
             _daprClient = daprClient;
         }
 
-        public async Task<ServiceResponse<DocumentResponse>> CheckDocument(string clientId, string roleId, string citizenshipNo)
+        public async Task<ServiceResponse> CheckConsent(string clientId, string roleId, string citizenshipNo)
         {
             try
             {
-                var documents = await _daprClient.InvokeMethodAsync<DocumentResponse>(HttpMethod.Post, Configuration["ConsentServiceAppName"], $"Authorization/CheckAuthorizationForLogin/clientCode={clientId}&roleId={roleId}&userTCKN={citizenshipNo}?scopeTCKN={citizenshipNo}");
+                await _daprClient.InvokeMethodAsync(HttpMethod.Get, Configuration["ConsentServiceAppName"], $"Authorization/CheckAuthorizationForLogin/clientCode={clientId}&roleId={roleId}&userTCKN={citizenshipNo}?scopeTCKN={citizenshipNo}");
 
-                return new ServiceResponse<DocumentResponse>()
+                return new ServiceResponse()
                 {
                     StatusCode = 200,
-                    Detail = "",
-                    Response = documents
+                    Detail = ""
                 };
             }
             catch (InvocationException ex)
             {
-                return new ServiceResponse<DocumentResponse>()
+                return new ServiceResponse()
                 {
                     StatusCode = (int)ex.Response.StatusCode,
                     Detail = await ex.Response.Content.ReadAsStringAsync()
@@ -37,7 +36,44 @@ namespace amorphie.token.Services.Consent
             }
             catch (System.Exception ex)
             {
-                return new ServiceResponse<DocumentResponse>()
+                return new ServiceResponse()
+                {
+                    StatusCode = 500,
+                    Detail = ex.ToString()
+                };
+            }
+        }
+
+        public async Task<ServiceResponse> SaveConsent(string clientId, string roleId, string citizenshipNo)
+        {
+            try
+            {
+                var request = new{
+                roleId = roleId,
+                clientCode = clientId,
+                userTCKN = citizenshipNo,
+                scopeTCKN = citizenshipNo
+                };
+
+                await _daprClient.InvokeMethodAsync(HttpMethod.Post, Configuration["ConsentServiceAppName"], $"Authorization/AuthorizeForLogin",request);
+
+                return new ServiceResponse()
+                {
+                    StatusCode = 200,
+                    Detail = ""
+                };
+            }
+            catch (InvocationException ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = (int)ex.Response.StatusCode,
+                    Detail = await ex.Response.Content.ReadAsStringAsync()
+                };
+            }
+            catch (System.Exception ex)
+            {
+                return new ServiceResponse()
                 {
                     StatusCode = 500,
                     Detail = ex.ToString()
