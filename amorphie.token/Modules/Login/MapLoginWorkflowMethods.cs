@@ -75,7 +75,7 @@ namespace amorphie.token.Modules.Login
             .ExcludeFromDescription()
             .Produces(StatusCodes.Status200OK);
 
-            app.MapPost("/amorphie-login-save-consent", CheckConsent.checkConsent)
+            app.MapPost("/amorphie-login-save-consent", SaveConsent.saveConsent)
             .ExcludeFromDescription()
             .Produces(StatusCodes.Status200OK);
 
