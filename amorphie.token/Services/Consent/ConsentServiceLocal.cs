@@ -23,6 +23,7 @@ namespace amorphie.token.Services.Consent
             var httpResponseMessage = await httpClient.GetAsync(
                 $"Authorization/CheckAuthorizationForLogin/clientCode={clientId}&roleId={roleId}&userTCKN={citizenshipNo}?scopeTCKN={citizenshipNo}");
 
+            Console.WriteLine("url : "+httpResponseMessage.RequestMessage.RequestUri);
             if (httpResponseMessage.IsSuccessStatusCode)
             {
                 return new ServiceResponse() { StatusCode = 200 };
