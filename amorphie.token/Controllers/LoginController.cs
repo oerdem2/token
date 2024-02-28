@@ -113,7 +113,7 @@ public class LoginController : Controller
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpPost("public/CheckDevice/{reference}")]
+    [HttpGet("public/CheckDevice/{reference}")]
     public async Task<IActionResult> CheckDevice(string reference)
     {
         var userResponse = await _ibUserService.GetUser(reference);
@@ -130,7 +130,7 @@ public class LoginController : Controller
         }
         else
         {
-            return NotFound();
+            return StatusCode(404);
         }
     }
 
