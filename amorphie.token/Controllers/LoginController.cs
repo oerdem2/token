@@ -122,9 +122,9 @@ public class LoginController : Controller
             return StatusCode(404);
         }
         var user = userResponse.Response;
-        var device = _ibContext.UserDevice.OrderByDescending(u=> u.RegistrationDate).FirstOrDefault(u => u.UserId == user.Id);
+        var device = _ibContext.UserDevice.FirstOrDefault(u => u.UserId == user.Id && u.Status == 10 && !string.IsNullOrEmpty(u.DeviceToken));
 
-        if(device != null && device.Status == 10 && !string.IsNullOrEmpty(device.DeviceToken))
+        if(device != null)
         {
             return Ok();
         }
