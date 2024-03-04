@@ -51,7 +51,6 @@ namespace amorphie.token.Modules.Login
             {
                 variables.status = false;
                 variables.message = clientResult.Detail;
-                variables.LastTransition = "amorphie-login-error";
             }
 
             return Results.Ok(variables);
