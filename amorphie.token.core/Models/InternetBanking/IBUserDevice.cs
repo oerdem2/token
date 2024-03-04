@@ -15,8 +15,8 @@ namespace amorphie.token.core.Models.InternetBanking
         public string Platform { get; set; }
         public string Version { get; set; }
         public string Manufacturer { get; set; }
-        public string Description { get; set; }
-        public string RemovalReason { get; set; }
+        public string? Description { get; set; }
+        public string? RemovalReason { get; set; }
         public int Status { get; set; }
         public DateTime? RegistrationDate { get; set; }
         public DateTime? ActivationDate { get; set; }

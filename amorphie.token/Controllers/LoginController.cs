@@ -11,6 +11,7 @@ using amorphie.token.Services.TransactionHandler;
 using amorphie.core.Enums;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 
 namespace amorphie.token.core.Controllers;
 
@@ -122,7 +123,7 @@ public class LoginController : Controller
             return StatusCode(404);
         }
         var user = userResponse.Response;
-        var device = _ibContext.UserDevice.FirstOrDefault(u => u.UserId == user.Id && u.Status == 10 && !string.IsNullOrEmpty(u.DeviceToken));
+        var device = await _ibContext.UserDevice.FirstOrDefaultAsync(u => u.UserId == user.Id && u.Status == 10 && !string.IsNullOrWhiteSpace(u.DeviceToken) );
 
         if(device != null)
         {
