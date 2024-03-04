@@ -15,6 +15,10 @@ namespace amorphie.token.Modules.Login
             .ExcludeFromDescription()
             .Produces(StatusCodes.Status200OK);
 
+            app.MapPost("/amorphie-login-check-backoffice-client", CheckBackofficeClient.checkBackofficeClient)
+            .ExcludeFromDescription()
+            .Produces(StatusCodes.Status200OK);
+
             app.MapPost("/amorphie-login-check-grant-type", CheckGrantType.checkGrantType)
             .ExcludeFromDescription()
             .Produces(StatusCodes.Status200OK);

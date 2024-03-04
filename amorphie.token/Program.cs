@@ -11,6 +11,7 @@ using amorphie.token.Services.MessagingGateway;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.TransactionHandler;
 using Elastic.Apm.NetCoreAll;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 using Refit;
@@ -52,7 +53,7 @@ internal class Program
                         .AllowAnyMethod();
                 });
         });
-        
+        builder.Logging.ClearProviders();
         Log.Logger = new LoggerConfiguration()
                 .Enrich.FromLogContext()
                 .Enrich.WithEnvironmentName()
