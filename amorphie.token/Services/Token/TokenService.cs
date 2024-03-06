@@ -377,6 +377,17 @@ public class TokenService : ServiceBase, ITokenService
             }
 
             _user = userResponse.Response;
+            
+            var profile = await _profileService.GetCustomerSimpleProfile(refreshTokenInfo.Reference);
+            if(profile.StatusCode != 200)
+            {
+                return new ServiceResponse<TokenResponse>()
+                {
+                    StatusCode = 500,
+                    Detail = "External Api Call Failed | Profile Service"
+                };
+            }
+            _profile = profile.Response;
 
             if (_user?.State.ToLower() != "active" && _user?.State.ToLower() != "new")
             {
