@@ -16,6 +16,24 @@ namespace amorphie.token.Services.Consent
             _httpClientFactory = httpClientFactory;
         }
 
+        public async Task<ServiceResponse<DocumentResponse>> CheckDocument(string clientId, string roleId, string citizenshipNo)
+        {
+            var httpClient = _httpClientFactory.CreateClient("Consent");
+            StringContent req = new StringContent("", System.Text.Encoding.UTF8, "application/json");
+
+            var httpResponseMessage = await httpClient.PostAsync(
+                $"Authorization/CheckAuthorizationForLogin/clientCode={clientId}&roleId={roleId}&userTCKN={citizenshipNo}?scopeTCKN={citizenshipNo}", req);
+
+            if (httpResponseMessage.IsSuccessStatusCode)
+            {
+                return new ServiceResponse<DocumentResponse>() { StatusCode = 200, Response = JsonSerializer.Deserialize<DocumentResponse>(await httpResponseMessage.Content.ReadAsStringAsync()) };
+            }
+            else
+            {
+                return new ServiceResponse<DocumentResponse>() { StatusCode = (int)httpResponseMessage.StatusCode };
+            }
+        }
+        
         public async Task<ServiceResponse> CheckConsent(string clientId, string roleId, string citizenshipNo)
         {
             var httpClient = _httpClientFactory.CreateClient("Consent");
