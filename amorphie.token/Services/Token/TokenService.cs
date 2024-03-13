@@ -5,6 +5,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using amorphie.token.core.Models.Consent;
 using amorphie.token.core.Models.Profile;
 using amorphie.token.data;
 using amorphie.token.Services.ClaimHandler;
@@ -31,11 +32,13 @@ public class TokenService : ServiceBase, ITokenService
     private TokenInfoDetail _tokenInfoDetail;
     private GenerateTokenRequest? _tokenRequest;
     private ClientResponse? _client;
+    private ConsentResponse? _consent;
     private LoginResponse? _user;
     private SimpleProfileResponse? _profile;
     private IInternetBankingUserService? _internetBankingUserService;
     private IbDatabaseContext _ibContext;
     private IProfileService? _profileService;
+    private string _deviceId;
     public TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, IClaimHandlerService claimService,
     ITransactionService transactionService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext
     , IInternetBankingUserService internetBankingUserService, IProfileService profileService, IbDatabaseContext ibContext) : base(logger, configuration)
@@ -129,7 +132,7 @@ public class TokenService : ServiceBase, ITokenService
 
         _tokenInfoDetail!.IdTokenId = Guid.NewGuid();
         _tokenInfoDetail!.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.IdToken, _tokenInfoDetail.IdTokenId, _client.id!, DateTime.UtcNow.AddSeconds(idDuration), true, _user!.Reference
-        , new List<string>(), _user!.Id, _tokenInfoDetail.AccessTokenId, null));
+        , new List<string>(), _user!.Id, _tokenInfoDetail.AccessTokenId, null, _deviceId));
 
         return idToken;
     }
@@ -143,6 +146,15 @@ public class TokenService : ServiceBase, ITokenService
         foreach (var scope in _tokenRequest!.Scopes!.ToArray().Except(excludedScopes))
             tokenClaims.Add(new Claim("scope", scope));
 
+        if (_tokenRequest.GrantType == "client_credentials")
+        {
+            tokenClaims.Add(new Claim("scope", "client_credentials"));
+        }
+
+        if (_tokenRequest.GrantType == "device")
+        {
+            tokenClaims.Add(new Claim("scope", "device"));
+        }
 
         var accessInfo = _client!.tokens!.FirstOrDefault(t => t.type == 0);
         if (accessInfo == null)
@@ -163,7 +175,7 @@ public class TokenService : ServiceBase, ITokenService
         if (accessInfo.claims != null && accessInfo.claims.Count() > 0 && !_tokenRequest.GrantType.Equals("client_credentials"))
         {
 
-            var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user, _profile);
+            var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user, _profile, _consent);
             tokenClaims.AddRange(populatedClaims);
             if (_tokenRequest.Scopes.Contains("temporary"))
                 tokenClaims.Add(new Claim("isTemporary", "1"));
@@ -185,6 +197,7 @@ public class TokenService : ServiceBase, ITokenService
             tokenClaims.Add(new Claim("userId", _user!.Id.ToString()));
         else
             tokenClaims.Add(new Claim("clientAuthorized", "1"));
+
         tokenClaims.Add(new Claim("iat", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()));
 
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_client.jwtSalt!));
@@ -195,8 +208,11 @@ public class TokenService : ServiceBase, ITokenService
         string access_token = JwtHelper.GenerateJwt("BurganIam", _client.returnuri, tokenClaims,
             expires: expires, signingCredentials: signinCredentials);
 
+        var scopes = _tokenRequest.Scopes!.ToArray().Except(excludedScopes).ToList();
+
+
         _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.AccessToken, _tokenInfoDetail.AccessTokenId, _client.id!, DateTime.UtcNow.AddSeconds(accessDuration), true, _user?.Reference ?? ""
-        , _tokenRequest.Scopes!.ToArray().Except(excludedScopes).ToList(), _user?.Id ?? null, null, _tokenRequest!.ConsentId));
+        , scopes, _user?.Id ?? null, null, _tokenRequest!.ConsentId, _deviceId));
 
         return access_token;
     }
@@ -236,7 +252,7 @@ public class TokenService : ServiceBase, ITokenService
             expires: refreshExpires, signingCredentials: signinCredentials);
 
         _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.RefreshToken, _tokenInfoDetail.RefreshTokenId, _client.id!, DateTime.UtcNow.AddSeconds(refreshDuration), true, _user?.Reference ?? ""
-        , new List<string>(), _user?.Id ?? null, _tokenInfoDetail.AccessTokenId, _tokenRequest!.ConsentId));
+        , new List<string>(), _user?.Id ?? null, _tokenInfoDetail.AccessTokenId, _tokenRequest!.ConsentId, _deviceId));
 
         return refresh_token;
     }
@@ -362,6 +378,17 @@ public class TokenService : ServiceBase, ITokenService
 
             _user = userResponse.Response;
 
+            var profile = await _profileService.GetCustomerSimpleProfile(refreshTokenInfo.Reference);
+            if (profile.StatusCode != 200)
+            {
+                return new ServiceResponse<TokenResponse>()
+                {
+                    StatusCode = 500,
+                    Detail = "External Api Call Failed | Profile Service"
+                };
+            }
+            _profile = profile.Response;
+
             if (_user?.State.ToLower() != "active" && _user?.State.ToLower() != "new")
             {
                 return new ServiceResponse<TokenResponse>()
@@ -413,13 +440,191 @@ public class TokenService : ServiceBase, ITokenService
 
     }
 
-    public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithPasswordFromWorkflow(GenerateTokenRequest tokenRequest, ClientResponse client, LoginResponse user, SimpleProfileResponse? profile)
+    public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithPasswordFromWorkflow(GenerateTokenRequest tokenRequest, ClientResponse client, LoginResponse user, SimpleProfileResponse? profile, string deviceId = "")
     {
         _tokenRequest = tokenRequest;
 
         _client = client;
         _user = user;
         _profile = profile;
+        _deviceId = deviceId;
+
+        var tokenResponse = await GenerateTokenResponse();
+
+        if (tokenResponse.IdToken == string.Empty && tokenResponse.AccessToken == string.Empty)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 500,
+                Detail = "Access Token And Id Token Couldn't Be Generated"
+            };
+        }
+
+        await PersistTokenInfo();
+
+        return new ServiceResponse<TokenResponse>()
+        {
+            StatusCode = 200,
+            Response = tokenResponse
+        };
+    }
+
+    public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithDevice(GenerateTokenRequest tokenRequest)
+    {
+        _tokenRequest = tokenRequest;
+        var checkDeviceResponse = await _userService.CheckDeviceWithoutUser(_tokenRequest.ClientId, _tokenRequest.DeviceId, Guid.Parse(_tokenRequest.InstallationId));
+        if (checkDeviceResponse.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = checkDeviceResponse.StatusCode,
+                Detail = checkDeviceResponse.Detail
+            };
+        }
+        if (!_tokenRequest.Username.Equals(checkDeviceResponse.Response.Reference))
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 490,
+                Detail = "User Has No Authorize On Requested Device"
+            };
+        }
+
+        ServiceResponse<ClientResponse> clientResponse;
+        if (Guid.TryParse(_tokenRequest.ClientId!, out Guid _))
+        {
+            clientResponse = await _clientService.ValidateClient(_tokenRequest.ClientId!, _tokenRequest.ClientSecret!);
+        }
+        else
+        {
+            clientResponse = await _clientService.ValidateClientByCode(_tokenRequest.ClientId!, _tokenRequest.ClientSecret!);
+        }
+
+        _client = clientResponse.Response;
+        if (!_client!.allowedgranttypes!.Any(g => g.GrantType == tokenRequest.GrantType))
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "Client Has No Authorize To Use Requested Grant Type"
+            };
+        }
+
+        var requestedScopes = tokenRequest.Scopes!.ToList();
+
+        if (!requestedScopes.All(_client.allowedscopetags!.Contains))
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 473,
+                Detail = "Client is Not Authorized For Requested Scopes"
+            };
+        }
+
+        var userResponse = await _internetBankingUserService.GetUser(_tokenRequest.Username!);
+        if (userResponse.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 404,
+                Detail = "User Not Found"
+            };
+        }
+        var user = userResponse.Response;
+
+        var userStatus = await _ibContext.Status.Where(s => s.UserId == user!.Id && (!s.State.HasValue || s.State.Value == 10)).OrderByDescending(s => s.CreatedAt).FirstOrDefaultAsync();
+        if (userStatus?.Type == 30 || userStatus?.Type == 40)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 404,
+                Detail = "User Not Active"
+            };
+        }
+
+        var userInfoResult = await _profileService.GetCustomerSimpleProfile(_tokenRequest.Username!);
+        if (userInfoResult.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "User Profile Couldn't Be Fetched"
+            };
+        }
+
+        var userInfo = userInfoResult.Response;
+        _profile = userInfo;
+        if (userInfo!.data!.profile!.Equals("customer") || !userInfo!.data!.profile!.status!.Equals("active"))
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "User is Not Customer Or Not Active"
+            };
+        }
+
+        var mobilePhoneCount = userInfo!.data!.phones!.Count(p => p.type!.Equals("mobile"));
+        if (mobilePhoneCount != 1)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "Bad Phone Data"
+            };
+        }
+
+        var mobilePhone = userInfo!.data!.phones!.FirstOrDefault(p => p.type!.Equals("mobile"));
+        if (string.IsNullOrWhiteSpace(mobilePhone!.prefix) || string.IsNullOrWhiteSpace(mobilePhone!.number))
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "Bad Phone Format"
+            };
+        }
+
+        var userRequest = new UserInfo
+        {
+            firstName = userInfo!.data.profile!.name!,
+            lastName = userInfo!.data.profile!.name!,
+            phone = new core.Models.User.UserPhone()
+            {
+                countryCode = mobilePhone!.countryCode!,
+                prefix = mobilePhone!.prefix,
+                number = mobilePhone!.number
+            },
+            state = "Active",
+            password = _tokenRequest.Password!,
+            explanation = "Migrated From IB",
+            reason = "Amorphie Login"
+        };
+        var verifiedMailAddress = userInfo.data.emails!.FirstOrDefault(m => m.isVerified == true);
+        userRequest.eMail = verifiedMailAddress?.address ?? "";
+        userRequest.reference = _tokenRequest.Username!;
+
+        var migrateResult = await _userService.SaveUser(userRequest);
+
+        var userAmorphieResponse = await _userService.Login(new LoginRequest() { Reference = tokenRequest.Username!, Password = tokenRequest.Password! });
+
+        if (userAmorphieResponse.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = userResponse.StatusCode,
+                Detail = userResponse.Detail
+            };
+        }
+
+        _user = userAmorphieResponse.Response;
+
+        if (_user?.State.ToLower() != "active" && _user?.State.ToLower() != "new")
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 470,
+                Detail = "User is disabled"
+            };
+        }
 
         var tokenResponse = await GenerateTokenResponse();
 
@@ -692,6 +897,85 @@ public class TokenService : ServiceBase, ITokenService
     public async Task<ServiceResponse<TokenResponse>> GenerateToken(GenerateTokenRequest tokenRequest)
     {
         _tokenRequest = tokenRequest;
+
+        var clientResponse = await _clientService.ValidateClient(tokenRequest.ClientId!, tokenRequest.ClientSecret!);
+        if (clientResponse.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = clientResponse.StatusCode,
+                Detail = clientResponse.Detail
+            };
+        }
+
+        _client = clientResponse.Response;
+
+        if (!_client!.allowedgranttypes!.Any(g => g.GrantType == tokenRequest.GrantType))
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "Client Has No Authorize To Use Requested Grant Type"
+            };
+        }
+
+        var authorizationCodeInfo = await _daprClient.GetStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"], tokenRequest.Code);
+
+        if (authorizationCodeInfo == null)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 470,
+                Detail = "Invalid Authorization Code"
+            };
+        }
+
+        _user = authorizationCodeInfo.Subject;
+
+        if (!authorizationCodeInfo.ClientId!.Equals(tokenRequest.ClientId, StringComparison.OrdinalIgnoreCase))
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "ClientId Not Matched"
+            };
+        }
+
+        if (_client.pkce == "must")
+        {
+            if (!authorizationCodeInfo.CodeChallenge!.Equals(GetHashedCodeVerifier(tokenRequest.CodeVerifier!)))
+            {
+                return new ServiceResponse<TokenResponse>()
+                {
+                    StatusCode = 472,
+                    Detail = "Code Verifier Not Matched"
+                };
+            }
+        }
+
+        var tokenResponse = await GenerateTokenResponse();
+
+        if (tokenResponse.IdToken == string.Empty && tokenResponse.AccessToken == string.Empty)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 500,
+                Detail = "Access Token And Id Token Couldn't Be Generated"
+            };
+        }
+
+        await PersistTokenInfo();
+        return new ServiceResponse<TokenResponse>()
+        {
+            StatusCode = 200,
+            Response = tokenResponse
+        };
+    }
+
+    public async Task<ServiceResponse<TokenResponse>> GenerateOpenBankingToken(GenerateTokenRequest tokenRequest, ConsentResponse consent)
+    {
+        _tokenRequest = tokenRequest;
+        _consent = consent;
 
         var clientResponse = await _clientService.ValidateClient(tokenRequest.ClientId!, tokenRequest.ClientSecret!);
         if (clientResponse.StatusCode != 200)

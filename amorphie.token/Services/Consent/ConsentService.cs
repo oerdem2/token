@@ -45,6 +45,74 @@ namespace amorphie.token.Services.Consent
             }
         }
 
+        public async Task<ServiceResponse> CheckConsent(string clientId, string roleId, string citizenshipNo)
+        {
+            try
+            {
+                await _daprClient.InvokeMethodAsync(HttpMethod.Get, Configuration["ConsentServiceAppName"], $"Authorization/CheckAuthorizationForLogin/clientCode={clientId}&roleId={roleId}&userTCKN={citizenshipNo}?scopeTCKN={citizenshipNo}");
+
+                return new ServiceResponse()
+                {
+                    StatusCode = 200,
+                    Detail = ""
+                };
+            }
+            catch (InvocationException ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = (int)ex.Response.StatusCode,
+                    Detail = await ex.Response.Content.ReadAsStringAsync()
+                };
+            }
+            catch (System.Exception ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = 500,
+                    Detail = ex.ToString()
+                };
+            }
+        }
+
+        public async Task<ServiceResponse> SaveConsent(string clientId, string roleId, string citizenshipNo)
+        {
+            try
+            {
+                var request = new
+                {
+                    roleId = roleId,
+                    clientCode = clientId,
+                    userTCKN = citizenshipNo,
+                    scopeTCKN = citizenshipNo
+                };
+
+                await _daprClient.InvokeMethodAsync(HttpMethod.Post, Configuration["ConsentServiceAppName"], $"Authorization/AuthorizeForLogin", request);
+
+                return new ServiceResponse()
+                {
+                    StatusCode = 200,
+                    Detail = ""
+                };
+            }
+            catch (InvocationException ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = (int)ex.Response.StatusCode,
+                    Detail = await ex.Response.Content.ReadAsStringAsync()
+                };
+            }
+            catch (System.Exception ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = 500,
+                    Detail = ex.ToString()
+                };
+            }
+        }
+
         public async Task<ServiceResponse<ConsentResponse>> GetConsent(Guid consentId)
         {
             try
@@ -76,9 +144,39 @@ namespace amorphie.token.Services.Consent
             }
         }
 
-        public Task<ServiceResponse> UpdateConsentForUsage(Guid consentId)
+        public async Task<ServiceResponse> UpdateConsentForUsage(Guid consentId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                await _daprClient.InvokeMethodAsync<dynamic, dynamic>(Configuration["ConsentServiceAppName"], "OpenBankingConsentHHS/UpdatePaymentConsentStatusForUsage", new
+                {
+                    id = consentId,
+                    state = "K"
+                });
+
+                return new ServiceResponse()
+                {
+                    StatusCode = 200,
+                    Detail = ""
+                };
+            }
+            catch (InvocationException ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = (int)ex.Response.StatusCode,
+                    Detail = await ex.Response.Content.ReadAsStringAsync()
+                };
+            }
+            catch (System.Exception ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = 500,
+                    Detail = ex.ToString()
+                };
+            }
+
         }
     }
 }

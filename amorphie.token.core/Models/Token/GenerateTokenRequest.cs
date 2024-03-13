@@ -19,5 +19,7 @@ public class GenerateTokenRequest
     public string? RecordId { get; set; }
     public IEnumerable<string>? Scopes { get; set; }
     public Guid? ConsentId { get; set; }
+    public string? DeviceId { get; set; }
+    public string? InstallationId { get; set; }
 
 }
