@@ -27,37 +27,6 @@ namespace amorphie.token.Services.ClaimHandler
 
         }
 
-        private void SetUser()
-        {
-            var userResult = _transactionService.GetUser();
-            if (userResult.StatusCode != 200)
-            {
-                _queryStringForTag = string.Empty;
-                _user = null;
-            }
-            else
-            {
-                _user = userResult.Response;
-                _queryStringForTag = string.Empty;
-                _queryStringForTag += "?reference=" + _user!.Reference;
-                _queryStringForTag += "&mail=" + _user!.EMail;
-                _queryStringForTag += "&phone=" + _user!.MobilePhone!.ToString();
-            }
-        }
-
-        private void SetConsent()
-        {
-            var consentResult = _transactionService.GetConsent();
-            if (consentResult.StatusCode != 200)
-            {
-                _consent = null;
-            }
-            else
-            {
-                _consent = consentResult.Response;
-            }
-        }
-
         public async Task<Claim?> GetClaimDetail(string[] claimPath)
         {
             var claimName = string.Empty;
@@ -168,12 +137,17 @@ namespace amorphie.token.Services.ClaimHandler
                 return property != null ? property.GetValue(src, null).ToString() : null;
             }
         }
-        public async Task<List<Claim>> PopulateClaims(List<string> clientClaims, LoginResponse? user, SimpleProfileResponse? profile = null)
+        public async Task<List<Claim>> PopulateClaims(List<string> clientClaims, LoginResponse? user, SimpleProfileResponse? profile = null, ConsentResponse? consent = null)
         {
             _profile = profile;
+            if (consent != null)
+            {
+                _consent = consent;
+            }
+
             if (user == null)
             {
-                SetUser();
+
             }
             else
             {

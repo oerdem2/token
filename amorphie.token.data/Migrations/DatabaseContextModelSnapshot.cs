@@ -18,10 +18,80 @@ namespace amorphie.token.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.8")
+                .HasAnnotation("ProductVersion", "8.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("amorphie.token.core.Models.Token.FailedLogon", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClientId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("LogonId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LogonId");
+
+                    b.HasIndex("Reference");
+
+                    b.ToTable("FailedLogon", (string)null);
+                });
+
+            modelBuilder.Entity("amorphie.token.core.Models.Token.Logon", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClientId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Error")
+                        .HasColumnType("text");
+
+                    b.Property<long>("LastJobKey")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("LogonStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LogonType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("WorkflowInstanceId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Reference");
+
+                    b.HasIndex("WorkflowInstanceId");
+
+                    b.ToTable("Logon", (string)null);
+                });
 
             modelBuilder.Entity("amorphie.token.core.Models.Token.TokenInfo", b =>
                 {
@@ -35,6 +105,9 @@ namespace amorphie.token.Migrations
 
                     b.Property<Guid?>("ConsentId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("DeviceId")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("ExpiredAt")
                         .HasColumnType("timestamp with time zone");
@@ -69,7 +142,23 @@ namespace amorphie.token.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Tokens");
+                    b.ToTable("Tokens", (string)null);
+                });
+
+            modelBuilder.Entity("amorphie.token.core.Models.Token.FailedLogon", b =>
+                {
+                    b.HasOne("amorphie.token.core.Models.Token.Logon", "Logon")
+                        .WithMany("FailedLogons")
+                        .HasForeignKey("LogonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Logon");
+                });
+
+            modelBuilder.Entity("amorphie.token.core.Models.Token.Logon", b =>
+                {
+                    b.Navigation("FailedLogons");
                 });
 #pragma warning restore 612, 618
         }

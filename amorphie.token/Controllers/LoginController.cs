@@ -11,6 +11,7 @@ using amorphie.token.Services.TransactionHandler;
 using amorphie.core.Enums;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 
 namespace amorphie.token.core.Controllers;
 
@@ -109,6 +110,28 @@ public class LoginController : Controller
         {
             _logger.LogError(ex.ToString());
             return StatusCode(500);
+        }
+    }
+
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [HttpGet("public/CheckDevice/{reference}")]
+    public async Task<IActionResult> CheckDevice(string reference)
+    {
+        var userResponse = await _ibUserService.GetUser(reference);
+        if (userResponse.StatusCode != 200)
+        {
+            return StatusCode(404);
+        }
+        var user = userResponse.Response;
+        var device = await _ibContext.UserDevice.FirstOrDefaultAsync(u => u.UserId == user.Id && u.Status == 10 && !string.IsNullOrWhiteSpace(u.DeviceToken));
+
+        if (device != null)
+        {
+            return Ok();
+        }
+        else
+        {
+            return StatusCode(404);
         }
     }
 
@@ -217,6 +240,7 @@ public class LoginController : Controller
             var transactionId = Guid.NewGuid();
             await _daprClient.SaveStateAsync(_configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code", code);
 
+            await _daprClient.SaveStateAsync(_configuration["DAPR_STATE_STORE_NAME"], $"{openBankingLoginRequest.consentId}_User", amorphieUser);
 
             var otpRequest = new
             {
@@ -293,56 +317,5 @@ public class LoginController : Controller
         }
     }
 
-    private async Task<IActionResult> WorkflowProcess()
-    {
-        var transaction = _transactionService.Transaction;
 
-        while (transaction!.TransactionNextEvent == TransactionNextEvent.Waiting)
-        {
-            await _transactionService.ReloadTransaction();
-            transaction = _transactionService.Transaction;
-
-            await Task.Delay(100);
-        }
-
-        if (transaction.TransactionNextEvent == TransactionNextEvent.ShowPage)
-        {
-            if (transaction.TransactionNextPage == TransactionNextPage.Login)
-            {
-                var loginModel = new Login()
-                {
-
-                };
-                ViewBag.HasError = false;
-                return View("LoginPage", loginModel);
-            }
-            if (transaction.TransactionNextPage == TransactionNextPage.Otp)
-            {
-                var otpModel = new Otp()
-                {
-                    transactionId = transaction.Id
-                };
-                ViewBag.HasError = false;
-
-                transaction.TransactionNextEvent = TransactionNextEvent.Waiting;
-                await _transactionService.SaveTransaction(transaction);
-
-                return View("Otp", otpModel);
-            }
-        }
-
-        if (transaction.TransactionNextEvent == TransactionNextEvent.PublishMessage)
-        {
-            dynamic zeebeMessage = new ExpandoObject();
-            zeebeMessage.messageName = transaction.TransactionNextMessage;
-            zeebeMessage.correlationKey = transaction.Id;
-            await _daprClient.InvokeBindingAsync("zeebe-local", "publish-message", zeebeMessage);
-
-            transaction.TransactionNextEvent = TransactionNextEvent.Waiting;
-            await _transactionService.SaveTransaction(transaction);
-        }
-
-
-        return await WorkflowProcess();
-    }
 }
