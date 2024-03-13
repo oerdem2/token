@@ -21,7 +21,7 @@ public static class DisableUser
     {
         var transactionId = body.GetProperty("InstanceId").ToString();
 
-        var requestBodySerialized = body.GetProperty($"TRXamorphiemobilelogin").GetProperty("Data").GetProperty("entityData").ToString();
+        var requestBodySerialized = body.GetProperty("requestBody").ToString();
         TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
 
 

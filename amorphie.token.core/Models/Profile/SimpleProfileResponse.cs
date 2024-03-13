@@ -42,6 +42,10 @@ namespace amorphie.token.core.Models.Profile
         {
             return $"{countryCode}{prefix}{number}";
         }
+        public string ToRememberPasswordString()
+        {
+            return $"+{countryCode}{prefix}{number}";
+        }
     }
 
     public class Profile

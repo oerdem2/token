@@ -6,7 +6,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "dapr-debug-amorphie-token",
-            "program": "${workspaceFolder}/amorphie.token/bin/Debug/net7.0/amorphie.token.dll",
+            "program": "${workspaceFolder}/amorphie.token/bin/Debug/net8.0/amorphie.token.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,

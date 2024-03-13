@@ -1,6 +1,7 @@
 
 using System.Text;
 using System.Text.Json;
+using MongoDB.Bson;
 
 namespace amorphie.token.Services.User;
 
@@ -24,6 +25,23 @@ public class UserServiceLocal : IUserService
         else
         {
             return new ServiceResponse<object>() { StatusCode = 404, Response = "Device Not Found" };
+        }
+    }
+
+    public async Task<ServiceResponse<CheckDeviceWithoutUserResponseDto>> CheckDeviceWithoutUser(string clientId, string deviceId, Guid installationId)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var httpResponseMessage = await httpClient.GetAsync($"userDevice/check-device-without-user/{clientId}/{deviceId}/{installationId}");
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            var response = await httpResponseMessage.Content.ReadAsStringAsync();
+            var responseObject = JsonSerializer.Deserialize<CheckDeviceWithoutUserResponseDto>(response);
+            return new ServiceResponse<CheckDeviceWithoutUserResponseDto>() { StatusCode = 200, Response = responseObject };
+        }
+        else
+        {
+            return new ServiceResponse<CheckDeviceWithoutUserResponseDto>() { StatusCode = 404, Response = null };
         }
     }
 
@@ -112,6 +130,27 @@ public class UserServiceLocal : IUserService
         if (httpResponseMessage.IsSuccessStatusCode)
         {
             return new ServiceResponse() { StatusCode = 200 };
+        }
+        else
+        {
+            throw new ServiceException((int)Errors.InvalidUser, "User Endpoint Did Not Response Successfully");
+        }
+    }
+
+    public async Task<ServiceResponse<LoginResponse>> GetUserByReference(string reference)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var httpResponseMessage = await httpClient.GetAsync(
+            "user/reference/" + reference.ToString());
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            var user = await httpResponseMessage.Content.ReadFromJsonAsync<LoginResponse>();
+            if (user == null)
+            {
+                throw new ServiceException((int)Errors.InvalidUser, "User not found with provided info");
+            }
+            return new ServiceResponse<LoginResponse>() { StatusCode = 200, Response = user };
         }
         else
         {

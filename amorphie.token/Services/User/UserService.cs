@@ -62,6 +62,58 @@ public class UserService : ServiceBase, IUserService
         };
     }
 
+    public async Task<ServiceResponse<CheckDeviceWithoutUserResponseDto>> CheckDeviceWithoutUser(string clientId, string deviceId, Guid installationId)
+    {
+        try
+        {
+            var res = await _daprClient.InvokeMethodAsync<CheckDeviceWithoutUserResponseDto>(HttpMethod.Get, Configuration["UserServiceAppName"], $"/userDevice/check-device-without-user/{clientId}/{deviceId}/{installationId}");
+            return new ServiceResponse<CheckDeviceWithoutUserResponseDto>()
+            {
+                StatusCode = 200,
+                Detail = "",
+                Response = res
+            };
+        }
+        catch (InvocationException ex)
+        {
+
+            if ((int)ex.Response.StatusCode >= 400 && (int)ex.Response.StatusCode < 500)
+            {
+                if ((int)ex.Response.StatusCode == 404)
+                {
+                    return new ServiceResponse<CheckDeviceWithoutUserResponseDto>()
+                    {
+                        StatusCode = 404,
+                        Detail = "User Device Not Found"
+                    };
+                }
+                return new ServiceResponse<CheckDeviceWithoutUserResponseDto>()
+                {
+                    StatusCode = (int)ex.Response.StatusCode,
+                    Detail = "User Device Not Found"
+                };
+            }
+            else
+            {
+                Logger.LogError("An Error Occured At User Device Invocation | Detail:" + ex.ToString());
+                return new ServiceResponse<CheckDeviceWithoutUserResponseDto>()
+                {
+                    StatusCode = 500,
+                    Detail = "Server Error"
+                };
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Logger.LogError("An Error Occured At User Device Invocation | Detail:" + ex.ToString());
+        }
+        return new ServiceResponse<CheckDeviceWithoutUserResponseDto>()
+        {
+            StatusCode = 500,
+            Detail = "Server Error"
+        };
+    }
+
     public async Task<ServiceResponse<LoginResponse>> Login(LoginRequest loginRequest)
     {
         try
@@ -286,5 +338,69 @@ public class UserService : ServiceBase, IUserService
                 Detail = "Dapr Remove Device Invoke Method Error"
             };
         }
+    }
+
+    public async Task<ServiceResponse<LoginResponse>> GetUserByReference(string reference)
+    {
+        try
+        {
+            var user = await _daprClient.InvokeMethodAsync<LoginResponse>(HttpMethod.Get, Configuration["UserServiceAppName"], "/user/reference/" + reference);
+            if (user == null)
+            {
+                return new ServiceResponse<LoginResponse>()
+                {
+                    StatusCode = 460,
+                    Detail = "User Not Found"
+                };
+            }
+            return new ServiceResponse<LoginResponse>()
+            {
+                StatusCode = 200,
+                Detail = "",
+                Response = user
+            };
+        }
+        catch (InvocationException ex)
+        {
+
+            if ((int)ex.Response.StatusCode >= 400 && (int)ex.Response.StatusCode < 500)
+            {
+                if ((int)ex.Response.StatusCode == 460)
+                {
+                    return new ServiceResponse<LoginResponse>()
+                    {
+                        StatusCode = 460,
+                        Detail = "User Not Found"
+                    };
+                }
+                if ((int)ex.Response.StatusCode == 461)
+                {
+                    return new ServiceResponse<LoginResponse>()
+                    {
+                        StatusCode = 461,
+                        Detail = "Invalid Reference or Password"
+                    };
+                }
+            }
+            else
+            {
+                Logger.LogError("An Error Occured At User Invocation | Detail:" + ex.ToString());
+                return new ServiceResponse<LoginResponse>()
+                {
+                    StatusCode = 500,
+                    Detail = "Server Error"
+                };
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Logger.LogError("An Error Occured At User Invocation | Detail:" + ex.ToString());
+        }
+        return new ServiceResponse<LoginResponse>()
+        {
+            StatusCode = 500,
+            Detail = "Server Error"
+        };
+
     }
 }

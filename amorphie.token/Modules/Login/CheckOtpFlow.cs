@@ -11,14 +11,13 @@ public static class CheckOtpFlow
     [ApiExplorerSettings(IgnoreApi = true)]
     public static async Task<IResult> checkOtpFlow(
     [FromBody] dynamic body,
-    [FromServices] IAuthorizationService authorizationService,
-    [FromServices] IUserService userService,
     IConfiguration configuration,
     DaprClient daprClient
     )
     {
         var transactionId = body.GetProperty("InstanceId").ToString();
-        var entityData = body.GetProperty("TRXamorphiemobileloginsendotp").GetProperty("Data").GetProperty("entityData").ToString();
+        var transitionName = body.GetProperty("LastTransition").ToString();
+        var entityData = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty("entityData").ToString();
 
         var entityObj = JsonSerializer.Deserialize<Dictionary<string, object>>(entityData);
         var providedCode = entityObj["otpValue"].ToString();

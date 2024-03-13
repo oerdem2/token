@@ -18,7 +18,9 @@ namespace amorphie.token.Modules.Login
         [FromServices] IInternetBankingUserService internetBankingUserService
         )
         {
-            var newPassword = body.GetProperty("TRXamorphiemobileloginsetnewpassword").GetProperty("Data").GetProperty("entityData").GetProperty("newPassword").ToString();
+            var transitionName = body.GetProperty("LastTransition").ToString();
+            var newPassword = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty("entityData").GetProperty("newPassword").ToString();
+
             var ibUserSerialized = body.GetProperty("ibUserSerialized").ToString();
             IBUser ibUser = JsonSerializer.Deserialize<IBUser>(ibUserSerialized);
             var oldPasswords = await ibContext.Password.Where(p => p.UserId == ibUser.Id).OrderByDescending(p => p.CreatedAt).Take(5).ToListAsync();
@@ -44,9 +46,21 @@ namespace amorphie.token.Modules.Login
 
             password.HashedPassword = passwordHasher.HashPassword(newPassword, password.Id.ToString());
             await ibContext.Password.AddAsync(password);
+
+            try
+            {
+                //Check Process is Remember Password or Not
+                var isValidated = body.GetProperty("isValidated");
+                var securityImage = await ibContext.SecurityImage.Where(i => i.UserId == ibUser.Id)
+                .OrderByDescending(i => i.CreatedAt).FirstOrDefaultAsync();
+                securityImage.RequireChange = true;
+            }
+            catch (Exception)
+            {
+
+            }
+
             await ibContext.SaveChangesAsync();
-
-
             variables.status = true;
             return Results.Ok(variables);
         }

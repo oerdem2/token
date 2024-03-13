@@ -89,7 +89,7 @@ document.getElementById("resetPasswordButton").addEventListener('click',function
 
 // //SignalR
 const connection = new signalR.HubConnectionBuilder()
-    .withUrl('https://test-amorphie-workflow-hub.burgan.com.tr/hubs/workflow',{
+    .withUrl('X',{
         skipNegotiation: true,
         transport: signalR.HttpTransportType.WebSockets
     })

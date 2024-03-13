@@ -6,7 +6,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using amorphie.token.data;
-using amorphie.token.core.Models.Workflow;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.FlowHandler;
@@ -14,6 +13,8 @@ using amorphie.token.Services.Consent;
 using amorphie.token.Services.TransactionHandler;
 using amorphie.token.core.Extensions;
 using System.Security.Claims;
+using Newtonsoft.Json.Linq;
+using MongoDB.Bson.IO;
 
 
 namespace amorphie.token.core.Controllers;
@@ -52,11 +53,14 @@ public class TokenController : Controller
 
     }
 
-    [HttpPut("public/Forget/{clientId}/{reference}")]
+    [HttpPut("public/Forget/{clientId}")]
     public async Task<IActionResult> ForgetUser(string clientId, string reference)
     {
         try
         {
+            Console.WriteLine("Remove Device Called");
+            Console.WriteLine("Remove Device Arg: " + clientId);
+            Console.WriteLine("Remove Device Arg: " + reference);
             await _userService.RemoveDevice(reference, clientId);
 
             return Ok();
@@ -142,6 +146,28 @@ public class TokenController : Controller
         }
 
         return StatusCode(500);
+    }
+
+    [HttpPost]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> JsonTest()
+    {
+
+        await Task.CompletedTask;
+        var body = "[{\"test\":\"mest\"}]";
+
+        JToken t = Newtonsoft.Json.JsonConvert.DeserializeObject<JToken>(body);
+        if (t.Type == JTokenType.Object)
+        {
+            int i = 5;
+        }
+        if (t.Type == JTokenType.Array)
+        {
+            int i = 5;
+        }
+
+        JObject k = t.ToObject<JObject>();
+        return Ok();
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
@@ -258,6 +284,18 @@ public class TokenController : Controller
         _transactionService.IpAddress = ipAddress;
 
         var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
+        if (tokenRequest.GrantType == "device")
+        {
+            var token = await _tokenService.GenerateTokenWithDevice(generateTokenRequest);
+            if (token.StatusCode == 200)
+            {
+                return Json(token.Response);
+            }
+            else
+            {
+                return Problem(detail: token.Detail, statusCode: token.StatusCode);
+            }
+        }
         if (tokenRequest.GrantType == "authorization_code")
         {
             var token = await _tokenService.GenerateToken(generateTokenRequest);
@@ -272,6 +310,9 @@ public class TokenController : Controller
         }
         if (tokenRequest.GrantType == "password")
         {
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")!.Equals("Prod"))
+                return StatusCode(403);
+
             var token = await _tokenService.GenerateTokenWithPassword(generateTokenRequest);
             if (token.StatusCode == 200)
             {
@@ -312,6 +353,44 @@ public class TokenController : Controller
         return Problem(detail: "Invalid Grant Type", statusCode: 480);
     }
 
+    [HttpGet("private/CheckScope/{reference}/{scope}")]
+    [SwaggerResponse(200, "Check Token Authorize")]
+    public async Task<IActionResult> CheckScope(string reference, string scope, [FromHeader(Name = "scope")] string[] scopes)
+    {
+        if (!scopes.Contains(scope))
+        {
+            return StatusCode(401);
+        }
+        else
+            return Ok();
+    }
+
+    [HttpGet("public/Logon/{clientId}/{reference}")]
+    [SwaggerResponse(200, "Logons Returned Successfully", typeof(LogonDto))]
+    public async Task<IActionResult> GetLastLogons(string clientId, string reference)
+    {
+
+        var lastSuccessfulLogon = await _databaseContext.Logon.OrderByDescending(l => l.CreatedAt).FirstOrDefaultAsync(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference));
+        var lastFailedLogon = await _databaseContext.FailedLogon.OrderByDescending(l => l.CreatedAt).FirstOrDefaultAsync(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference));
+
+        return Ok(new LogonDto
+        {
+            LastSuccessfullLogonDate = lastSuccessfulLogon?.CreatedAt,
+            LastFailedLogonDate = lastFailedLogon?.CreatedAt
+        });
+    }
+
+    [HttpGet("public/Logons/{clientId}/{reference}")]
+    [SwaggerResponse(200, "Logons Returned Successfully", typeof(LogonDto))]
+    public async Task<IActionResult> GetLastLogonsList(string clientId, string reference, int page = 0, int pageSize = 20)
+    {
+        Console.WriteLine("Environment : " + Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"));
+        var lastSuccessLogon = await _databaseContext.Logon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference) && l.LogonStatus == LogonStatus.Completed).Select(l => new LogonDetailDto { LogonDate = l.CreatedAt, Channel = "ON Mobil", Status = 1 }).ToListAsync();
+        var lastFailedLogon = await _databaseContext.FailedLogon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference)).Select(l => new LogonDetailDto { LogonDate = l.CreatedAt, Channel = "ON Mobil", Status = 0 }).ToListAsync();
+        lastFailedLogon.AddRange(lastSuccessLogon);
+        lastFailedLogon = lastFailedLogon.OrderByDescending(l => l.LogonDate).Skip(page * pageSize).Take(pageSize).ToList();
+        return Ok(lastFailedLogon);
+    }
 
     [HttpGet("private/Token/User/{UserId}")]
     [SwaggerResponse(200, "Sms was sent successfully", typeof(List<TokenInfoDto>))]
@@ -342,7 +421,7 @@ public class TokenController : Controller
     public async Task<IActionResult> OpenBankingToken([FromBody] OpenBankingTokenRequest openBankingTokenRequest)
     {
         var generateTokenRequest = new GenerateTokenRequest();
-
+        var consent = await _consentService.GetConsent(Guid.Parse(openBankingTokenRequest.ConsentNo!));
         var clientResult = await _clientService.CheckClient(_configuration["OpenBankingClientId"]!);
         if (clientResult.StatusCode != 200)
         {
@@ -359,7 +438,7 @@ public class TokenController : Controller
             generateTokenRequest.Scopes = new List<string>() { "open-banking" };
             generateTokenRequest.Code = openBankingTokenRequest.AuthCode;
 
-            var token = await _tokenService.GenerateToken(generateTokenRequest);
+            var token = await _tokenService.GenerateOpenBankingToken(generateTokenRequest, consent.Response);
             if (token.StatusCode != 200)
             {
                 return Problem(statusCode: token.StatusCode, detail: token.Detail);
@@ -376,6 +455,21 @@ public class TokenController : Controller
             await _daprClient.DeleteStateAsync(_configuration["DAPR_STATE_STORE_NAME"], "AuthCodeInfo_" + openBankingTokenRequest.ConsentNo);
 
             await _consentService.UpdateConsentForUsage(Guid.Parse(openBankingTokenRequest.ConsentNo!));
+
+
+            var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-request-id"));
+            var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-group-id"));
+            var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-aspsp-code"));
+            var tppCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-tpp-code"));
+
+
+            HttpContext.Response.Headers.Add("X-Request-ID", string.IsNullOrWhiteSpace(requestId.Value) ? Guid.NewGuid().ToString() : requestId.Value);
+            HttpContext.Response.Headers.Add("X-Group-ID", string.IsNullOrWhiteSpace(groupId.Value) ? Guid.NewGuid().ToString() : groupId.Value);
+            HttpContext.Response.Headers.Add("X-ASPSP-Code", string.IsNullOrWhiteSpace(aspspCode.Value) ? Guid.NewGuid().ToString() : aspspCode.Value);
+            HttpContext.Response.Headers.Add("X-TPP-Code", string.IsNullOrWhiteSpace(tppCode.Value) ? Guid.NewGuid().ToString() : tppCode.Value);
+
+            SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, openBankingTokenResponse);
+
             return Ok(openBankingTokenResponse);
         }
         if (openBankingTokenRequest.AuthType.Equals("yenileme_belirteci"))
@@ -396,11 +490,24 @@ public class TokenController : Controller
                 RefreshToken = token.Response.RefreshToken,
                 RefreshTokenExpiresIn = token.Response.RefreshTokenExpiresIn
             };
+            var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-request-id"));
+            var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-group-id"));
+            var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-aspsp-code"));
+            var tppCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-tpp-code"));
+
+            HttpContext.Response.Headers.Add("X-Request-ID", string.IsNullOrWhiteSpace(requestId.Value) ? Guid.NewGuid().ToString() : requestId.Value);
+            HttpContext.Response.Headers.Add("X-Group-ID", string.IsNullOrWhiteSpace(groupId.Value) ? Guid.NewGuid().ToString() : groupId.Value);
+            HttpContext.Response.Headers.Add("X-ASPSP-Code", string.IsNullOrWhiteSpace(aspspCode.Value) ? Guid.NewGuid().ToString() : aspspCode.Value);
+            HttpContext.Response.Headers.Add("X-TPP-Code", string.IsNullOrWhiteSpace(tppCode.Value) ? Guid.NewGuid().ToString() : tppCode.Value);
+
+            SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, openBankingTokenResponse);
             return Ok(openBankingTokenResponse);
         }
 
         return BadRequest();
     }
+
+
 
 
 }
