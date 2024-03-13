@@ -45,11 +45,7 @@ async function fetchToken()
         grant_type:"password"
     };
     const response = await fetch(tokenUrl, {
-        method: "POST",
-        body: JSON.stringify(req),
-        headers: {
-            "Content-type": "application/json; charset=UTF-8"
-        }
+        method: "GET"
     });
 
     var t = await response.json();

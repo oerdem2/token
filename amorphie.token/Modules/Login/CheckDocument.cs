@@ -51,8 +51,7 @@ namespace amorphie.token.Modules.Login
                 PropertyNameCaseInsensitive = true
             });
 
-            var requestBodySerialized = body.GetProperty("TRXamorphiemobilelogin").GetProperty("Data").GetProperty("entityData").ToString();
-
+            var requestBodySerialized = body.GetProperty("requestBody").ToString();
             TokenRequest requestBody = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -65,7 +64,6 @@ namespace amorphie.token.Modules.Login
                 PropertyNameCaseInsensitive = true
             });
 
-            ServiceResponse<TokenResponse> result = await tokenService.GenerateTokenWithPasswordFromWorkflow(requestBody.MapTo<GenerateTokenRequest>(), clientInfo, userInfo, profile);
 
             using var httpClient = new HttpClient();
             StringContent request = new(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");

@@ -39,7 +39,7 @@ public class JwtHelper
         return claim?.Value;
     }
 
-    public static TokenInfo CreateTokenInfo(TokenType tokenType, Guid jti, string clientId, DateTime expiredAt, bool isActive, string reference, List<string> scopes, Guid? userId, Guid? relatedTokenId, Guid? consentId)
+    public static TokenInfo CreateTokenInfo(TokenType tokenType, Guid jti, string clientId, DateTime expiredAt, bool isActive, string reference, List<string> scopes, Guid? userId, Guid? relatedTokenId, Guid? consentId, string deviceId)
     {
         var tokenInfo = new TokenInfo
         {
@@ -52,7 +52,8 @@ public class JwtHelper
             Reference = reference,
             UserId = userId,
             RelatedTokenId = relatedTokenId,
-            ConsentId = consentId
+            ConsentId = consentId,
+            DeviceId = deviceId
         };
 
         return tokenInfo;

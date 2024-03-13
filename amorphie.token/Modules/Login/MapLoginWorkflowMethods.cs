@@ -15,6 +15,10 @@ namespace amorphie.token.Modules.Login
             .ExcludeFromDescription()
             .Produces(StatusCodes.Status200OK);
 
+            app.MapPost("/amorphie-login-check-backoffice-client", CheckBackofficeClient.checkBackofficeClient)
+            .ExcludeFromDescription()
+            .Produces(StatusCodes.Status200OK);
+
             app.MapPost("/amorphie-login-check-grant-type", CheckGrantType.checkGrantType)
             .ExcludeFromDescription()
             .Produces(StatusCodes.Status200OK);
@@ -75,7 +79,27 @@ namespace amorphie.token.Modules.Login
             .ExcludeFromDescription()
             .Produces(StatusCodes.Status200OK);
 
+            app.MapPost("/amorphie-login-check-consent", CheckConsent.checkConsent)
+            .ExcludeFromDescription()
+            .Produces(StatusCodes.Status200OK);
+
+            app.MapPost("/amorphie-login-save-consent", SaveConsent.saveConsent)
+            .ExcludeFromDescription()
+            .Produces(StatusCodes.Status200OK);
+
             app.MapPost("/amorphie-login-generate-tokens", GenerateTokens.generateTokens)
+            .ExcludeFromDescription()
+            .Produces(StatusCodes.Status200OK);
+
+            app.MapPost("/amorphie-remember-password-validate-username-phone", CheckUserPhone.checkUserPhone)
+            .ExcludeFromDescription()
+            .Produces(StatusCodes.Status200OK);
+
+            app.MapPost("/amorphie-remember-password-get-question-info", GenerateResetPasswordQuestion.generateResetPasswordQuestion)
+            .ExcludeFromDescription()
+            .Produces(StatusCodes.Status200OK);
+
+            app.MapPost("/amorphie-remember-password-validate-question", ValidateSecretQuestionAnswer.validateSecretQuestionAnswer)
             .ExcludeFromDescription()
             .Produces(StatusCodes.Status200OK);
 

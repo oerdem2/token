@@ -1,8 +1,7 @@
 using System.Dynamic;
-using System.Security.Cryptography;
-using System.Text;
+using amorphie.token.data;
 using amorphie.token.Services.TransactionHandler;
-using Newtonsoft.Json;
+using Elastic.Apm.Api;
 
 namespace amorphie.token.Middlewares
 {
@@ -14,10 +13,14 @@ namespace amorphie.token.Middlewares
             _next = next;
         }
 
-        public async Task InvokeAsync(HttpContext context, DaprClient daprClient, IConfiguration configuration)
+        public async Task InvokeAsync(HttpContext context, DaprClient daprClient, IConfiguration configuration, ITransactionService transactionService)
         {
 
-            var jobKey = context.Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Zeebe-Job-Key")).Value;
+            var instanceKey = Convert.ToInt64(context.Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Zeebe-Process-Instance-Key")).Value);
+            var jobKey = Convert.ToInt64(context.Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Zeebe-Job-Key")).Value);
+
+            await transactionService.InitLogon(instanceKey, jobKey);
+
             dynamic variables = new ExpandoObject();
             try
             {
@@ -25,10 +28,12 @@ namespace amorphie.token.Middlewares
             }
             catch (ZeebeWorkerException ex)
             {
-                variables.jobKey = long.Parse(jobKey);
+                variables.jobKey = jobKey;
                 variables.errorCode = "exception-error";
                 variables.errorMessage = ex.Message;
 
+                transactionService.Logon.Error = ex.Message;
+                transactionService.Logon.LogonStatus = LogonStatus.Failed;
                 try
                 {
                     await daprClient.InvokeBindingAsync(configuration["ZeebeCommand"], "throw-error", variables);
@@ -42,13 +47,20 @@ namespace amorphie.token.Middlewares
             }
             catch (Exception ex)
             {
-                variables.jobKey = long.Parse(jobKey);
+                variables.jobKey = jobKey;
                 variables.errorCode = "exception-error";
                 variables.errorMessage = ex.Message;
+
+                transactionService.Logon.Error = ex.Message;
+                transactionService.Logon.LogonStatus = LogonStatus.Failed;
 
                 await daprClient.InvokeBindingAsync(configuration["ZeebeCommand"], "throw-error", variables);
                 context.Response.StatusCode = 200;
                 context.Response.ContentType = "application/json";
+            }
+            finally
+            {
+                await transactionService.SaveLogon();
             }
         }
 
@@ -59,7 +71,7 @@ namespace amorphie.token.Middlewares
     {
         public static IApplicationBuilder UseTransactionMiddleware(this IApplicationBuilder builder)
         {
-            return builder.UseWhen(c => c.Request.Path.ToString().StartsWith("/amorphie-login"), builder => builder.UseMiddleware<TransactionMiddleware>());
+            return builder.UseWhen(c => c.Request.Method == "POST" && c.Request.Path.ToString().StartsWith("/amorphie-login"), builder => builder.UseMiddleware<TransactionMiddleware>());
         }
     }
 }

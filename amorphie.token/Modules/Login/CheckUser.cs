@@ -1,14 +1,9 @@
-using System;
-using System.Collections.Generic;
 using System.Dynamic;
-using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
 using amorphie.token.data;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
-using Azure.Core.Pipeline;
-using Microsoft.AspNetCore.Http.HttpResults;
+using amorphie.token.Services.TransactionHandler;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,14 +17,16 @@ namespace amorphie.token.Modules.Login
         [FromServices] IInternetBankingUserService internetBankingUserService,
         [FromServices] IProfileService profileService,
         [FromServices] IUserService userService,
-        [FromServices] IbDatabaseContext ibContext
+        [FromServices] IbDatabaseContext ibContext,
+        [FromServices] ITransactionService transactionService
         )
         {
-            await Task.CompletedTask;
-            var requestBodySerialized = body.GetProperty($"TRXamorphiemobilelogin").GetProperty("Data").GetProperty("entityData").ToString();
+            var transitionName = body.GetProperty("LastTransition").ToString();
+            var requestBodySerialized = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty("entityData").ToString();
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
 
             dynamic variables = new ExpandoObject();
+            variables.requestBody = requestBodySerialized;
             variables.PasswordTryCount = 0;
             variables.wrongCredentials = false;
             variables.disableUser = false;
@@ -45,16 +42,6 @@ namespace amorphie.token.Modules.Login
             var user = userResponse.Response;
             variables.ibUserSerialized = JsonSerializer.Serialize(user);
 
-            var userStatus = await ibContext.Status.Where(s => s.UserId == user!.Id && (!s.State.HasValue || s.State.Value == 10)).OrderByDescending(s => s.CreatedAt).FirstOrDefaultAsync();
-            if (userStatus?.Type == 30 || userStatus?.Type == 40)
-            {
-                variables.status = false;
-                variables.message = "User Not Active";
-                variables.wrongCredentials = true;
-                variables.disableUser = true;
-                return Results.Ok(variables);
-            }
-
             var passwordResponse = await internetBankingUserService.GetPassword(user!.Id);
             if (passwordResponse.StatusCode != 200)
             {
@@ -69,6 +56,12 @@ namespace amorphie.token.Modules.Login
             //Consider SuccessRehashNeeded
             if (isVerified != PasswordVerificationResult.Success)
             {
+                transactionService.Logon.FailedLogons.Add(new FailedLogon
+                {
+                    ClientId = request.ClientId,
+                    Reference = request.Username
+                });
+
                 variables.status = false;
                 variables.message = "Username or password doesn't match";
                 passwordRecord.AccessFailedCount = (passwordRecord.AccessFailedCount ?? 0) + 1;
@@ -84,6 +77,15 @@ namespace amorphie.token.Modules.Login
             }
             else
             {
+                var userStatus = await ibContext.Status.Where(s => s.UserId == user!.Id && (!s.State.HasValue || s.State.Value == 10)).OrderByDescending(s => s.CreatedAt).FirstOrDefaultAsync();
+                if (userStatus?.Type == 30 || userStatus?.Type == 40)
+                {
+                    variables.status = false;
+                    variables.message = "User Not Active";
+                    variables.wrongCredentials = false;
+                    return Results.Ok(variables);
+                }
+
                 if (passwordRecord.AccessFailedCount >= 5)
                 {
                     variables.disableUser = true;
@@ -137,7 +139,7 @@ namespace amorphie.token.Modules.Login
             var userRequest = new UserInfo
             {
                 firstName = userInfo!.data.profile!.name!,
-                lastName = userInfo!.data.profile!.name!,
+                lastName = userInfo!.data.profile!.surname!,
                 phone = new core.Models.User.UserPhone()
                 {
                     countryCode = mobilePhone!.countryCode!,
@@ -163,6 +165,9 @@ namespace amorphie.token.Modules.Login
 
             variables.status = true;
 
+            variables.userInfo = userInfo;
+            variables.BusinessLine = userInfo.data.profile.businessLine.Equals("X") ? "On" : "Burgan";
+            variables.Reference = amorphieUser.Reference;
             variables.userInfoSerialized = JsonSerializer.Serialize(userInfo);
             variables.userSerialized = JsonSerializer.Serialize(amorphieUser);
             variables.passwordSerialized = JsonSerializer.Serialize(passwordRecord);

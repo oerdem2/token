@@ -76,7 +76,7 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
                 CodeChallenge = request.CodeChallange,
                 CodeChallengeMethod = request.CodeChallangeMethod,
                 CreationTime = DateTime.UtcNow,
-                Subject = null,
+                Subject = request.User ?? null,
                 ConsentId = request.ConsentId?.ToString(),
                 Nonce = request.Nonce
             };

@@ -4,6 +4,9 @@ using System.Dynamic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using amorphie.token.data;
+using amorphie.token.Services.TransactionHandler;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace amorphie.token.Modules.Login
@@ -14,12 +17,19 @@ namespace amorphie.token.Modules.Login
         public static async Task<IResult> checkMobileClient(
         [FromBody] dynamic body,
         [FromServices] IClientService clientService,
-        HttpContext context
+        ITransactionService transactionService
         )
         {
-
-            var requestBodySerialized = body.GetProperty($"TRXamorphiemobilelogin").GetProperty("Data").GetProperty("entityData").ToString();
+            var transitionName = body.GetProperty("LastTransition").ToString();
+            var requestBodySerialized = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty("entityData").ToString();
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
+
+            transactionService.Logon.LogonStatus = LogonStatus.Active;
+            transactionService.Logon.LogonType = !string.IsNullOrWhiteSpace(request.Password) ? LogonType.Password : LogonType.Phone;
+            transactionService.Logon.Reference = request.Username;
+
+            dynamic variables = new ExpandoObject();
+            variables.requestBody = requestBodySerialized;
 
             ServiceResponse<ClientResponse> clientResult;
             if (Guid.TryParse(request.ClientId, out Guid _))
@@ -33,19 +43,18 @@ namespace amorphie.token.Modules.Login
 
             if (clientResult.StatusCode == 200)
             {
-                dynamic variables = new ExpandoObject();
                 variables.status = true;
                 variables.clientSerialized = clientResult.Response;
-                return Results.Ok(variables);
+                transactionService.Logon.ClientId = clientResult.Response.id;
             }
             else
             {
-                dynamic variables = new ExpandoObject();
                 variables.status = false;
                 variables.message = clientResult.Detail;
                 variables.LastTransition = "amorphie-login-error";
-                return Results.Ok(variables);
             }
+
+            return Results.Ok(variables);
         }
     }
 }

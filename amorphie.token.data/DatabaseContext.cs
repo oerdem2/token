@@ -17,11 +17,28 @@ namespace amorphie.token.data
 
     public class DatabaseContext : DbContext
     {
-        public DbSet<TokenInfo> Tokens{get;set;}
+        public DbSet<TokenInfo> Tokens { get; set; }
+        public DbSet<Logon> Logon { get; set; }
+        public DbSet<FailedLogon> FailedLogon { get; set; }
+
 
         public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
         {
-            
+
+        }
+
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            builder.Entity<Logon>()
+                .HasMany(l => l.FailedLogons)
+                .WithOne(l => l.Logon)
+                .HasForeignKey(l => l.LogonId);
+
+            builder
+                .Entity<FailedLogon>()
+                .Property(l => l.Id)
+                .ValueGeneratedNever();
         }
     }
 }

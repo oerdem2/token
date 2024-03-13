@@ -10,6 +10,8 @@ public class TokenRequest
     public string? Username { get; set; }
     [JsonPropertyName("password")]
     public string? Password { get; set; }
+    [JsonPropertyName("phone")]
+    public string? Phone { get; set; }
     [JsonPropertyName("client_id")]
     public string? ClientId { get; set; }
     [JsonPropertyName("client_secret")]
@@ -28,5 +30,10 @@ public class TokenRequest
     public string? RecordId { get; set; }
     [JsonPropertyName("scopes")]
     public IEnumerable<string>? Scopes { get; set; }
+    [JsonPropertyName("device_id")]
+    public string? DeviceId { get; set; }
+    [JsonPropertyName("installation_id")]
+    public string? InstallationId { get; set; }
+
 
 }
