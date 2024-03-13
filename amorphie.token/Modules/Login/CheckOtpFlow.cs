@@ -17,7 +17,7 @@ public static class CheckOtpFlow
     {
         var transactionId = body.GetProperty("InstanceId").ToString();
         var transitionName = body.GetProperty("LastTransition").ToString();
-        var entityData = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty("entityData").ToString();
+        var entityData = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty(WorkflowConstants.ENTITY_DATA_FIELD).ToString();
 
         var entityObj = JsonSerializer.Deserialize<Dictionary<string, object>>(entityData);
         var providedCode = entityObj["otpValue"].ToString();

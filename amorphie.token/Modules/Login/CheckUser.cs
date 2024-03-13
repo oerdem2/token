@@ -22,7 +22,7 @@ namespace amorphie.token.Modules.Login
         )
         {
             var transitionName = body.GetProperty("LastTransition").ToString();
-            var requestBodySerialized = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty("entityData").ToString();
+            var requestBodySerialized = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty(WorkflowConstants.ENTITY_DATA_FIELD).ToString();
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
 
             dynamic variables = new ExpandoObject();

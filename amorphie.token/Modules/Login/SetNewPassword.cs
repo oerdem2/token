@@ -19,7 +19,7 @@ namespace amorphie.token.Modules.Login
         )
         {
             var transitionName = body.GetProperty("LastTransition").ToString();
-            var newPassword = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty("entityData").GetProperty("newPassword").ToString();
+            var newPassword = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty(WorkflowConstants.ENTITY_DATA_FIELD).GetProperty("newPassword").ToString();
 
             var ibUserSerialized = body.GetProperty("ibUserSerialized").ToString();
             IBUser ibUser = JsonSerializer.Deserialize<IBUser>(ibUserSerialized);

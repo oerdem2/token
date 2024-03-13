@@ -46,6 +46,7 @@
     <Using Include="amorphie.token.Services" />
     <Using Include="amorphie.token.core.Helpers" />
     <Using Include="amorphie.token.core.Exceptions" />
+    <Using Include="amorphie.token.core.Constants" />
     <Using Include="amorphie.token.core.Enums" />
     <Using Include="amorphie.token.Modules" />
     <Using Include="Dapr.Client" />
