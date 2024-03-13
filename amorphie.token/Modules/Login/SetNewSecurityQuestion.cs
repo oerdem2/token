@@ -23,7 +23,7 @@ namespace amorphie.token.Modules.Login
             IBUser ibUser = JsonSerializer.Deserialize<IBUser>(ibUserSerialized);
 
             var transitionName = body.GetProperty("LastTransition").ToString();
-            var securityQuestionId = body.GetProperty("TRX-"+transitionName).GetProperty("Data").GetProperty("entityData").GetProperty("questionId").ToString();
+            var securityQuestionId = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty("entityData").GetProperty("questionId").ToString();
             var answer = body.GetProperty("TRXamorphiemobileloginsetnewsecurityquestion").GetProperty("Data").GetProperty("entityData").GetProperty("answer").ToString();
             var instanceId = body.GetProperty("InstanceId").ToString();
 

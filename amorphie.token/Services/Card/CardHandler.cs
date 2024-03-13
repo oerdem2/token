@@ -8,10 +8,10 @@ using Refit;
 
 namespace amorphie.token.Services.Card
 {
-    public class CardHandler : ServiceBase,ICardHandler
+    public class CardHandler : ServiceBase, ICardHandler
     {
         private ICardService _cardService;
-        public CardHandler(ILogger<CardHandler> logger, IConfiguration configuration,ICardService cardService):base(logger,configuration)
+        public CardHandler(ILogger<CardHandler> logger, IConfiguration configuration, ICardService cardService) : base(logger, configuration)
         {
             _cardService = cardService;
         }
@@ -24,22 +24,22 @@ namespace amorphie.token.Services.Card
                 ClientId = Configuration["SelfClientId"],
                 ClientSecret = Configuration["SelfClientSecret"],
                 GrantType = "client_credentials",
-                Scopes = new List<string>(){"retail-customer"}
+                Scopes = new List<string>() { "retail-customer" }
             }), Encoding.UTF8, "application/json");
 
             var httpResponse = await httpClient.PostAsync(Configuration["localAddress"] + "public/Token", request);
-            if(!httpResponse.IsSuccessStatusCode)
+            if (!httpResponse.IsSuccessStatusCode)
             {
                 response.StatusCode = 500;
                 response.Detail = "Couldn't Get Token For Using Card Service";
                 return response;
             }
             var resp = await httpResponse.Content.ReadFromJsonAsync<TokenResponse>();
-            
+
             try
             {
-                var res = await _cardService.ValidateCard(reference,cardNo,cvv,pin,resp.AccessToken);
-                if(res.IsSuccess)
+                var res = await _cardService.ValidateCard(reference, cardNo, cvv, pin, resp.AccessToken);
+                if (res.IsSuccess)
                 {
                     response.StatusCode = 200;
                     response.Detail = "Provided Card Info Not Valid";

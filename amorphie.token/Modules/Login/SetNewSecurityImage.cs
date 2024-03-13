@@ -20,7 +20,7 @@ namespace amorphie.token.Modules.Login
             IBUser ibUser = JsonSerializer.Deserialize<IBUser>(ibUserSerialized);
 
             var transitionName = body.GetProperty("LastTransition").ToString();
-            var securityImageId = body.GetProperty("TRX-"+transitionName).GetProperty("Data").GetProperty("entityData").GetProperty("imageId").ToString();
+            var securityImageId = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty("entityData").GetProperty("imageId").ToString();
             var instanceId = body.GetProperty("InstanceId").ToString();
 
             var securityImage = new IBSecurityImage()

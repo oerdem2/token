@@ -40,15 +40,15 @@ namespace amorphie.token.Modules.Login
             {
                 PropertyNameCaseInsensitive = true
             });
-            
+
             dynamic variables = new Dictionary<string, dynamic>();
 
             var saveConsent = await consentService.SaveConsent(clientInfo.id!, "7b19daa2-8793-45d2-9d96-aa7540c9d1ab", userInfo.Reference);
-            if(saveConsent.StatusCode != 200)
+            if (saveConsent.StatusCode != 200)
             {
-                Console.WriteLine("consent save err : "+saveConsent.Detail);
+                Console.WriteLine("consent save err : " + saveConsent.Detail);
             }
-            variables.Add("consentSaved",true);
+            variables.Add("consentSaved", true);
             return Results.Ok(variables);
         }
     }

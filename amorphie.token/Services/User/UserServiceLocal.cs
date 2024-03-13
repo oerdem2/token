@@ -37,7 +37,7 @@ public class UserServiceLocal : IUserService
         {
             var response = await httpResponseMessage.Content.ReadAsStringAsync();
             var responseObject = JsonSerializer.Deserialize<CheckDeviceWithoutUserResponseDto>(response);
-            return new ServiceResponse<CheckDeviceWithoutUserResponseDto>() { StatusCode = 200, Response =  responseObject};
+            return new ServiceResponse<CheckDeviceWithoutUserResponseDto>() { StatusCode = 200, Response = responseObject };
         }
         else
         {

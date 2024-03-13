@@ -15,11 +15,11 @@ namespace amorphie.token.Middlewares
 
         public async Task InvokeAsync(HttpContext context, DaprClient daprClient, IConfiguration configuration, ITransactionService transactionService)
         {
-            
+
             var instanceKey = Convert.ToInt64(context.Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Zeebe-Process-Instance-Key")).Value);
             var jobKey = Convert.ToInt64(context.Request.Headers.FirstOrDefault(h => h.Key.Equals("X-Zeebe-Job-Key")).Value);
-            
-            await transactionService.InitLogon(instanceKey,jobKey);
+
+            await transactionService.InitLogon(instanceKey, jobKey);
 
             dynamic variables = new ExpandoObject();
             try
@@ -53,7 +53,7 @@ namespace amorphie.token.Middlewares
 
                 transactionService.Logon.Error = ex.Message;
                 transactionService.Logon.LogonStatus = LogonStatus.Failed;
-                
+
                 await daprClient.InvokeBindingAsync(configuration["ZeebeCommand"], "throw-error", variables);
                 context.Response.StatusCode = 200;
                 context.Response.ContentType = "application/json";

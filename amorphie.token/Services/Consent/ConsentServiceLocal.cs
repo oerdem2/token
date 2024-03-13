@@ -33,7 +33,7 @@ namespace amorphie.token.Services.Consent
                 return new ServiceResponse<DocumentResponse>() { StatusCode = (int)httpResponseMessage.StatusCode };
             }
         }
-        
+
         public async Task<ServiceResponse> CheckConsent(string clientId, string roleId, string citizenshipNo)
         {
             var httpClient = _httpClientFactory.CreateClient("Consent");
@@ -41,7 +41,7 @@ namespace amorphie.token.Services.Consent
             var httpResponseMessage = await httpClient.GetAsync(
                 $"Authorization/CheckAuthorizationForLogin/clientCode={clientId}&roleId={roleId}&userTCKN={citizenshipNo}&scopeTCKN={citizenshipNo}");
 
-            Console.WriteLine("url : "+httpResponseMessage.RequestMessage.RequestUri);
+            Console.WriteLine("url : " + httpResponseMessage.RequestMessage.RequestUri);
             if (httpResponseMessage.IsSuccessStatusCode)
             {
                 return new ServiceResponse() { StatusCode = 200 };
@@ -55,7 +55,8 @@ namespace amorphie.token.Services.Consent
         public async Task<ServiceResponse> SaveConsent(string clientId, string roleId, string citizenshipNo)
         {
             var httpClient = _httpClientFactory.CreateClient("Consent");
-            StringContent req = new StringContent(JsonSerializer.Serialize(new{
+            StringContent req = new StringContent(JsonSerializer.Serialize(new
+            {
                 roleId = roleId,
                 clientCode = clientId,
                 userTCKN = citizenshipNo,
@@ -63,7 +64,7 @@ namespace amorphie.token.Services.Consent
             }), System.Text.Encoding.UTF8, "application/json");
 
             var httpResponseMessage = await httpClient.PostAsync(
-                $"Authorization/AuthorizeForLogin",req);
+                $"Authorization/AuthorizeForLogin", req);
 
             if (httpResponseMessage.IsSuccessStatusCode)
             {
@@ -99,16 +100,16 @@ namespace amorphie.token.Services.Consent
         public async Task<ServiceResponse> UpdateConsentForUsage(Guid consentId)
         {
             var httpClient = _httpClientFactory.CreateClient("Consent");
-            Console.WriteLine("Consent Id For Usage Id : "+consentId);
+            Console.WriteLine("Consent Id For Usage Id : " + consentId);
             StringContent req = new StringContent(JsonSerializer.Serialize(new
             {
                 id = consentId,
                 state = "K"
             }), System.Text.Encoding.UTF8, "application/json");
-            Console.WriteLine("Consent Id For Usage Id : "+JsonSerializer.Serialize(req));
+            Console.WriteLine("Consent Id For Usage Id : " + JsonSerializer.Serialize(req));
             var httpResponseMessage = await httpClient.PostAsync(
                 "OpenBankingConsentHHS/UpdateConsentStatusForUsage", req);
-            Console.WriteLine("Consent Id For Usage Response Code : "+httpResponseMessage.IsSuccessStatusCode);
+            Console.WriteLine("Consent Id For Usage Response Code : " + httpResponseMessage.IsSuccessStatusCode);
             if (httpResponseMessage.IsSuccessStatusCode)
             {
                 return new ServiceResponse() { StatusCode = 200 };

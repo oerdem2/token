@@ -12,17 +12,18 @@ namespace amorphie.token.Services.TransactionHandler
         public Logon Logon { get => _logon; set => _logon = value; }
         private DatabaseContext _databaseContext;
 
-        public TransactionService(ILogger<TransactionService> logger, IConfiguration configuration,DatabaseContext databaseContext) : base(logger, configuration)
+        public TransactionService(ILogger<TransactionService> logger, IConfiguration configuration, DatabaseContext databaseContext) : base(logger, configuration)
         {
             _databaseContext = databaseContext;
         }
 
-        public async Task InitLogon(long instanceKey,long jobKey)
+        public async Task InitLogon(long instanceKey, long jobKey)
         {
             _logon = await _databaseContext.Logon.FirstOrDefaultAsync(l => l.WorkflowInstanceId == instanceKey);
-            if(_logon == null)
+            if (_logon == null)
             {
-                _logon = new Logon{
+                _logon = new Logon
+                {
                     WorkflowInstanceId = instanceKey,
                     LastJobKey = jobKey
                 };

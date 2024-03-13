@@ -22,7 +22,7 @@ namespace amorphie.token.Modules.Login
         )
         {
             var transitionName = body.GetProperty("LastTransition").ToString();
-            var requestBodySerialized = body.GetProperty("TRX-"+transitionName).GetProperty("Data").GetProperty("entityData").ToString();
+            var requestBodySerialized = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty("entityData").ToString();
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
 
             dynamic variables = new ExpandoObject();
@@ -56,7 +56,8 @@ namespace amorphie.token.Modules.Login
             //Consider SuccessRehashNeeded
             if (isVerified != PasswordVerificationResult.Success)
             {
-                transactionService.Logon.FailedLogons.Add(new FailedLogon{
+                transactionService.Logon.FailedLogons.Add(new FailedLogon
+                {
                     ClientId = request.ClientId,
                     Reference = request.Username
                 });

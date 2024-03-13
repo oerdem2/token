@@ -10,8 +10,8 @@ namespace amorphie.token.core.Models.Card
     public class ValidateCardResponse
     {
         [JsonPropertyName("textDescription")]
-        public string? TextDescription{get;set;}
+        public string? TextDescription { get; set; }
         [JsonPropertyName("isSuccess")]
-        public bool IsSuccess{get;set;} 
+        public bool IsSuccess { get; set; }
     }
 }

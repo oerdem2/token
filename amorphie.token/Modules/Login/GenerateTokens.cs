@@ -71,7 +71,7 @@ namespace amorphie.token.Modules.Login
 
             if (result.StatusCode == 200)
             {
-                
+
                 await userService.SaveDevice(new UserSaveMobileDeviceDto()
                 {
                     DeviceId = deviceId,

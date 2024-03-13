@@ -9,6 +9,6 @@ namespace amorphie.token.core.Models.User
     public class CheckDeviceWithoutUserResponseDto
     {
         [JsonPropertyName("reference")]
-        public string? Reference{get;set;}
+        public string? Reference { get; set; }
     }
 }

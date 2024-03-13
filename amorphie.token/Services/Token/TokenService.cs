@@ -132,7 +132,7 @@ public class TokenService : ServiceBase, ITokenService
 
         _tokenInfoDetail!.IdTokenId = Guid.NewGuid();
         _tokenInfoDetail!.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.IdToken, _tokenInfoDetail.IdTokenId, _client.id!, DateTime.UtcNow.AddSeconds(idDuration), true, _user!.Reference
-        , new List<string>(), _user!.Id, _tokenInfoDetail.AccessTokenId, null,_deviceId));
+        , new List<string>(), _user!.Id, _tokenInfoDetail.AccessTokenId, null, _deviceId));
 
         return idToken;
     }
@@ -146,12 +146,12 @@ public class TokenService : ServiceBase, ITokenService
         foreach (var scope in _tokenRequest!.Scopes!.ToArray().Except(excludedScopes))
             tokenClaims.Add(new Claim("scope", scope));
 
-        if(_tokenRequest.GrantType == "client_credentials")
+        if (_tokenRequest.GrantType == "client_credentials")
         {
             tokenClaims.Add(new Claim("scope", "client_credentials"));
         }
 
-        if(_tokenRequest.GrantType == "device")
+        if (_tokenRequest.GrantType == "device")
         {
             tokenClaims.Add(new Claim("scope", "device"));
         }
@@ -197,7 +197,7 @@ public class TokenService : ServiceBase, ITokenService
             tokenClaims.Add(new Claim("userId", _user!.Id.ToString()));
         else
             tokenClaims.Add(new Claim("clientAuthorized", "1"));
-        
+
         tokenClaims.Add(new Claim("iat", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()));
 
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_client.jwtSalt!));
@@ -209,10 +209,10 @@ public class TokenService : ServiceBase, ITokenService
             expires: expires, signingCredentials: signinCredentials);
 
         var scopes = _tokenRequest.Scopes!.ToArray().Except(excludedScopes).ToList();
-        
+
 
         _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.AccessToken, _tokenInfoDetail.AccessTokenId, _client.id!, DateTime.UtcNow.AddSeconds(accessDuration), true, _user?.Reference ?? ""
-        , scopes, _user?.Id ?? null, null, _tokenRequest!.ConsentId,_deviceId));
+        , scopes, _user?.Id ?? null, null, _tokenRequest!.ConsentId, _deviceId));
 
         return access_token;
     }
@@ -377,9 +377,9 @@ public class TokenService : ServiceBase, ITokenService
             }
 
             _user = userResponse.Response;
-            
+
             var profile = await _profileService.GetCustomerSimpleProfile(refreshTokenInfo.Reference);
-            if(profile.StatusCode != 200)
+            if (profile.StatusCode != 200)
             {
                 return new ServiceResponse<TokenResponse>()
                 {
@@ -472,7 +472,7 @@ public class TokenService : ServiceBase, ITokenService
     public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithDevice(GenerateTokenRequest tokenRequest)
     {
         _tokenRequest = tokenRequest;
-        var checkDeviceResponse = await _userService.CheckDeviceWithoutUser(_tokenRequest.ClientId,_tokenRequest.DeviceId,Guid.Parse(_tokenRequest.InstallationId));
+        var checkDeviceResponse = await _userService.CheckDeviceWithoutUser(_tokenRequest.ClientId, _tokenRequest.DeviceId, Guid.Parse(_tokenRequest.InstallationId));
         if (checkDeviceResponse.StatusCode != 200)
         {
             return new ServiceResponse<TokenResponse>()
@@ -481,7 +481,7 @@ public class TokenService : ServiceBase, ITokenService
                 Detail = checkDeviceResponse.Detail
             };
         }
-        if(!_tokenRequest.Username.Equals(checkDeviceResponse.Response.Reference))
+        if (!_tokenRequest.Username.Equals(checkDeviceResponse.Response.Reference))
         {
             return new ServiceResponse<TokenResponse>()
             {
@@ -972,11 +972,11 @@ public class TokenService : ServiceBase, ITokenService
         };
     }
 
-    public async Task<ServiceResponse<TokenResponse>> GenerateOpenBankingToken(GenerateTokenRequest tokenRequest,ConsentResponse consent)
+    public async Task<ServiceResponse<TokenResponse>> GenerateOpenBankingToken(GenerateTokenRequest tokenRequest, ConsentResponse consent)
     {
         _tokenRequest = tokenRequest;
         _consent = consent;
-        
+
         var clientResponse = await _clientService.ValidateClient(tokenRequest.ClientId!, tokenRequest.ClientSecret!);
         if (clientResponse.StatusCode != 200)
         {

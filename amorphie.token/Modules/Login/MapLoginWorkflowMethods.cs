@@ -98,7 +98,7 @@ namespace amorphie.token.Modules.Login
             app.MapPost("/amorphie-remember-password-get-question-info", GenerateResetPasswordQuestion.generateResetPasswordQuestion)
             .ExcludeFromDescription()
             .Produces(StatusCodes.Status200OK);
-            
+
             app.MapPost("/amorphie-remember-password-validate-question", ValidateSecretQuestionAnswer.validateSecretQuestionAnswer)
             .ExcludeFromDescription()
             .Produces(StatusCodes.Status200OK);

@@ -137,17 +137,17 @@ namespace amorphie.token.Services.ClaimHandler
                 return property != null ? property.GetValue(src, null).ToString() : null;
             }
         }
-        public async Task<List<Claim>> PopulateClaims(List<string> clientClaims, LoginResponse? user, SimpleProfileResponse? profile = null,ConsentResponse? consent = null)
+        public async Task<List<Claim>> PopulateClaims(List<string> clientClaims, LoginResponse? user, SimpleProfileResponse? profile = null, ConsentResponse? consent = null)
         {
             _profile = profile;
-            if(consent != null)
+            if (consent != null)
             {
                 _consent = consent;
             }
-            
+
             if (user == null)
             {
-                
+
             }
             else
             {

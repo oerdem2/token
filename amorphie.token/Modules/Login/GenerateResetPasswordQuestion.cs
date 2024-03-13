@@ -23,10 +23,10 @@ public static class GenerateResetPasswordQuestion
 
         var securityQuestion = await ibContext.Question.Where(q => q.UserId == ibUser.Id)
                 .OrderByDescending(q => q.CreatedAt).FirstOrDefaultAsync();
-        
+
         PasswordHasher passwordHasher = new();
-        var answer =  passwordHasher.DecryptString(securityQuestion.EncryptedAnswer,securityQuestion.Id.ToString("N")).Trim();
-        
+        var answer = passwordHasher.DecryptString(securityQuestion.EncryptedAnswer, securityQuestion.Id.ToString("N")).Trim();
+
         var securityQuestionDefined = await ibContext.QuestionDefinition.Where(q => q.IsActive && q.Id == securityQuestion.DefinitionId).Select(
                     q => new
                     {
@@ -47,7 +47,7 @@ public static class GenerateResetPasswordQuestion
         var installationId = body.GetProperty("Headers").GetProperty("xtokenid").ToString();
         dataChanged.additionalData = new ExpandoObject();
 
-        if(answer.Length == 2)
+        if (answer.Length == 2)
         {
             dataChanged.additionalData.answerFirstCharIndex = 1;
             dataChanged.additionalData.answerSecondCharIndex = 2;
@@ -56,16 +56,16 @@ public static class GenerateResetPasswordQuestion
         {
             var rnd = new Random();
             int seperator = answer.Length / 2;
-            dataChanged.additionalData.answerFirstCharIndex = rnd.Next(1,seperator);
-            dataChanged.additionalData.answerSecondCharIndex = rnd.Next(seperator,answer.Length+1);
+            dataChanged.additionalData.answerFirstCharIndex = rnd.Next(1, seperator);
+            dataChanged.additionalData.answerSecondCharIndex = rnd.Next(seperator, answer.Length + 1);
         }
         dataChanged.additionalData.question = securityQuestionDefined;
         targetObject.Data = dataChanged;
         targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
         targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
         variables.Add($"TRX{transitionName.ToString().Replace("-", "")}", targetObject);
-        variables.Add("answerFirstCharIndex",dataChanged.additionalData.answerFirstCharIndex);
-        variables.Add("answerSecondCharIndex",dataChanged.additionalData.answerSecondCharIndex);
+        variables.Add("answerFirstCharIndex", dataChanged.additionalData.answerFirstCharIndex);
+        variables.Add("answerSecondCharIndex", dataChanged.additionalData.answerSecondCharIndex);
         return Results.Ok(variables);
     }
 

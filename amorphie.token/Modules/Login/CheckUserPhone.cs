@@ -24,7 +24,7 @@ namespace amorphie.token.Modules.Login
         )
         {
             var transitionName = body.GetProperty("LastTransition").ToString();
-            var requestBodySerialized = body.GetProperty("TRX-"+transitionName).GetProperty("Data").GetProperty("entityData").ToString();
+            var requestBodySerialized = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty("entityData").ToString();
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
 
             dynamic variables = new ExpandoObject();
@@ -83,7 +83,7 @@ namespace amorphie.token.Modules.Login
                 return Results.Ok(variables);
             }
 
-            if(!mobilePhone.ToRememberPasswordString().Equals(request.Phone))
+            if (!mobilePhone.ToRememberPasswordString().Equals(request.Phone))
             {
                 variables.wrongCredentials = true;
                 variables.message = "Phone Number Doesnt Match";

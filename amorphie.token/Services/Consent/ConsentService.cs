@@ -79,14 +79,15 @@ namespace amorphie.token.Services.Consent
         {
             try
             {
-                var request = new{
-                roleId = roleId,
-                clientCode = clientId,
-                userTCKN = citizenshipNo,
-                scopeTCKN = citizenshipNo
+                var request = new
+                {
+                    roleId = roleId,
+                    clientCode = clientId,
+                    userTCKN = citizenshipNo,
+                    scopeTCKN = citizenshipNo
                 };
 
-                await _daprClient.InvokeMethodAsync(HttpMethod.Post, Configuration["ConsentServiceAppName"], $"Authorization/AuthorizeForLogin",request);
+                await _daprClient.InvokeMethodAsync(HttpMethod.Post, Configuration["ConsentServiceAppName"], $"Authorization/AuthorizeForLogin", request);
 
                 return new ServiceResponse()
                 {
@@ -147,7 +148,7 @@ namespace amorphie.token.Services.Consent
         {
             try
             {
-                await _daprClient.InvokeMethodAsync<dynamic,dynamic>(Configuration["ConsentServiceAppName"], "OpenBankingConsentHHS/UpdatePaymentConsentStatusForUsage",new
+                await _daprClient.InvokeMethodAsync<dynamic, dynamic>(Configuration["ConsentServiceAppName"], "OpenBankingConsentHHS/UpdatePaymentConsentStatusForUsage", new
                 {
                     id = consentId,
                     state = "K"
@@ -175,7 +176,7 @@ namespace amorphie.token.Services.Consent
                     Detail = ex.ToString()
                 };
             }
-           
+
         }
     }
 }

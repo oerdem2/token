@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace amorphie.token.core.Models.InternetBanking
 {
-    public class IBUserDevice:IbBaseEntity
+    public class IBUserDevice : IbBaseEntity
     {
         public Guid UserId { get; set; }
         public string DeviceId { get; set; }

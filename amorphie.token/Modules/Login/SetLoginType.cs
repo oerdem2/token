@@ -24,27 +24,27 @@ namespace amorphie.token.Modules.Login
         )
         {
             LoginResponse userInfo;
-            
+
             var userInfoSerialized = body.GetProperty("userSerialized").ToString();
 
             userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
-            
-            
+
+
             var ibUserSerialized = body.GetProperty("ibUserSerialized").ToString();
             IBUser ibUser = JsonSerializer.Deserialize<IBUser>(ibUserSerialized);
-            
+
             ClientResponse clientInfo;
-            
+
             var clientInfoSerialized = body.GetProperty("clientSerialized").ToString();
 
             clientInfo = JsonSerializer.Deserialize<ClientResponse>(clientInfoSerialized, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
-            
+
             string securityImagePath = string.Empty;
             var securityImage = await ibContext.SecurityImage.Where(i => i.UserId == ibUser.Id)
                 .OrderByDescending(i => i.CreatedAt).FirstOrDefaultAsync();

@@ -21,7 +21,7 @@ namespace amorphie.token.Services.FlowHandler
 
         public async Task<ServiceResponse> CheckOtp(string otpValue)
         {
-            
+
             return null;
         }
 

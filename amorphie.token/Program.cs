@@ -34,9 +34,9 @@ internal class Program
                 Console.WriteLine("Dapr Sidecar Doesn't Respond");
                 return;
             }
-            
+
         }
-        
+
         await builder.Configuration.AddVaultSecrets(builder.Configuration["DAPR_SECRET_STORE_NAME"], new string[] { "ServiceConnections" });
 
         // Add services to the container.
@@ -56,10 +56,10 @@ internal class Program
                 .Enrich.WithEnvironmentName()
                 .Enrich.WithMachineName()
                 .WriteTo.Console()
-                .WriteTo.File(new CompactJsonFormatter(),"amorphie-token-log.json", rollingInterval: RollingInterval.Day)
+                .WriteTo.File(new CompactJsonFormatter(), "amorphie-token-log.json", rollingInterval: RollingInterval.Day)
                 .ReadFrom.Configuration(builder.Configuration)
                 .CreateLogger();
-        builder.Host.UseSerilog(Log.Logger,true);
+        builder.Host.UseSerilog(Log.Logger, true);
 
         builder.Services.AddHealthChecks();
         builder.Services.AddControllersWithViews();
@@ -137,12 +137,12 @@ internal class Program
 
         builder.Services.AddRefitClient<IMessagingGateway>()
         .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["MessagingGatewayBaseAddress"]!));
-        
+
         var app = builder.Build();
         app.UseAllElasticApm(app.Configuration);
         app.UseTransactionMiddleware();
 
-        
+
         //Db Migrate
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();

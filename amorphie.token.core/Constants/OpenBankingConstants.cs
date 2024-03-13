@@ -7,7 +7,7 @@ namespace amorphie.token.core.Constants
 {
     public static class OpenBankingConstants
     {
-        public static Dictionary<string,string> ConsentTypeMap = new Dictionary<string, string>()
+        public static Dictionary<string, string> ConsentTypeMap = new Dictionary<string, string>()
         {
             {"OB_Account","H"},
             {"OB_Payment","O"},

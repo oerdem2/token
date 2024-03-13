@@ -123,9 +123,9 @@ public class LoginController : Controller
             return StatusCode(404);
         }
         var user = userResponse.Response;
-        var device = await _ibContext.UserDevice.FirstOrDefaultAsync(u => u.UserId == user.Id && u.Status == 10 && !string.IsNullOrWhiteSpace(u.DeviceToken) );
+        var device = await _ibContext.UserDevice.FirstOrDefaultAsync(u => u.UserId == user.Id && u.Status == 10 && !string.IsNullOrWhiteSpace(u.DeviceToken));
 
-        if(device != null)
+        if (device != null)
         {
             return Ok();
         }
@@ -239,7 +239,7 @@ public class LoginController : Controller
 
             var transactionId = Guid.NewGuid();
             await _daprClient.SaveStateAsync(_configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code", code);
-            
+
             await _daprClient.SaveStateAsync(_configuration["DAPR_STATE_STORE_NAME"], $"{openBankingLoginRequest.consentId}_User", amorphieUser);
 
             var otpRequest = new
@@ -317,5 +317,5 @@ public class LoginController : Controller
         }
     }
 
-        
+
 }

@@ -9,7 +9,7 @@ namespace amorphie.token.Services.TransactionHandler
     public interface ITransactionService
     {
         public string IpAddress { get; set; }
-        public Logon Logon{get;set;}
+        public Logon Logon { get; set; }
         public Task InitLogon(long instanceKey, long jobKey);
         public Task SaveLogon();
     }

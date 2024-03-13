@@ -7,7 +7,7 @@ namespace amorphie.token.Services.Token;
 public interface ITokenService
 {
     public Task<ServiceResponse<TokenResponse>> GenerateToken(GenerateTokenRequest tokenRequest);
-    public Task<ServiceResponse<TokenResponse>> GenerateOpenBankingToken(GenerateTokenRequest tokenRequest,ConsentResponse consent);
+    public Task<ServiceResponse<TokenResponse>> GenerateOpenBankingToken(GenerateTokenRequest tokenRequest, ConsentResponse consent);
     public Task<ServiceResponse<TokenResponse>> GenerateTokenWithPassword(GenerateTokenRequest tokenRequest);
     public Task<ServiceResponse<TokenResponse>> GenerateTokenWithDevice(GenerateTokenRequest tokenRequest);
     public Task<ServiceResponse<TokenResponse>> GenerateTokenWithRefreshToken(GenerateTokenRequest tokenRequest);

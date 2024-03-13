@@ -27,9 +27,9 @@ public static class ValidateCardAnswer
         var cardNo = body.GetProperty("cardNo").ToString();
         var cardCvv = body.GetProperty("cardCvv").ToString();
         var cardPin = body.GetProperty("cardPin").ToString();
-        
-        ServiceResponse cardResponse = await cardHandler.ValidateCard(ibUser.UserName,cardNo,cardCvv,cardPin);
-        if(cardResponse.StatusCode == 200)
+
+        ServiceResponse cardResponse = await cardHandler.ValidateCard(ibUser.UserName, cardNo, cardCvv, cardPin);
+        if (cardResponse.StatusCode == 200)
         {
             variables.isValidated = true;
         }

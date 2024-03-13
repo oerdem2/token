@@ -7,8 +7,8 @@ namespace amorphie.token.core.Models.Token
 {
     public class LogonDetailDto
     {
-        public DateTime LogonDate{get;set;}
-        public string Channel{get;set;}
-        public int Status{get;set;}
+        public DateTime LogonDate { get; set; }
+        public string Channel { get; set; }
+        public int Status { get; set; }
     }
 }

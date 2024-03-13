@@ -42,7 +42,7 @@ public class AuthorizeController : Controller
         _daprClient = daprClient;
         _consentService = consentService;
         _profileService = profileService;
-        
+
     }
 
     [HttpGet("/public/OpenBankingAuthCode")]
@@ -57,7 +57,7 @@ public class AuthorizeController : Controller
             var consent = consentResponse.Response;
             var deserializedData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent.additionalData!);
             var redirectUri = deserializedData.gkd.yonAdr;
-            
+
             var authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest()
             {
                 ResponseType = "code",
@@ -67,7 +67,7 @@ public class AuthorizeController : Controller
                 User = user
             });
             var authCode = authResponse.Response.Code;
-            
+
             return Redirect($"{redirectUri}&rizaDrm=Y&yetKod={authCode}&rizaNo={consentId}&rizaTip={OpenBankingConstants.ConsentTypeMap[consent.consentType]}");
         }
         return Forbid();
@@ -87,15 +87,15 @@ public class AuthorizeController : Controller
 
         var consentData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent!.additionalData!);
         string kmlkNo = string.Empty;
-        if(consent.consentType.Equals("OB_Account"))
+        if (consent.consentType.Equals("OB_Account"))
         {
             kmlkNo = consentData!.kmlk.kmlkVrs.ToString();
         }
-        if(consent.consentType.Equals("OB_Payment"))
+        if (consent.consentType.Equals("OB_Payment"))
         {
             kmlkNo = consentData!.odmBsltm.kmlk.kmlkVrs.ToString();
         }
-        
+
         var customerInfoResult = await _profileService.GetCustomerSimpleProfile(kmlkNo);
         if (customerInfoResult.StatusCode != 200)
         {
@@ -140,5 +140,5 @@ public class AuthorizeController : Controller
     }
 
 
-   
+
 }

@@ -7,7 +7,7 @@ namespace amorphie.token.core.Models.Token
 {
     public class LogonDto
     {
-        public DateTime? LastSuccessfullLogonDate{get;set;}
-        public DateTime? LastFailedLogonDate{get;set;}
+        public DateTime? LastSuccessfullLogonDate { get; set; }
+        public DateTime? LastFailedLogonDate { get; set; }
     }
 }
