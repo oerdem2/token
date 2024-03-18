@@ -1,3 +1,6 @@
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Unicode;
 using amorphie.core.Extension;
 using amorphie.token.data;
 using amorphie.token.Middlewares;
@@ -11,6 +14,7 @@ using amorphie.token.Services.MessagingGateway;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.TransactionHandler;
 using Elastic.Apm.NetCoreAll;
+using Elastic.Transport;
 using Microsoft.EntityFrameworkCore;
 using Refit;
 using Serilog;
@@ -36,6 +40,8 @@ internal class Program
             }
 
         }
+
+
 
         await builder.Configuration.AddVaultSecrets(builder.Configuration["DAPR_SECRET_STORE_NAME"], new string[] { "ServiceConnections" });
 

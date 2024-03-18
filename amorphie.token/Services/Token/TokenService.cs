@@ -1,6 +1,5 @@
 
 
-using System.Dynamic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -9,13 +8,10 @@ using amorphie.token.core.Models.Consent;
 using amorphie.token.core.Models.Profile;
 using amorphie.token.data;
 using amorphie.token.Services.ClaimHandler;
-using amorphie.token.Services.Consent;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.TransactionHandler;
-using Google.Protobuf.WellKnownTypes;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.IdentityModel.Tokens;
 
 namespace amorphie.token.Services.Token;
@@ -174,7 +170,6 @@ public class TokenService : ServiceBase, ITokenService
 
         if (accessInfo.claims != null && accessInfo.claims.Count() > 0 && !_tokenRequest.GrantType.Equals("client_credentials"))
         {
-
             var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user, _profile, _consent);
             tokenClaims.AddRange(populatedClaims);
             if (_tokenRequest.Scopes.Contains("temporary"))
