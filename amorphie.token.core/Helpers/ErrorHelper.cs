@@ -31,7 +31,7 @@ namespace amorphie.token.core.Helpers
             try
             {
                 var headers = body.GetProperty("Headers");
-                var lang = headers.GetProperty("acceptlanguage");
+                var lang = headers.GetProperty("acceptlanguage").ToString();
                 if (string.IsNullOrWhiteSpace(lang))
                     return "tr-TR";
                 return lang;
