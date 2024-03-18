@@ -21,6 +21,7 @@ namespace amorphie.token.Modules.Login
         [FromServices] ITransactionService transactionService
         )
         {
+            var langCode = ErrorHelper.GetLangCode(body);
             var transitionName = body.GetProperty("LastTransition").ToString();
             var requestBodySerialized = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty(WorkflowConstants.ENTITY_DATA_FIELD).ToString();
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
@@ -35,7 +36,7 @@ namespace amorphie.token.Modules.Login
             if (userResponse.StatusCode != 200)
             {
                 variables.status = false;
-                variables.message = "User Not Found";
+                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.UserNotFound,langCode);
                 variables.wrongCredentials = true;
                 return Results.Ok(variables);
             }
@@ -46,7 +47,7 @@ namespace amorphie.token.Modules.Login
             if (passwordResponse.StatusCode != 200)
             {
                 variables.status = false;
-                variables.message = "Password not found";
+                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.UserNotFound,langCode);
                 variables.wrongCredentials = true;
                 return Results.Ok(variables);
             }
@@ -63,7 +64,7 @@ namespace amorphie.token.Modules.Login
                 });
 
                 variables.status = false;
-                variables.message = "Username or password doesn't match";
+                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.WrongPassword,langCode);;
                 passwordRecord.AccessFailedCount = (passwordRecord.AccessFailedCount ?? 0) + 1;
                 variables.PasswordTryCount = passwordRecord.AccessFailedCount;
                 variables.wrongCredentials = true;
@@ -81,19 +82,11 @@ namespace amorphie.token.Modules.Login
                 if (userStatus?.Type == 30 || userStatus?.Type == 40)
                 {
                     variables.status = false;
-                    variables.message = "User Not Active";
+                    variables.message = ErrorHelper.GetErrorMessage(LoginErrors.BlockedUser,langCode);
                     variables.wrongCredentials = false;
                     return Results.Ok(variables);
                 }
 
-                if (passwordRecord.AccessFailedCount >= 5)
-                {
-                    variables.disableUser = true;
-                    variables.status = false;
-                    variables.wrongCredentials = true;
-                    variables.message = "User Not Active";
-                    return Results.Ok(variables);
-                }
                 passwordRecord.AccessFailedCount = 0;
                 await ibContext.SaveChangesAsync();
             }
@@ -104,7 +97,7 @@ namespace amorphie.token.Modules.Login
             if (userInfoResult.StatusCode != 200)
             {
                 variables.status = false;
-                variables.message = "UserInfo Not Found";
+                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.UserNotFound,langCode);
                 variables.wrongCredentials = true;
                 return Results.Ok(variables);
             }
@@ -114,7 +107,7 @@ namespace amorphie.token.Modules.Login
             if (userInfo!.data!.profile!.Equals("customer") || !userInfo!.data!.profile!.status!.Equals("active"))
             {
                 variables.status = false;
-                variables.message = "User is Not Customer Or Not Active";
+                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.General,langCode);
                 variables.wrongCredentials = true;
                 return Results.Ok(variables);
             }
@@ -123,7 +116,7 @@ namespace amorphie.token.Modules.Login
             if (mobilePhoneCount != 1)
             {
                 variables.status = false;
-                variables.message = "Bad Phone Data";
+                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.General,langCode);
 
                 return Results.Ok(variables);
             }
@@ -132,7 +125,7 @@ namespace amorphie.token.Modules.Login
             if (string.IsNullOrWhiteSpace(mobilePhone!.prefix) || string.IsNullOrWhiteSpace(mobilePhone!.number))
             {
                 variables.status = false;
-                variables.message = "Bad Phone Format";
+                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.General,langCode);
                 return Results.Ok(variables);
             }
 

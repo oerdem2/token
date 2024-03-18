@@ -18,6 +18,7 @@ namespace amorphie.token.Modules.Login
         [FromServices] IInternetBankingUserService internetBankingUserService
         )
         {
+            var langCode = ErrorHelper.GetLangCode(body);
             var transitionName = body.GetProperty("LastTransition").ToString();
             var newPassword = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty(WorkflowConstants.ENTITY_DATA_FIELD).GetProperty("newPassword").ToString();
 
@@ -39,7 +40,7 @@ namespace amorphie.token.Modules.Login
                 if (passwordHasher.VerifyHashedPassword(pass.HashedPassword, newPassword, pass.Id.ToString()) != PasswordVerificationResult.Failed)
                 {
                     variables.status = false;
-                    variables.message = "New Password Can Not Be Same With Last 5 Passwords";
+                    variables.message = ErrorHelper.GetErrorMessage(LoginErrors.UserNotFound,langCode);
                     return Results.Ok(variables);
                 }
             }

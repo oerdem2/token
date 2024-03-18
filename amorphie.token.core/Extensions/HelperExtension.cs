@@ -32,5 +32,7 @@ namespace amorphie.token.core.Extensions
             return returnString.Trim();
         }
 
+        
+
     }
 }

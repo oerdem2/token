@@ -15,6 +15,7 @@ public static class CheckOtpFlow
     DaprClient daprClient
     )
     {
+        var langCode = ErrorHelper.GetLangCode(body);
         var transactionId = body.GetProperty("InstanceId").ToString();
         var transitionName = body.GetProperty("LastTransition").ToString();
         var entityData = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty(WorkflowConstants.ENTITY_DATA_FIELD).ToString();
@@ -31,20 +32,6 @@ public static class CheckOtpFlow
         }
         variables.otpTimeout = false;
 
-        var clientInfoSerialized = body.GetProperty("clientSerialized").ToString();
-
-        ClientResponse clientInfo = JsonSerializer.Deserialize<ClientResponse>(clientInfoSerialized, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
-
-        var userInfoSerialized = body.GetProperty("userSerialized").ToString();
-
-        LoginResponse userInfo = JsonSerializer.Deserialize<LoginResponse>(userInfoSerialized, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
-
         if (generatedCode != null && providedCode == generatedCode)
         {
             variables.otpMatch = true;
@@ -56,7 +43,7 @@ public static class CheckOtpFlow
             var otpTryCount = Convert.ToInt32(body.GetProperty("OtpTryCount").ToString());
             variables.otpMatch = false;
             variables.OtpTryCount = otpTryCount++;
-            variables.message = "Otp Check Failed";
+            variables.message = ErrorHelper.GetErrorMessage(LoginErrors.WrongPassword,langCode);
             return Results.Ok(variables);
         }
     }
