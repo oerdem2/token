@@ -66,9 +66,9 @@ namespace amorphie.token.Middlewares
                 }
                 catch (Exception ex)
                 {
-                    
+
                 }
-                
+
             }
         }
 

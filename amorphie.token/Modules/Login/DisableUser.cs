@@ -50,7 +50,7 @@ public static class DisableUser
 
 
         variables.status = true;
-        variables.message = ErrorHelper.GetErrorMessage(LoginErrors.BlockedUser,langCode);
+        variables.message = ErrorHelper.GetErrorMessage(LoginErrors.BlockedUser, langCode);
         return Results.Ok(variables);
     }
 

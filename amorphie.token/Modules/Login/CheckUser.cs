@@ -47,7 +47,7 @@ namespace amorphie.token.Modules.Login
             if (userStatus?.Type == 30 || userStatus?.Type == 40)
             {
                 variables.status = false;
-                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.BlockedUser,langCode);
+                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.BlockedUser, langCode);
                 variables.wrongCredentials = false;
                 return Results.Ok(variables);
             }
