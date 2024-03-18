@@ -60,7 +60,15 @@ namespace amorphie.token.Middlewares
             }
             finally
             {
-                await transactionService.SaveLogon();
+                try
+                {
+                    await transactionService.SaveLogon();
+                }
+                catch (Exception ex)
+                {
+                    
+                }
+                
             }
         }
 
