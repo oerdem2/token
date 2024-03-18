@@ -43,6 +43,15 @@ namespace amorphie.token.Modules.Login
             var user = userResponse.Response;
             variables.ibUserSerialized = JsonSerializer.Serialize(user);
 
+            var userStatus = await ibContext.Status.Where(s => s.UserId == user!.Id && (!s.State.HasValue || s.State.Value == 10)).OrderByDescending(s => s.CreatedAt).FirstOrDefaultAsync();
+            if (userStatus?.Type == 30 || userStatus?.Type == 40)
+            {
+                variables.status = false;
+                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.BlockedUser, langCode);
+                variables.wrongCredentials = false;
+                return Results.Ok(variables);
+            }
+
             var passwordResponse = await internetBankingUserService.GetPassword(user!.Id);
             if (passwordResponse.StatusCode != 200)
             {
@@ -78,15 +87,6 @@ namespace amorphie.token.Modules.Login
             }
             else
             {
-                var userStatus = await ibContext.Status.Where(s => s.UserId == user!.Id && (!s.State.HasValue || s.State.Value == 10)).OrderByDescending(s => s.CreatedAt).FirstOrDefaultAsync();
-                if (userStatus?.Type == 30 || userStatus?.Type == 40)
-                {
-                    variables.status = false;
-                    variables.message = ErrorHelper.GetErrorMessage(LoginErrors.BlockedUser, langCode);
-                    variables.wrongCredentials = false;
-                    return Results.Ok(variables);
-                }
-
                 passwordRecord.AccessFailedCount = 0;
                 await ibContext.SaveChangesAsync();
             }
