@@ -40,7 +40,7 @@ namespace amorphie.token.Modules.Login
                 if (passwordHasher.VerifyHashedPassword(pass.HashedPassword, newPassword, pass.Id.ToString()) != PasswordVerificationResult.Failed)
                 {
                     variables.status = false;
-                    variables.message = ErrorHelper.GetErrorMessage(LoginErrors.UserNotFound,langCode);
+                    variables.message = ErrorHelper.GetErrorMessage(LoginErrors.UserNotFound, langCode);
                     return Results.Ok(variables);
                 }
             }

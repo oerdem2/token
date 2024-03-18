@@ -7,7 +7,7 @@ using amorphie.token.data;
 
 namespace amorphie.token.Services.Migration
 {
-    public class MigrationService:ServiceBase,IMigrationService
+    public class MigrationService : ServiceBase, IMigrationService
     {
         private readonly IbDatabaseContext _ibDatabaseContext;
         public MigrationService(IbDatabaseContext ibDatabaseContext, IConfiguration configuration, ILogger<MigrationService> logger) : base(logger, configuration)

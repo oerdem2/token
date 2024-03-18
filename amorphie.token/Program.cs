@@ -143,7 +143,7 @@ internal class Program
 
         builder.Services.AddRefitClient<IMessagingGateway>()
         .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["MessagingGatewayBaseAddress"]!));
-    
+
         var app = builder.Build();
         app.UseAllElasticApm(app.Configuration);
         app.UseTransactionMiddleware();

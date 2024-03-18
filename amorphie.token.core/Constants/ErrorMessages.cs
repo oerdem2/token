@@ -57,15 +57,15 @@ namespace amorphie.token.core.Constants
             {"en-US","New password couldn't be same as your last 5 passwords"},
         };
 
-        public static readonly Dictionary<LoginErrors,Dictionary<string,string>> LoginErrorMap = new()
+        public static readonly Dictionary<LoginErrors, Dictionary<string, string>> LoginErrorMap = new()
         {
-            {LoginErrors.UserNotFound,LoginUserNotFound},
-            {LoginErrors.WrongPassword,LoginWrongPassword},
-            {LoginErrors.WrongOtp,OtpNotValid},
-            {LoginErrors.BlockedUser,LoginBlockedUser},
-            {LoginErrors.BlockUser,LoginBlockUser},
-            {LoginErrors.SamePassword,SamePassword},
-            {LoginErrors.General,General}
+            { LoginErrors.UserNotFound, LoginUserNotFound },
+            { LoginErrors.WrongPassword, LoginWrongPassword },
+            { LoginErrors.WrongOtp, OtpNotValid },
+            { LoginErrors.BlockedUser, LoginBlockedUser },
+            { LoginErrors.BlockUser, LoginBlockUser },
+            { LoginErrors.SamePassword, SamePassword },
+            { LoginErrors.General, General }
         };
     }
 }

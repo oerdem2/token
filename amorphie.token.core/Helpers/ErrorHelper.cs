@@ -10,9 +10,9 @@ namespace amorphie.token.core.Helpers
 {
     public class ErrorHelper
     {
-        public static string GetErrorMessage(LoginErrors loginError,string lang)
+        public static string GetErrorMessage(LoginErrors loginError, string lang)
         {
-            if(ErrorMessages.LoginErrorMap.ContainsKey(loginError))
+            if (ErrorMessages.LoginErrorMap.ContainsKey(loginError))
             {
                 return ErrorMessages.LoginErrorMap[loginError].ContainsKey(lang) ?
                 ErrorMessages.LoginErrorMap[loginError][lang] :
@@ -32,7 +32,7 @@ namespace amorphie.token.core.Helpers
             {
                 var headers = body.GetProperty("Headers");
                 var lang = headers.GetProperty("acceptlanguage");
-                if(string.IsNullOrWhiteSpace(lang))
+                if (string.IsNullOrWhiteSpace(lang))
                     return "tr-TR";
                 return lang;
             }
@@ -43,5 +43,5 @@ namespace amorphie.token.core.Helpers
         }
     }
 
-    
+
 }
