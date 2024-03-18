@@ -10,9 +10,9 @@ namespace amorphie.token.core.Constants
     {
         public static readonly Dictionary<string, string> OtpNotValid = new Dictionary<string, string>()
         {
-            {"tr-TR","Doğrulama Kodu Hatalı"},
-            {"en-EN","Verification Code is Not Valid"},
-            {"en-US","Verification Code is Not Valid"},
+            {"tr-TR","Şifre doğrulama kodunu hatalı girdiniz, yeniden deneyin."},
+            {"en-EN","You entered the password verification code incorrectly, try again."},
+            {"en-US","You entered the password verification code incorrectly, try again."},
         };
 
         public static readonly Dictionary<string, string> General = new Dictionary<string, string>()
@@ -24,23 +24,23 @@ namespace amorphie.token.core.Constants
 
         public static readonly Dictionary<string, string> LoginUserNotFound = new Dictionary<string, string>()
         {
-            {"tr-TR","Kullanıcı Bulunamadı"},
-            {"en-EN","User Not Found"},
-            {"en-US","User Not Found"},
+            {"tr-TR","Yanlış şifre girdiniz, lütfen tekrar deneyin."},
+            {"en-EN","You entered the wrong password, please try again."},
+            {"en-US","You entered the wrong password, please try again."},
         };
 
         public static readonly Dictionary<string, string> LoginWrongPassword = new Dictionary<string, string>()
         {
-            {"tr-TR","Kullanıcı Adı veya Şifre Hatalı"},
-            {"en-EN","Wrong Username or Password"},
-            {"en-US","Wrong Username or Password"},
+            {"tr-TR","Yanlış şifre girdiniz, lütfen tekrar deneyin."},
+            {"en-EN","You entered the wrong password, please try again."},
+            {"en-US","You entered the wrong password, please try again."},
         };
 
         public static readonly Dictionary<string, string> LoginBlockedUser = new Dictionary<string, string>()
         {
-            {"tr-TR","Kullanıcı Blokeli"},
-            {"en-EN","User is Blocked"},
-            {"en-US","User is Blocked"},
+            {"tr-TR","Şifreyi 5 kere yanlış girdiğiniz için giriş yapılamıyor. Şifremi Unuttum butonuna basarak yeni şifre alabilir, giriş yapabilirsiniz."},
+            {"en-EN","You cannot log in because you entered the wrong password 5 times. You can get a new password and log in by pressing the Forgot My Password button."},
+            {"en-US","You cannot log in because you entered the wrong password 5 times. You can get a new password and log in by pressing the Forgot My Password button."},
         };
 
         public static readonly Dictionary<string, string> LoginBlockUser = new Dictionary<string, string>()
@@ -52,9 +52,9 @@ namespace amorphie.token.core.Constants
 
         public static readonly Dictionary<string, string> SamePassword = new Dictionary<string, string>()
         {
-            {"tr-TR","Yeni şifreniz son 5 şifreniz ile aynı olamaz"},
-            {"en-EN","New password couldn't be same as your last 5 passwords"},
-            {"en-US","New password couldn't be same as your last 5 passwords"},
+            {"tr-TR","Önceki 5 şifrenizi tekrar kullanamazsınız, lütfen başka bir şifre belirleyin."},
+            {"en-EN","You cannot reuse your previous 5 passwords, please set another password."},
+            {"en-US","You cannot reuse your previous 5 passwords, please set another password."},
         };
 
         public static readonly Dictionary<LoginErrors, Dictionary<string, string>> LoginErrorMap = new()
