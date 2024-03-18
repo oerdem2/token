@@ -7,6 +7,6 @@ namespace amorphie.token.core.Constants
 {
     public static class WorkflowConstants
     {
-        public static readonly string ENTITY_DATA_FIELD = "EntityData";
+        public static readonly string ENTITY_DATA_FIELD = "entityData";
     }
 }
