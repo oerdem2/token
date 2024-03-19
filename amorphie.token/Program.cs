@@ -11,6 +11,7 @@ using amorphie.token.Services.Consent;
 using amorphie.token.Services.FlowHandler;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.MessagingGateway;
+using amorphie.token.Services.Migration;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.TransactionHandler;
 using Elastic.Apm.NetCoreAll;
@@ -129,6 +130,7 @@ internal class Program
         builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddScoped<IClaimHandlerService, ClaimHandlerService>();
         builder.Services.AddScoped<ICardHandler, CardHandler>();
+        builder.Services.AddScoped<IMigrationService, MigrationService>();
 
         builder.Services.AddRefitClient<IProfile>()
         .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["ProfileBaseAddress"]!))

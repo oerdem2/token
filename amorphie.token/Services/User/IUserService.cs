@@ -11,4 +11,6 @@ public interface IUserService
     public Task<ServiceResponse<LoginResponse>> GetUserById(Guid userId);
     public Task<ServiceResponse<LoginResponse>> GetUserByReference(string reference);
     public Task<ServiceResponse> SaveUser(UserInfo userInfo);
+    public Task<ServiceResponse> MigrateSecurityQuestion(MigrateSecurityQuestionRequest migrateSecurityQuestionRequest);
+    public Task<ServiceResponse> MigrateSecurityImage(MigrateSecurityImageRequest migrateSecurityImageRequest);
 }

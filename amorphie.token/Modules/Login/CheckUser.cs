@@ -2,6 +2,7 @@ using System.Dynamic;
 using System.Text.Json;
 using amorphie.token.data;
 using amorphie.token.Services.InternetBanking;
+using amorphie.token.Services.Migration;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.TransactionHandler;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +19,8 @@ namespace amorphie.token.Modules.Login
         [FromServices] IProfileService profileService,
         [FromServices] IUserService userService,
         [FromServices] IbDatabaseContext ibContext,
-        [FromServices] ITransactionService transactionService
+        [FromServices] ITransactionService transactionService,
+        [FromServices] IMigrationService migrationService
         )
         {
             var langCode = ErrorHelper.GetLangCode(body);
@@ -152,9 +154,10 @@ namespace amorphie.token.Modules.Login
             userRequest.reference = request.Username!;
 
             var migrateResult = await userService.SaveUser(userRequest);
-
             var amorphieUserResult = await userService.Login(new LoginRequest() { Reference = request.Username!, Password = request.Password! });
             var amorphieUser = amorphieUserResult.Response;
+
+            var migrateUserInfoResult = await migrationService.MigrateUserData(amorphieUser.Id,user.Id);
 
             variables.status = true;
 
