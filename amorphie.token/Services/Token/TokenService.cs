@@ -455,9 +455,8 @@ public class TokenService : ServiceBase, ITokenService
             };
         }
 
-        await PersistTokenInfo();
-
         await _databaseContext.Tokens.Where(t => t.Reference == _tokenRequest.Username && t.IsActive).ExecuteUpdateAsync(s => s.SetProperty(t => t.IsActive, false));
+        await PersistTokenInfo();
 
         return new ServiceResponse<TokenResponse>()
         {
