@@ -15,6 +15,13 @@ namespace amorphie.token.core.Constants
             {"en-US","You entered the password verification code incorrectly, try again."},
         };
 
+        public static readonly Dictionary<string, string> OtpTimeout = new Dictionary<string, string>()
+        {
+            {"tr-TR","Şifre doğrulama kodunun süresi dolmuştur. Yeniden gönderiniz."},
+            {"en-EN","Password verification code has been expired, send again."},
+            {"en-US","Password verification code has been expired, send again."},
+        };
+
         public static readonly Dictionary<string, string> General = new Dictionary<string, string>()
         {
             {"tr-TR","Teknik Bir Sorun Oluştu. Daha Sonra Tekrar Deneyin"},
@@ -62,6 +69,7 @@ namespace amorphie.token.core.Constants
             { LoginErrors.UserNotFound, LoginUserNotFound },
             { LoginErrors.WrongPassword, LoginWrongPassword },
             { LoginErrors.WrongOtp, OtpNotValid },
+            { LoginErrors.OtpTimeout, OtpTimeout },
             { LoginErrors.BlockedUser, LoginBlockedUser },
             { LoginErrors.BlockUser, LoginBlockUser },
             { LoginErrors.SamePassword, SamePassword },
