@@ -465,4 +465,66 @@ public class UserService : ServiceBase, IUserService
             };
         }
     }
+
+    public async Task<ServiceResponse> MigrateSecurityImages(List<SecurityImageRequestDto> securityImageRequestDtos)
+    {
+        try
+        {
+            await _daprClient.InvokeMethodAsync(Configuration["UserServiceAppName"], "/userSecurityImage/migrateImages", securityImageRequestDtos);
+            return new ServiceResponse()
+            {
+                StatusCode = 200,
+                Detail = "",
+            };
+        }
+        catch (InvocationException ex)
+        {
+            Logger.LogError("An Error Occured At User Invocation Migrate Security Images | Detail:" + ex.ToString());
+            return new ServiceResponse()
+            {
+                StatusCode = (int)ex.Response.StatusCode,
+                Detail = await ex.Response.Content.ReadAsStringAsync()
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("An Error Occured At User Invocation Migrate Security Images | Detail:" + ex.ToString());
+            return new ServiceResponse()
+            {
+                StatusCode = 500,
+                Detail = "Dapr Migrate Security Image Invoke Method Error"
+            };
+        }
+    }
+
+    public async Task<ServiceResponse> MigrateSecurityQuestions(List<SecurityQuestionRequestDto> securityQuestionRequestDtos)
+    {
+        try
+        {
+            await _daprClient.InvokeMethodAsync(Configuration["UserServiceAppName"], "/userSecurityQuestion/migrateQuestions", securityQuestionRequestDtos);
+            return new ServiceResponse()
+            {
+                StatusCode = 200,
+                Detail = "",
+            };
+        }
+        catch (InvocationException ex)
+        {
+            Logger.LogError("An Error Occured At User Invocation Migrate Security Questions | Detail:" + ex.ToString());
+            return new ServiceResponse()
+            {
+                StatusCode = (int)ex.Response.StatusCode,
+                Detail = await ex.Response.Content.ReadAsStringAsync()
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("An Error Occured At User Invocation Migrate Security Questions | Detail:" + ex.ToString());
+            return new ServiceResponse()
+            {
+                StatusCode = 500,
+                Detail = "Dapr Migrate Security Image Invoke Method Error"
+            };
+        }
+    }
 }

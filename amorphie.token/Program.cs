@@ -156,6 +156,9 @@ internal class Program
         var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
         db.Database.Migrate();
 
+        var migrateService = scope.ServiceProvider.GetRequiredService<IMigrationService>();
+        await migrateService.MigrateStaticData();
+        
         app.MapHealthChecks("/health");
 
         app.MapLoginWorkflowEndpoints();

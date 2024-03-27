@@ -18,6 +18,44 @@ namespace amorphie.token.Services.Migration
             _userService = userService;
         }
 
+        public async Task<ServiceResponse> MigrateStaticData()
+        {
+            var securityImages =  await _ibDatabaseContext.SecurityImageDefinition.ToListAsync();
+            await _userService.MigrateSecurityImages(securityImages.Select(i => new SecurityImageRequestDto(){
+                Id = i.Id,
+                CreatedAt = i.CreatedAt,
+                CreatedBy = Guid.Parse("00000000-0000-0000-0000-000000000000"),
+                CreatedByBehalfOf = Guid.Parse("00000000-0000-0000-0000-000000000000"),
+                ModifiedAt = i.CreatedAt,
+                ModifiedBy = Guid.Parse("00000000-0000-0000-0000-000000000000"),
+                ModifiedByBehalfOf = Guid.Parse("00000000-0000-0000-0000-000000000000"),
+                EnTitle = i.TitleEn,
+                TrTitle = i.TitleTr,
+                Image = i.ImagePath
+            }).ToList());
+
+            var securityQuestions =  await _ibDatabaseContext.QuestionDefinition.Where(d => d.Type == 10).ToListAsync();
+            await _userService.MigrateSecurityQuestions(securityQuestions.Select(i => new SecurityQuestionRequestDto(){
+                Id = i.Id,
+                CreatedAt = i.CreatedAt,
+                CreatedBy = Guid.Parse("00000000-0000-0000-0000-000000000000"),
+                CreatedByBehalfOf = Guid.Parse("00000000-0000-0000-0000-000000000000"),
+                ModifiedAt = i.CreatedAt,
+                ModifiedBy = Guid.Parse("00000000-0000-0000-0000-000000000000"),
+                ModifiedByBehalfOf = Guid.Parse("00000000-0000-0000-0000-000000000000"),
+                DescriptionEn = i.DescriptionEn,
+                DescriptionTr = i.DescriptionTr,
+                IsActive = i.IsActive,
+                Key = i.Key,
+                Priority = i.Priority,
+                ValueTypeClr = i.ValueTypeClr
+            }).ToList());
+
+            return new ServiceResponse{
+                 StatusCode = 200
+            };
+        }
+
         public async Task<ServiceResponse> MigrateUserData(Guid userId, Guid dodgeUserID)
         {
             var serviceResponse = new ServiceResponse();
