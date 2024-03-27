@@ -1,4 +1,5 @@
 using amorphie.core.Extension;
+using amorphie.token;
 using amorphie.token.data;
 using amorphie.token.Middlewares;
 using amorphie.token.Modules.Login;
@@ -123,6 +124,7 @@ internal class Program
         builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddScoped<IClaimHandlerService, ClaimHandlerService>();
         builder.Services.AddScoped<ICardHandler, CardHandler>();
+        builder.Services.AddTransient<IPasswordRememberService, PasswordRememberService>();
 
         builder.Services.AddRefitClient<IProfile>()
         .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["ProfileBaseAddress"]!))
@@ -137,6 +139,13 @@ internal class Program
 
         builder.Services.AddRefitClient<IMessagingGateway>()
         .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["MessagingGatewayBaseAddress"]!));
+
+       builder.Services.AddRefitClient<IPasswordRememberCard>()
+       .ConfigureHttpClient(c=>c.BaseAddress = new Uri(builder.Configuration["cardValidationUri"]!));
+
+        // Bind options from configuration :)
+        builder.Services.AddOptions<CardValidationOptions>()
+        .Bind(builder.Configuration.GetSection("CardValidation"));
 
         var app = builder.Build();
         app.UseAllElasticApm(app.Configuration);
