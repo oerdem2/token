@@ -174,7 +174,7 @@ public class TokenController : Controller
     [Consumes("application/x-www-form-urlencoded")]
     public async Task<IResult> Introspect([FromForm] string token, [FromQuery] bool isTemporary = false)
     {
-        
+        Console.WriteLine("Introspect Starting..");
         var temporary = JwtHelper.GetClaim(token, "isTemporary");
 
         if (temporary != null && temporary.Equals("1"))
@@ -186,7 +186,7 @@ public class TokenController : Controller
         }
 
         var jti = JwtHelper.GetClaim(token, "jti");
-
+        Console.WriteLine("Introspect jti : "+jti);
         if (jti == null)
             return Results.Json(new { active = false });
 
