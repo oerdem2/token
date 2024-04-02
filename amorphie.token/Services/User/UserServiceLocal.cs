@@ -157,4 +157,72 @@ public class UserServiceLocal : IUserService
             throw new ServiceException((int)Errors.InvalidUser, "User Endpoint Did Not Response Successfully");
         }
     }
+
+    public async Task<ServiceResponse> MigrateSecurityQuestion(MigrateSecurityQuestionRequest migrateSecurityQuestionRequest)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var request = new StringContent(JsonSerializer.Serialize(migrateSecurityQuestionRequest), Encoding.UTF8, "application/json");
+        var httpResponseMessage = await httpClient.PostAsync(
+            "userSecurityQuestion/migrate", request);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            return new ServiceResponse() { StatusCode = 200 };
+        }
+        else
+        {
+            return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode, Detail = "Migrate Security Question Error" };
+        }
+    }
+
+    public async Task<ServiceResponse> MigrateSecurityImage(MigrateSecurityImageRequest migrateSecurityImageRequest)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var request = new StringContent(JsonSerializer.Serialize(migrateSecurityImageRequest), Encoding.UTF8, "application/json");
+        var httpResponseMessage = await httpClient.PostAsync(
+            "userSecurityImage/migrate", request);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            return new ServiceResponse() { StatusCode = 200 };
+        }
+        else
+        {
+            return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode, Detail = "Migrate Security Image Error" };
+        }
+    }
+
+    public async Task<ServiceResponse> MigrateSecurityQuestions(List<SecurityQuestionRequestDto> securityQuestionRequestDtos)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var request = new StringContent(JsonSerializer.Serialize(securityQuestionRequestDtos), Encoding.UTF8, "application/json");
+        var httpResponseMessage = await httpClient.PostAsync(
+            "userSecurityQuestion/migrateQuestions", request);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            return new ServiceResponse() { StatusCode = 200 };
+        }
+        else
+        {
+            return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode, Detail = "Migrate Security Questions Error" };
+        }
+    }
+
+    public async Task<ServiceResponse> MigrateSecurityImages(List<SecurityImageRequestDto> securityImageRequestDtos)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var request = new StringContent(JsonSerializer.Serialize(securityImageRequestDtos), Encoding.UTF8, "application/json");
+        var httpResponseMessage = await httpClient.PostAsync(
+            "userSecurityImage/migrateImages", request);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            return new ServiceResponse() { StatusCode = 200 };
+        }
+        else
+        {
+            return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode, Detail = "Migrate Security Images Error" };
+        }
+    }
 }
