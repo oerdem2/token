@@ -76,6 +76,7 @@ public class JwtHelper
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = signingKey,
             ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
 
         };
 

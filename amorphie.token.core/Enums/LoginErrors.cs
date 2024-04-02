@@ -5,6 +5,7 @@ namespace amorphie.token.core.Enums;
     UserNotFound = 10,
     WrongPassword = 20,
     WrongOtp = 30,
+    OtpTimeout = 31,
     BlockedUser = 40,
     BlockUser = 50,
     SamePassword = 60,

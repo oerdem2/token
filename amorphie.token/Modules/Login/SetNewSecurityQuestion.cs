@@ -33,7 +33,7 @@ namespace amorphie.token.Modules.Login
                 Id = questionId,
                 UserId = ibUser.Id,
                 DefinitionId = Guid.Parse(securityQuestionId),
-                EncryptedAnswer = passwordHasher.EncryptString(answer.Trim(), questionId.ToString("N")),
+                EncryptedAnswer = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").Equals("Prod") ? passwordHasher.EncryptString(answer.Trim(), questionId.ToString("N")) : answer.Trim(),
                 CreatedByInstanceId = Guid.Parse(instanceId),
                 CreatedByInstanceState = "SetNewSecurityQuestion",
                 Status = 10,
