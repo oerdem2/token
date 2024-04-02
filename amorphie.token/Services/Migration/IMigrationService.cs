@@ -7,6 +7,7 @@ namespace amorphie.token.Services.Migration
 {
     public interface IMigrationService
     {
-        public Task<ServiceResponse> MigrateUserData(string username);
+        public Task<ServiceResponse> MigrateUserData(Guid userId, Guid dodgeUserId);
+        public Task<ServiceResponse> MigrateStaticData();
     }
 }

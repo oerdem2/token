@@ -28,6 +28,7 @@ public static class CheckOtpFlow
         if (generatedCode == null)
         {
             variables.otpTimeout = true;
+            variables.message = ErrorHelper.GetErrorMessage(LoginErrors.OtpTimeout, langCode);
             return Results.Ok(variables);
         }
         variables.otpTimeout = false;
