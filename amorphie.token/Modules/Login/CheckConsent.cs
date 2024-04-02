@@ -53,10 +53,10 @@ namespace amorphie.token.Modules.Login
             // {
             //     variables.Add("hasConsent", false);
             // }
-            if(userInfo.Reference.Equals("62845308062"))
-                variables.Add("hasConsent",false);
+            if (userInfo.Reference.Equals("62845308062"))
+                variables.Add("hasConsent", false);
             else
-                variables.Add("hasConsent",true);
+                variables.Add("hasConsent", true);
 
             return Results.Ok(variables);
         }

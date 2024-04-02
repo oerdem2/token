@@ -149,7 +149,7 @@ public class TokenController : Controller
         return StatusCode(500);
     }
 
-    
+
 
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> Demo()
@@ -186,7 +186,7 @@ public class TokenController : Controller
         }
 
         var jti = JwtHelper.GetClaim(token, "jti");
-        Console.WriteLine("Introspect jti : "+jti);
+        Console.WriteLine("Introspect jti : " + jti);
         if (jti == null)
             return Results.Json(new { active = false });
 
@@ -194,9 +194,9 @@ public class TokenController : Controller
             return Results.Json(new { active = false });
 
         var accessTokenInfo = _databaseContext.Tokens.FirstOrDefault(t => t.Id == Guid.Parse(jti));
-        Console.WriteLine("Token Type : "+accessTokenInfo.TokenType);
-        Console.WriteLine("Token Status : "+accessTokenInfo.IsActive);
-        
+        Console.WriteLine("Token Type : " + accessTokenInfo.TokenType);
+        Console.WriteLine("Token Status : " + accessTokenInfo.IsActive);
+
         if (accessTokenInfo == null)
             return Results.Json(new { active = false });
         if (accessTokenInfo.TokenType != TokenType.AccessToken || !accessTokenInfo.IsActive)

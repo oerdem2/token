@@ -158,7 +158,7 @@ internal class Program
 
         var migrateService = scope.ServiceProvider.GetRequiredService<IMigrationService>();
         await migrateService.MigrateStaticData();
-        
+
         app.MapHealthChecks("/health");
 
         app.MapLoginWorkflowEndpoints();

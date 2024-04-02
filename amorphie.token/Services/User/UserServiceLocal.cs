@@ -171,7 +171,7 @@ public class UserServiceLocal : IUserService
         }
         else
         {
-            return new ServiceResponse() { StatusCode =(int) httpResponseMessage.StatusCode,Detail = "Migrate Security Question Error" };
+            return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode, Detail = "Migrate Security Question Error" };
         }
     }
 
@@ -188,7 +188,7 @@ public class UserServiceLocal : IUserService
         }
         else
         {
-            return new ServiceResponse() { StatusCode =(int) httpResponseMessage.StatusCode,Detail = "Migrate Security Image Error" };
+            return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode, Detail = "Migrate Security Image Error" };
         }
     }
 
@@ -205,7 +205,7 @@ public class UserServiceLocal : IUserService
         }
         else
         {
-            return new ServiceResponse() { StatusCode =(int) httpResponseMessage.StatusCode,Detail = "Migrate Security Questions Error" };
+            return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode, Detail = "Migrate Security Questions Error" };
         }
     }
 
@@ -222,7 +222,7 @@ public class UserServiceLocal : IUserService
         }
         else
         {
-            return new ServiceResponse() { StatusCode =(int) httpResponseMessage.StatusCode,Detail = "Migrate Security Images Error" };
+            return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode, Detail = "Migrate Security Images Error" };
         }
     }
 }

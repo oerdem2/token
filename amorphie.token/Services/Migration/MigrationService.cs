@@ -20,8 +20,9 @@ namespace amorphie.token.Services.Migration
 
         public async Task<ServiceResponse> MigrateStaticData()
         {
-            var securityImages =  await _ibDatabaseContext.SecurityImageDefinition.ToListAsync();
-            await _userService.MigrateSecurityImages(securityImages.Select(i => new SecurityImageRequestDto(){
+            var securityImages = await _ibDatabaseContext.SecurityImageDefinition.ToListAsync();
+            await _userService.MigrateSecurityImages(securityImages.Select(i => new SecurityImageRequestDto()
+            {
                 Id = i.Id,
                 CreatedAt = i.CreatedAt,
                 CreatedBy = Guid.Parse("00000000-0000-0000-0000-000000000000"),
@@ -34,8 +35,9 @@ namespace amorphie.token.Services.Migration
                 Image = i.ImagePath
             }).ToList());
 
-            var securityQuestions =  await _ibDatabaseContext.QuestionDefinition.Where(d => d.Type == 10).ToListAsync();
-            await _userService.MigrateSecurityQuestions(securityQuestions.Select(i => new SecurityQuestionRequestDto(){
+            var securityQuestions = await _ibDatabaseContext.QuestionDefinition.Where(d => d.Type == 10).ToListAsync();
+            await _userService.MigrateSecurityQuestions(securityQuestions.Select(i => new SecurityQuestionRequestDto()
+            {
                 Id = i.Id,
                 CreatedAt = i.CreatedAt,
                 CreatedBy = Guid.Parse("00000000-0000-0000-0000-000000000000"),
@@ -51,8 +53,9 @@ namespace amorphie.token.Services.Migration
                 ValueTypeClr = i.ValueTypeClr
             }).ToList());
 
-            return new ServiceResponse{
-                 StatusCode = 200
+            return new ServiceResponse
+            {
+                StatusCode = 200
             };
         }
 
@@ -63,9 +66,10 @@ namespace amorphie.token.Services.Migration
             var securityQuestion = await _ibDatabaseContext.Question.Where(q => q.UserId == dodgeUserID)
                 .OrderByDescending(q => q.CreatedAt).FirstOrDefaultAsync();
 
-            if(securityQuestion is {})
+            if (securityQuestion is { })
             {
-                var migrateSecurityQuestion = await _userService.MigrateSecurityQuestion(new MigrateSecurityQuestionRequest(){
+                var migrateSecurityQuestion = await _userService.MigrateSecurityQuestion(new MigrateSecurityQuestionRequest()
+                {
                     Id = securityQuestion.Id,
                     UserId = userId,
                     Answer = securityQuestion.EncryptedAnswer,
@@ -74,18 +78,19 @@ namespace amorphie.token.Services.Migration
                     SecurityQuestionId = securityQuestion.DefinitionId
                 });
 
-                if(migrateSecurityQuestion.StatusCode != 200)
+                if (migrateSecurityQuestion.StatusCode != 200)
                 {
                     return migrateSecurityQuestion;
                 }
             }
-            
+
             var securityImage = await _ibDatabaseContext.SecurityImage.Where(i => i.UserId == dodgeUserID)
                 .OrderByDescending(i => i.CreatedAt).FirstOrDefaultAsync();
 
-            if(securityImage is {})
+            if (securityImage is { })
             {
-                var migrateSecurityImage = await _userService.MigrateSecurityImage(new MigrateSecurityImageRequest(){
+                var migrateSecurityImage = await _userService.MigrateSecurityImage(new MigrateSecurityImageRequest()
+                {
                     Id = securityImage.Id,
                     UserId = userId,
                     RequireChange = securityImage.RequireChange,
@@ -93,7 +98,7 @@ namespace amorphie.token.Services.Migration
                     SecurityImageId = securityImage.DefinitionId
                 });
 
-                if(migrateSecurityImage.StatusCode != 200)
+                if (migrateSecurityImage.StatusCode != 200)
                 {
                     return migrateSecurityImage;
                 }
