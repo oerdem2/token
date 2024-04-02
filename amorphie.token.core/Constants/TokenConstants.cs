@@ -8,7 +8,7 @@ namespace amorphie.token.core.Constants
 {
     public static class TokenConstants
     {
-        public static Dictionary<LogonChannel, string> LogonChannelMap = new Dictionary<LogonChannel, string>()
+        public static readonly Dictionary<LogonChannel, string> LogonChannelMap = new Dictionary<LogonChannel, string>()
         {
             {LogonChannel.OnMobil,"On Mobil"}
         };

@@ -15,6 +15,7 @@ using amorphie.token.core.Extensions;
 using System.Security.Claims;
 using Newtonsoft.Json.Linq;
 using MongoDB.Bson.IO;
+using Newtonsoft.Json;
 
 
 namespace amorphie.token.core.Controllers;
@@ -148,27 +149,7 @@ public class TokenController : Controller
         return StatusCode(500);
     }
 
-    [HttpPost]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    public async Task<IActionResult> JsonTest()
-    {
 
-        await Task.CompletedTask;
-        var body = "[{\"test\":\"mest\"}]";
-
-        JToken t = Newtonsoft.Json.JsonConvert.DeserializeObject<JToken>(body);
-        if (t.Type == JTokenType.Object)
-        {
-            int i = 5;
-        }
-        if (t.Type == JTokenType.Array)
-        {
-            int i = 5;
-        }
-
-        JObject k = t.ToObject<JObject>();
-        return Ok();
-    }
 
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> Demo()
@@ -193,9 +174,7 @@ public class TokenController : Controller
     [Consumes("application/x-www-form-urlencoded")]
     public async Task<IResult> Introspect([FromForm] string token, [FromQuery] bool isTemporary = false)
     {
-        foreach (var f in HttpContext.Request.Form)
-        {
-        }
+        Console.WriteLine("Introspect Starting..");
         var temporary = JwtHelper.GetClaim(token, "isTemporary");
 
         if (temporary != null && temporary.Equals("1"))
@@ -207,7 +186,7 @@ public class TokenController : Controller
         }
 
         var jti = JwtHelper.GetClaim(token, "jti");
-
+        Console.WriteLine("Introspect jti : " + jti);
         if (jti == null)
             return Results.Json(new { active = false });
 
@@ -215,6 +194,9 @@ public class TokenController : Controller
             return Results.Json(new { active = false });
 
         var accessTokenInfo = _databaseContext.Tokens.FirstOrDefault(t => t.Id == Guid.Parse(jti));
+        Console.WriteLine("Token Type : " + accessTokenInfo.TokenType);
+        Console.WriteLine("Token Status : " + accessTokenInfo.IsActive);
+
         if (accessTokenInfo == null)
             return Results.Json(new { active = false });
         if (accessTokenInfo.TokenType != TokenType.AccessToken || !accessTokenInfo.IsActive)

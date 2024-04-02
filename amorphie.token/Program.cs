@@ -1,3 +1,6 @@
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Unicode;
 using amorphie.core.Extension;
 using amorphie.token.data;
 using amorphie.token.Middlewares;
@@ -8,9 +11,11 @@ using amorphie.token.Services.Consent;
 using amorphie.token.Services.FlowHandler;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.MessagingGateway;
+using amorphie.token.Services.Migration;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.TransactionHandler;
 using Elastic.Apm.NetCoreAll;
+using Elastic.Transport;
 using Microsoft.EntityFrameworkCore;
 using Refit;
 using Serilog;
@@ -36,6 +41,8 @@ internal class Program
             }
 
         }
+
+
 
         await builder.Configuration.AddVaultSecrets(builder.Configuration["DAPR_SECRET_STORE_NAME"], new string[] { "ServiceConnections" });
 
@@ -123,6 +130,7 @@ internal class Program
         builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddScoped<IClaimHandlerService, ClaimHandlerService>();
         builder.Services.AddScoped<ICardHandler, CardHandler>();
+        builder.Services.AddScoped<IMigrationService, MigrationService>();
 
         builder.Services.AddRefitClient<IProfile>()
         .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["ProfileBaseAddress"]!))
@@ -147,6 +155,9 @@ internal class Program
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
         db.Database.Migrate();
+
+        var migrateService = scope.ServiceProvider.GetRequiredService<IMigrationService>();
+        await migrateService.MigrateStaticData();
 
         app.MapHealthChecks("/health");
 

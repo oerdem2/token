@@ -1,6 +1,5 @@
 
 
-using System.Dynamic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -9,13 +8,10 @@ using amorphie.token.core.Models.Consent;
 using amorphie.token.core.Models.Profile;
 using amorphie.token.data;
 using amorphie.token.Services.ClaimHandler;
-using amorphie.token.Services.Consent;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.TransactionHandler;
-using Google.Protobuf.WellKnownTypes;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.IdentityModel.Tokens;
 
 namespace amorphie.token.Services.Token;
@@ -104,7 +100,7 @@ public class TokenService : ServiceBase, ITokenService
             if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
             {
                 claims.Add(new Claim("client_id", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
-                claims.Add(new Claim("email", _profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address));
+                claims.Add(new Claim("email", _profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
                 claims.Add(new Claim("phone_number", _profile.data.phones.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString()));
                 claims.Add(new Claim("role", "FullAuthorized"));
                 claims.Add(new Claim("credentials", "IsInternetCustomer###1"));
@@ -174,7 +170,6 @@ public class TokenService : ServiceBase, ITokenService
 
         if (accessInfo.claims != null && accessInfo.claims.Count() > 0 && !_tokenRequest.GrantType.Equals("client_credentials"))
         {
-
             var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user, _profile, _consent);
             tokenClaims.AddRange(populatedClaims);
             if (_tokenRequest.Scopes.Contains("temporary"))
@@ -183,7 +178,7 @@ public class TokenService : ServiceBase, ITokenService
             if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
             {
                 tokenClaims.Add(new Claim("client_id", _client.code ?? _client.id));
-                tokenClaims.Add(new Claim("email", _profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address));
+                tokenClaims.Add(new Claim("email", _profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
                 tokenClaims.Add(new Claim("phone_number", _profile.data.phones.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString()));
                 tokenClaims.Add(new Claim("role", "FullAuthorized"));
                 tokenClaims.Add(new Claim("credentials", "IsInternetCustomer###1"));
@@ -460,6 +455,7 @@ public class TokenService : ServiceBase, ITokenService
             };
         }
 
+        await _databaseContext.Tokens.Where(t => t.Reference == _tokenRequest.Username && t.IsActive).ExecuteUpdateAsync(s => s.SetProperty(t => t.IsActive, false));
         await PersistTokenInfo();
 
         return new ServiceResponse<TokenResponse>()

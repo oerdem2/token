@@ -2,6 +2,7 @@ using System.Dynamic;
 using System.Text.Json;
 using amorphie.token.data;
 using amorphie.token.Services.InternetBanking;
+using amorphie.token.Services.Migration;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.TransactionHandler;
 using Microsoft.AspNetCore.Mvc;
@@ -18,11 +19,13 @@ namespace amorphie.token.Modules.Login
         [FromServices] IProfileService profileService,
         [FromServices] IUserService userService,
         [FromServices] IbDatabaseContext ibContext,
-        [FromServices] ITransactionService transactionService
+        [FromServices] ITransactionService transactionService,
+        [FromServices] IMigrationService migrationService
         )
         {
+            var langCode = ErrorHelper.GetLangCode(body);
             var transitionName = body.GetProperty("LastTransition").ToString();
-            var requestBodySerialized = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty("entityData").ToString();
+            var requestBodySerialized = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty(WorkflowConstants.ENTITY_DATA_FIELD).ToString();
             TokenRequest request = JsonSerializer.Deserialize<TokenRequest>(requestBodySerialized);
 
             dynamic variables = new ExpandoObject();
@@ -35,18 +38,27 @@ namespace amorphie.token.Modules.Login
             if (userResponse.StatusCode != 200)
             {
                 variables.status = false;
-                variables.message = "User Not Found";
+                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.UserNotFound, langCode);
                 variables.wrongCredentials = true;
                 return Results.Ok(variables);
             }
             var user = userResponse.Response;
             variables.ibUserSerialized = JsonSerializer.Serialize(user);
 
+            var userStatus = await ibContext.Status.Where(s => s.UserId == user!.Id && (!s.State.HasValue || s.State.Value == 10)).OrderByDescending(s => s.CreatedAt).FirstOrDefaultAsync();
+            if (userStatus?.Type == 30 || userStatus?.Type == 40)
+            {
+                variables.status = false;
+                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.BlockedUser, langCode);
+                variables.wrongCredentials = false;
+                return Results.Ok(variables);
+            }
+
             var passwordResponse = await internetBankingUserService.GetPassword(user!.Id);
             if (passwordResponse.StatusCode != 200)
             {
                 variables.status = false;
-                variables.message = "Password not found";
+                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.UserNotFound, langCode);
                 variables.wrongCredentials = true;
                 return Results.Ok(variables);
             }
@@ -63,7 +75,7 @@ namespace amorphie.token.Modules.Login
                 });
 
                 variables.status = false;
-                variables.message = "Username or password doesn't match";
+                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.WrongPassword, langCode); ;
                 passwordRecord.AccessFailedCount = (passwordRecord.AccessFailedCount ?? 0) + 1;
                 variables.PasswordTryCount = passwordRecord.AccessFailedCount;
                 variables.wrongCredentials = true;
@@ -77,23 +89,6 @@ namespace amorphie.token.Modules.Login
             }
             else
             {
-                var userStatus = await ibContext.Status.Where(s => s.UserId == user!.Id && (!s.State.HasValue || s.State.Value == 10)).OrderByDescending(s => s.CreatedAt).FirstOrDefaultAsync();
-                if (userStatus?.Type == 30 || userStatus?.Type == 40)
-                {
-                    variables.status = false;
-                    variables.message = "User Not Active";
-                    variables.wrongCredentials = false;
-                    return Results.Ok(variables);
-                }
-
-                if (passwordRecord.AccessFailedCount >= 5)
-                {
-                    variables.disableUser = true;
-                    variables.status = false;
-                    variables.wrongCredentials = true;
-                    variables.message = "User Not Active";
-                    return Results.Ok(variables);
-                }
                 passwordRecord.AccessFailedCount = 0;
                 await ibContext.SaveChangesAsync();
             }
@@ -104,7 +99,7 @@ namespace amorphie.token.Modules.Login
             if (userInfoResult.StatusCode != 200)
             {
                 variables.status = false;
-                variables.message = "UserInfo Not Found";
+                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.UserNotFound, langCode);
                 variables.wrongCredentials = true;
                 return Results.Ok(variables);
             }
@@ -114,7 +109,7 @@ namespace amorphie.token.Modules.Login
             if (userInfo!.data!.profile!.Equals("customer") || !userInfo!.data!.profile!.status!.Equals("active"))
             {
                 variables.status = false;
-                variables.message = "User is Not Customer Or Not Active";
+                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.General, langCode);
                 variables.wrongCredentials = true;
                 return Results.Ok(variables);
             }
@@ -123,7 +118,7 @@ namespace amorphie.token.Modules.Login
             if (mobilePhoneCount != 1)
             {
                 variables.status = false;
-                variables.message = "Bad Phone Data";
+                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.General, langCode);
 
                 return Results.Ok(variables);
             }
@@ -132,7 +127,7 @@ namespace amorphie.token.Modules.Login
             if (string.IsNullOrWhiteSpace(mobilePhone!.prefix) || string.IsNullOrWhiteSpace(mobilePhone!.number))
             {
                 variables.status = false;
-                variables.message = "Bad Phone Format";
+                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.General, langCode);
                 return Results.Ok(variables);
             }
 
@@ -159,14 +154,15 @@ namespace amorphie.token.Modules.Login
             userRequest.reference = request.Username!;
 
             var migrateResult = await userService.SaveUser(userRequest);
-
             var amorphieUserResult = await userService.Login(new LoginRequest() { Reference = request.Username!, Password = request.Password! });
             var amorphieUser = amorphieUserResult.Response;
+
+            //var migrateUserInfoResult = await migrationService.MigrateUserData(amorphieUser.Id,user.Id);
 
             variables.status = true;
 
             variables.userInfo = userInfo;
-            variables.BusinessLine = userInfo.data.profile.businessLine.Equals("X") ? "On" : "Burgan";
+            variables.BusinessLine = userInfo.data.profile.businessLine.Equals("X") ? "X" : "B";
             variables.Reference = amorphieUser.Reference;
             variables.userInfoSerialized = JsonSerializer.Serialize(userInfo);
             variables.userSerialized = JsonSerializer.Serialize(amorphieUser);

@@ -23,8 +23,8 @@ namespace amorphie.token.Modules.Login
             IBUser ibUser = JsonSerializer.Deserialize<IBUser>(ibUserSerialized);
 
             var transitionName = body.GetProperty("LastTransition").ToString();
-            var securityQuestionId = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty("entityData").GetProperty("questionId").ToString();
-            var answer = body.GetProperty("TRXamorphiemobileloginsetnewsecurityquestion").GetProperty("Data").GetProperty("entityData").GetProperty("answer").ToString();
+            var securityQuestionId = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty(WorkflowConstants.ENTITY_DATA_FIELD).GetProperty("questionId").ToString();
+            var answer = body.GetProperty("TRXamorphiemobileloginsetnewsecurityquestion").GetProperty("Data").GetProperty(WorkflowConstants.ENTITY_DATA_FIELD).GetProperty("answer").ToString();
             var instanceId = body.GetProperty("InstanceId").ToString();
 
             var questionId = Guid.NewGuid();
@@ -33,7 +33,7 @@ namespace amorphie.token.Modules.Login
                 Id = questionId,
                 UserId = ibUser.Id,
                 DefinitionId = Guid.Parse(securityQuestionId),
-                EncryptedAnswer = passwordHasher.EncryptString(answer.Trim(), questionId.ToString("N")),
+                EncryptedAnswer = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").Equals("Prod") ? passwordHasher.EncryptString(answer.Trim(), questionId.ToString("N")) : answer.Trim(),
                 CreatedByInstanceId = Guid.Parse(instanceId),
                 CreatedByInstanceState = "SetNewSecurityQuestion",
                 Status = 10,
