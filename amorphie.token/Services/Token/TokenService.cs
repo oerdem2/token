@@ -184,6 +184,8 @@ public class TokenService : ServiceBase, ITokenService
                 tokenClaims.Add(new Claim("credentials", "IsInternetCustomer###1"));
                 tokenClaims.Add(new Claim("credentials", "IsAnonymous###1"));
                 tokenClaims.Add(new Claim("azp", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                tokenClaims.Add(new Claim("uppercase_name", _profile?.data?.profile?.uppercase_name ?? string.Empty));
+                tokenClaims.Add(new Claim("uppercase_surname", _profile?.data?.profile?.uppercase_surname ?? string.Empty));
                 tokenClaims.Add(new Claim("logon_ip", _transactionService.IpAddress ?? "undefined"));
             }
         }
