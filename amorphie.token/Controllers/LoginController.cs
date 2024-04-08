@@ -127,7 +127,7 @@ public class LoginController : Controller
 
         if (device != null)
         {
-            return Ok(new{os=device.Platform});
+            return Ok(new{os=device.Platform.ToLower().Equals("android") ? 1 : 2});
         }
         else
         {
