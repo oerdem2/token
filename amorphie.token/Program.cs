@@ -34,9 +34,9 @@ internal class Program
             {
                 await client.WaitForSidecarAsync(tokenSource.Token);
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
-                Console.WriteLine("Dapr Sidecar Doesn't Respond");
+                Console.WriteLine("Dapr Sidecar Doesn't Respond "+ex.ToString());
                 return;
             }
 
