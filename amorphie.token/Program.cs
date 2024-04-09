@@ -103,6 +103,10 @@ internal class Program
             {
                 httpClient.BaseAddress = new Uri(builder.Configuration["ConsentBaseAddress"]!);
             });
+
+            builder.Services.AddHttpClient("Enqura",httpClient =>{
+                httpClient.BaseAddress = new Uri(builder.Configuration["EnquraBaseAddress"]!);
+            });
         }
         else
         {
