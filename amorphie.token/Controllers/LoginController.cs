@@ -117,6 +117,11 @@ public class LoginController : Controller
     [HttpGet("public/CheckDevice/{reference}")]
     public async Task<IActionResult> CheckDevice(string reference)
     {
+        //For Default User
+        if (reference == "99999999998")
+        {
+            return Ok();
+        }
         var userResponse = await _ibUserService.GetUser(reference);
         if (userResponse.StatusCode != 200)
         {
