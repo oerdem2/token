@@ -20,11 +20,11 @@ public static class EkycPrepare
             dynamic targetObject = new System.Dynamic.ExpandoObject();
 
             targetObject.Data = dataChanged;
-        dynamic variables = new ExpandoObject();
-        variables.Init = true;
-
+        dynamic variables = new Dictionary<string, dynamic>();
+        variables.Add("Init",true);
+ 
         dataChanged.additionalData = new ExpandoObject();
-                dataChanged.additionalData.securityQuestions = "securityQuestions";// gitmek istediği data 
+                dataChanged.additionalData.IsEkyc = true;// gitmek istediği data 
                 targetObject.Data = dataChanged;
                 targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
                 targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());

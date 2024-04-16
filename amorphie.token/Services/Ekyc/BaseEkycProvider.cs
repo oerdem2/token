@@ -1,4 +1,5 @@
 ﻿
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using amorphie.core.Extension;
@@ -9,7 +10,7 @@ namespace amorphie.token;
 
 public class BaseEkycProvider
 {
-    private readonly IHttpClientFactory _httpClientFactory;
+    protected readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<BaseEkycProvider> _logger;
     private readonly IConfiguration _configuration;
     private readonly DaprClient _daprClient;
@@ -25,13 +26,14 @@ public class BaseEkycProvider
         _daprClient = daprClient;
     }
 
-    protected async Task<IDictionary<string, string>> GetEnquraHeadersAsync()
+    protected async Task<AuthenticationHeaderValue> GetEnquraHeadersAsync()
     {
-        var headers = new Dictionary<string, string>
-     {
-         { "Authorization", "Bearer " + await GetTokenAsync() }
-     };
-        return headers;
+    //     var headers = new Dictionary<string, string>
+    //  {
+    //      { "Authorization", "Bearer " + await GetTokenAsync() }
+    //  };
+        var header = new AuthenticationHeaderValue("Bearer", await GetTokenAsync());
+        return header;
     }
 
     protected async Task<string> GetTokenAsync()
@@ -63,8 +65,8 @@ public class BaseEkycProvider
                 throw new Exception($"Enqura token LOGIN result: {response.StatusCode} - token service LOGIN error.");
             }
 
-           await _daprClient.SaveStateAsync<string>(_configuration["DAPR_STATE_STORE_NAME"],"amorphie-enquraToken",resp.Token);
-           token = resp.Token;
+            await _daprClient.SaveStateAsync<string>(_configuration["DAPR_STATE_STORE_NAME"], "amorphie-enquraToken", resp.Token);
+            token = resp.Token;
 
         }
 

@@ -2,6 +2,20 @@
 
 public class GetSessionInfoModels
 {
+
+
+    public class Request
+    {
+        public string SessionUId { get; set; }
+        public bool LoadDetails { get; set; }
+        public bool LoadContent { get; set; }
+        public string RoomId { get; set; }
+    }
+
+    public class Response : EkycResponseBase
+    {
+        public Data Data { get; set; }
+    }
     public class Data
     {
         public Guid UId { get; set; }
@@ -79,4 +93,5 @@ public class GetSessionInfoModels
         public string ExpireDate { get; set; }
         public bool? IsValid { get; set; }
     }
+
 }
