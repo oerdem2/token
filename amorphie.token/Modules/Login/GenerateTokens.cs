@@ -72,15 +72,20 @@ namespace amorphie.token.Modules.Login
             if (result.StatusCode == 200)
             {
 
-                await userService.SaveDevice(new UserSaveMobileDeviceDto()
+                //For Default User
+                if (userInfo.Reference != "99999999998")
                 {
-                    DeviceId = deviceId,
-                    InstallationId = Guid.Parse(installationId),
-                    DeviceModel = model,
-                    DevicePlatform = platform,
-                    ClientId = clientInfo.code ?? clientInfo.id,
-                    UserId = userInfo.Id
-                });
+                    await userService.SaveDevice(new UserSaveMobileDeviceDto()
+                    {
+                        DeviceId = deviceId,
+                        InstallationId = Guid.Parse(installationId),
+                        DeviceModel = model,
+                        DevicePlatform = platform,
+                        ClientId = clientInfo.code ?? clientInfo.id,
+                        UserId = userInfo.Id
+                    });
+                }
+
 
                 dataChanged.additionalData = result.Response;
                 targetObject.Data = dataChanged;
