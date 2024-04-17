@@ -180,12 +180,15 @@ public class TokenService : ServiceBase, ITokenService
                 tokenClaims.Add(new Claim("client_id", _client.code ?? _client.id));
                 tokenClaims.Add(new Claim("email", _profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
                 tokenClaims.Add(new Claim("phone_number", _profile.data.phones.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString()));
-                tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                string role = _user.Reference == "99999999998"?"Viewer":"FullAuthorized";
+                tokenClaims.Add(new Claim("role", role));
                 tokenClaims.Add(new Claim("credentials", "IsInternetCustomer###1"));
                 tokenClaims.Add(new Claim("credentials", "IsAnonymous###1"));
                 tokenClaims.Add(new Claim("azp", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
                 tokenClaims.Add(new Claim("logon_ip", _transactionService.IpAddress ?? "undefined"));
             }
+
+            
         }
         tokenClaims.Add(new Claim("jti", _tokenInfoDetail.AccessTokenId.ToString()));
         if (_user != null)
