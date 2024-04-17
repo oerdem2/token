@@ -61,6 +61,8 @@ namespace amorphie.token.core.Models.Profile
         public string? name { get; set; }
         public string? middleName { get; set; }
         public string? surname { get; set; }
+        public string? uppercase_name{get;set;}
+        public string? uppercase_surname{get;set;}
         public bool hasMobApproval { get; set; }
         public bool hasCollectionRestriction { get; set; }
         public bool isPrivateBanking { get; set; }
