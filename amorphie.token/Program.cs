@@ -34,9 +34,9 @@ internal class Program
             {
                 await client.WaitForSidecarAsync(tokenSource.Token);
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
-                Console.WriteLine("Dapr Sidecar Doesn't Respond");
+                Console.WriteLine("Dapr Sidecar Doesn't Respond "+ex.ToString());
                 return;
             }
 
@@ -148,8 +148,8 @@ internal class Program
 
         var app = builder.Build();
         app.UseAllElasticApm(app.Configuration);
-        app.UseTransactionMiddleware();
 
+        app.UseTransactionMiddleware();
 
         //Db Migrate
         using var scope = app.Services.CreateScope();

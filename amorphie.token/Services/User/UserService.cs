@@ -527,4 +527,132 @@ public class UserService : ServiceBase, IUserService
             };
         }
     }
+
+    public async Task<ServiceResponse<IEnumerable<SecurityQuestionDto>>> GetSecurityQuestions()
+    {
+        try
+        {
+            var questions = await _daprClient.InvokeMethodAsync<IEnumerable<SecurityQuestionDto>>(HttpMethod.Get,Configuration["UserServiceAppName"], "/securityQuestion/getAll");
+            return new ServiceResponse<IEnumerable<SecurityQuestionDto>>()
+            {
+                StatusCode = 200,
+                Detail = "",
+                Response = questions
+            };
+        }
+        catch (InvocationException ex)
+        {
+            Logger.LogError("An Error Occured When Trying To Retrieve Security Questions | Invocation Failed | Detail:" + ex.ToString());
+            return new ServiceResponse<IEnumerable<SecurityQuestionDto>>()
+            {
+                StatusCode = (int)ex.Response.StatusCode,
+                Detail = await ex.Response.Content.ReadAsStringAsync()
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("An Error Occured When Trying To Retrieve Security Questions | Detail:" + ex.ToString());
+            return new ServiceResponse<IEnumerable<SecurityQuestionDto>>()
+            {
+                StatusCode = 500,
+                Detail = "An Error Occured When Trying To Retrieve Security Questions | Detail:" + ex.ToString()
+            };
+        }
+    }
+
+    public async Task<ServiceResponse<IEnumerable<SecurityImageDto>>> GetSecurityImages()
+    {
+        try
+        {
+            var questions = await _daprClient.InvokeMethodAsync<IEnumerable<SecurityImageDto>>(HttpMethod.Get,Configuration["UserServiceAppName"], "/securityImage/getAll");
+            return new ServiceResponse<IEnumerable<SecurityImageDto>>()
+            {
+                StatusCode = 200,
+                Detail = "",
+                Response = questions
+            };
+        }
+        catch (InvocationException ex)
+        {
+            Logger.LogError("An Error Occured When Trying To Retrieve Security Images | Invocation Failed | Detail:" + ex.ToString());
+            return new ServiceResponse<IEnumerable<SecurityImageDto>>()
+            {
+                StatusCode = (int)ex.Response.StatusCode,
+                Detail = await ex.Response.Content.ReadAsStringAsync()
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("An Error Occured When Trying To Retrieve Security Images | Detail:" + ex.ToString());
+            return new ServiceResponse<IEnumerable<SecurityImageDto>>()
+            {
+                StatusCode = 500,
+                Detail = "An Error Occured When Trying To Retrieve Security Images | Detail:" + ex.ToString()
+            };
+        }
+    }
+
+    public async Task<ServiceResponse<UserSecurityQuestionDto>> GetLastSecurityQuestion(Guid id)
+    {
+        try
+        {
+            var questions = await _daprClient.InvokeMethodAsync<UserSecurityQuestionDto>(HttpMethod.Get,Configuration["UserServiceAppName"], "/userSecurityQuestion/getLastSecurityQuestion/"+id);
+            return new ServiceResponse<UserSecurityQuestionDto>()
+            {
+                StatusCode = 200,
+                Detail = "",
+                Response = questions
+            };
+        }
+        catch (InvocationException ex)
+        {
+            Logger.LogError("An Error Occured When Trying To Retrieve Last Security Question | Invocation Failed | Detail:" + ex.ToString());
+            return new ServiceResponse<UserSecurityQuestionDto>()
+            {
+                StatusCode = (int)ex.Response.StatusCode,
+                Detail = await ex.Response.Content.ReadAsStringAsync()
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("An Error Occured When Trying To Retrieve Last Security Question | Detail:" + ex.ToString());
+            return new ServiceResponse<UserSecurityQuestionDto>()
+            {
+                StatusCode = 500,
+                Detail = "An Error Occured When Trying To Retrieve Last Security Question | Detail:" + ex.ToString()
+            };
+        }
+    }
+
+    public async Task<ServiceResponse<UserSecurityImageDto>> GetLastSecurityImage(Guid id)
+    {
+        try
+        {
+            var questions = await _daprClient.InvokeMethodAsync<UserSecurityImageDto>(HttpMethod.Get,Configuration["UserServiceAppName"], "/userSecurityImage/getLastSecurityImage/"+id);
+            return new ServiceResponse<UserSecurityImageDto>()
+            {
+                StatusCode = 200,
+                Detail = "",
+                Response = questions
+            };
+        }
+        catch (InvocationException ex)
+        {
+            Logger.LogError("An Error Occured When Trying To Retrieve Last Security Image | Invocation Failed | Detail:" + ex.ToString());
+            return new ServiceResponse<UserSecurityImageDto>()
+            {
+                StatusCode = (int)ex.Response.StatusCode,
+                Detail = await ex.Response.Content.ReadAsStringAsync()
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("An Error Occured When Trying To Retrieve Last Security Image | Detail:" + ex.ToString());
+            return new ServiceResponse<UserSecurityImageDto>()
+            {
+                StatusCode = 500,
+                Detail = "An Error Occured When Trying To Retrieve Last Security Image | Detail:" + ex.ToString()
+            };
+        }
+    }
 }

@@ -54,7 +54,7 @@ public class AuthorizeController : Controller
 
         if (consentResponse.StatusCode == 200)
         {
-            var consent = consentResponse.Response;
+            var consent = consentResponse!.Response!;
             var deserializedData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent.additionalData!);
             var redirectUri = deserializedData.gkd.yonAdr;
 
@@ -62,7 +62,7 @@ public class AuthorizeController : Controller
             {
                 ResponseType = "code",
                 ClientId = _configuration["OpenBankingClientId"],
-                Scope = new string[] { "open-banking" },
+                Scope = ["open-banking"],
                 ConsentId = consentId,
                 User = user
             });

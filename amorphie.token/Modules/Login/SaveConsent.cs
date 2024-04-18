@@ -24,7 +24,6 @@ namespace amorphie.token.Modules.Login
         [FromServices] IConfiguration configuration
         )
         {
-            Console.WriteLine("consent save 1");
             var transitionName = body.GetProperty("LastTransition").ToString();
 
             var clientInfoSerialized = body.GetProperty("clientSerialized").ToString();
@@ -46,7 +45,7 @@ namespace amorphie.token.Modules.Login
             var saveConsent = await consentService.SaveConsent(clientInfo.id!, "7b19daa2-8793-45d2-9d96-aa7540c9d1ab", userInfo.Reference);
             if (saveConsent.StatusCode != 200)
             {
-                Console.WriteLine("consent save err : " + saveConsent.Detail);
+                //TODO
             }
             variables.Add("consentSaved", true);
             return Results.Ok(variables);
