@@ -15,7 +15,7 @@ public class PasswordRememberService : ServiceBase, IPasswordRememberService
         IConfiguration configuration,
         IPasswordRememberCard passwordRememberCard) : base(logger, configuration)
     {
-        
+
         _passwordRememberCard = passwordRememberCard;
     }
 
@@ -23,11 +23,12 @@ public class PasswordRememberService : ServiceBase, IPasswordRememberService
     {
 
         using var httpClient = new HttpClient();
-        StringContent request = new(JsonSerializer.Serialize(new CardValidationOptions{
+        StringContent request = new(JsonSerializer.Serialize(new CardValidationOptions
+        {
             ClientId = Configuration["CardValidationClientId"],
             ClientSecret = Configuration["CardValidationClientSecret"],
             GrantType = "client_credentials",
-            Scopes =new List<string>() { "retail-customer" }
+            Scopes = new List<string>() { "retail-customer" }
         }), Encoding.UTF8, "application/json");
         var response = new ServiceResponse<bool>();
         var httpResponse = await httpClient.PostAsync(Configuration["CardValidationTokenBaseAddress"], request);
@@ -41,7 +42,7 @@ public class PasswordRememberService : ServiceBase, IPasswordRememberService
         var resp = await httpResponse.Content.ReadFromJsonAsync<TokenResponse>();
         try
         {
-            var cardResponse = await _passwordRememberCard.GetCards(citizenshipNo, resp.TokenType+" "+resp.AccessToken);
+            var cardResponse = await _passwordRememberCard.GetCards(citizenshipNo, resp.TokenType + " " + resp.AccessToken);
             if (cardResponse is not null && cardResponse.Count > 0)
             {
                 response.StatusCode = 200;

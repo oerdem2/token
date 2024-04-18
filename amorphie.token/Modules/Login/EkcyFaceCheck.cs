@@ -17,7 +17,7 @@ public static class EkcyFaceCheck
         // var requestBodySerialized = body.GetProperty("requestBody").ToString();,
         dynamic variables = new ExpandoObject();
         variables.Init = true;
-        variables.IsSelfServiceAvaliable  = true;
+        variables.IsSelfServiceAvaliable = true;
         return Results.Ok(variables);
 
         // return Task.FromResult(Results.Ok("data"));

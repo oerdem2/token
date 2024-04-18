@@ -116,7 +116,7 @@ namespace amorphie.token.Modules.Login
             app.MapPost("/amorphie-ekyc-nfc-check", EkycNfcCheck.Check)
                 .ExcludeFromDescription()
                 .Produces(StatusCodes.Status200OK);
-            
+
             app.MapPost("/amorphie-ekyc-face-check", EkcyFaceCheck.Check)
                 .ExcludeFromDescription()
                 .Produces(StatusCodes.Status200OK);

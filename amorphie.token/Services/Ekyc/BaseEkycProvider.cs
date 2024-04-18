@@ -28,10 +28,10 @@ public class BaseEkycProvider
 
     protected async Task<AuthenticationHeaderValue> GetEnquraHeadersAsync()
     {
-    //     var headers = new Dictionary<string, string>
-    //  {
-    //      { "Authorization", "Bearer " + await GetTokenAsync() }
-    //  };
+        //     var headers = new Dictionary<string, string>
+        //  {
+        //      { "Authorization", "Bearer " + await GetTokenAsync() }
+        //  };
         var header = new AuthenticationHeaderValue("Bearer", await GetTokenAsync());
         return header;
     }

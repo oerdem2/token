@@ -146,7 +146,7 @@ internal class Program
 
         builder.Services.AddRefitClient<IPasswordRememberCard>()
         .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["cardValidationUri"]!));
-        
+
         builder.Services.AddHttpClient("Enqura", httpClient =>
         {
             httpClient.BaseAddress = new Uri(builder.Configuration["EnquraBaseAddress"]!);

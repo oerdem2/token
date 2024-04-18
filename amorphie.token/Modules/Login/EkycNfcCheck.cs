@@ -17,7 +17,7 @@ public static class EkycNfcCheck
         // var requestBodySerialized = body.GetProperty("requestBody").ToString();,
         dynamic variables = new ExpandoObject();
         variables.Init = true;
-        variables.NfcStatus  = true;
+        variables.NfcStatus = true;
         return Results.Ok(variables);
 
         // return Task.FromResult(Results.Ok("data"));
