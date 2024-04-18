@@ -11,7 +11,7 @@ namespace amorphie.token;
 public class BaseEkycProvider
 {
     protected readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<BaseEkycProvider> _logger;
+    protected readonly ILogger<BaseEkycProvider> _logger;
     private readonly IConfiguration _configuration;
     private readonly DaprClient _daprClient;
 

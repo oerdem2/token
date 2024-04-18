@@ -87,6 +87,7 @@ internal class Program
             builder.Services.AddScoped<ITagService, TagServiceLocal>();
             builder.Services.AddScoped<IConsentService, ConsentServiceLocal>();
 
+
             builder.Services.AddHttpClient("Client", httpClient =>
             {
                 httpClient.BaseAddress = new Uri(builder.Configuration["ClientBaseAddress"]!);
@@ -104,9 +105,7 @@ internal class Program
                 httpClient.BaseAddress = new Uri(builder.Configuration["ConsentBaseAddress"]!);
             });
 
-            builder.Services.AddHttpClient("Enqura",httpClient =>{
-                httpClient.BaseAddress = new Uri(builder.Configuration["EnquraBaseAddress"]!);
-            });
+
         }
         else
         {
@@ -129,6 +128,7 @@ internal class Program
         builder.Services.AddScoped<IClaimHandlerService, ClaimHandlerService>();
         builder.Services.AddScoped<ICardHandler, CardHandler>();
         builder.Services.AddTransient<IPasswordRememberService, PasswordRememberService>();
+        builder.Services.AddTransient<IEkycProvider, EkycProvider>();
 
         builder.Services.AddRefitClient<IProfile>()
         .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["ProfileBaseAddress"]!))
@@ -144,8 +144,14 @@ internal class Program
         builder.Services.AddRefitClient<IMessagingGateway>()
         .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["MessagingGatewayBaseAddress"]!));
 
-       builder.Services.AddRefitClient<IPasswordRememberCard>()
-       .ConfigureHttpClient(c=>c.BaseAddress = new Uri(builder.Configuration["cardValidationUri"]!));
+        builder.Services.AddRefitClient<IPasswordRememberCard>()
+        .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["cardValidationUri"]!));
+        
+        builder.Services.AddHttpClient("Enqura", httpClient =>
+        {
+            httpClient.BaseAddress = new Uri(builder.Configuration["EnquraBaseAddress"]!);
+        });
+
 
         // Bind options from configuration :)
         builder.Services.AddOptions<CardValidationOptions>()
