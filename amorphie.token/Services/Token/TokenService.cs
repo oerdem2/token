@@ -8,6 +8,7 @@ using amorphie.token.core.Models.Consent;
 using amorphie.token.core.Models.Profile;
 using amorphie.token.data;
 using amorphie.token.Services.ClaimHandler;
+using amorphie.token.Services.Consent;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.TransactionHandler;
@@ -24,6 +25,7 @@ public class TokenService : ServiceBase, ITokenService
     private readonly DatabaseContext _databaseContext;
     private readonly ITransactionService _transactionService;
     private readonly IClaimHandlerService _claimService;
+    private readonly IConsentService _consentService;
 
     private TokenInfoDetail _tokenInfoDetail;
     private GenerateTokenRequest? _tokenRequest;
@@ -36,7 +38,7 @@ public class TokenService : ServiceBase, ITokenService
     private IProfileService? _profileService;
     private string _deviceId;
     public TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, IClaimHandlerService claimService,
-    ITransactionService transactionService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext
+    ITransactionService transactionService,IConsentService consentService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext
     , IInternetBankingUserService internetBankingUserService, IProfileService profileService, IbDatabaseContext ibContext) : base(logger, configuration)
     {
         _clientService = clientService;
@@ -47,6 +49,7 @@ public class TokenService : ServiceBase, ITokenService
         _claimService = claimService;
         _internetBankingUserService = internetBankingUserService;
         _profileService = profileService;
+        _consentService = consentService;
         _ibContext = ibContext;
         _tokenInfoDetail = new();
     }
@@ -160,6 +163,17 @@ public class TokenService : ServiceBase, ITokenService
         try
         {
             accessDuration = TimeHelper.ConvertStrDurationToSeconds(accessInfo.duration!);
+            if(_consent is not null)
+            {
+                if(_consent.consentType.Equals("OB_Account"))
+                {
+                    accessDuration = 24 * 60 * 60; // 1 day
+                }
+                if(_consent.consentType.Equals("OB_Payment"))
+                {
+                    accessDuration = 5 * 60; // 5 min
+                }
+            }
             _tokenInfoDetail.AccessTokenDuration = accessDuration;
         }
         catch (FormatException ex)
@@ -212,7 +226,7 @@ public class TokenService : ServiceBase, ITokenService
 
 
         _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.AccessToken, _tokenInfoDetail.AccessTokenId, _client.id!, DateTime.UtcNow.AddSeconds(accessDuration), true, _user?.Reference ?? ""
-        , scopes, _user?.Id ?? null, null, _tokenRequest!.ConsentId, _deviceId));
+        , scopes, _user?.Id ?? null, null, _consent.id, _deviceId));
 
         return access_token;
     }
@@ -236,6 +250,17 @@ public class TokenService : ServiceBase, ITokenService
         try
         {
             refreshDuration = TimeHelper.ConvertStrDurationToSeconds(refreshInfo.duration!);
+            if(_consent is not null)
+            {
+                if(_consent.consentType.Equals("OB_Account"))
+                {
+                    refreshDuration = 90 * 24 * 60 * 60; // Until Consent Expires
+                }
+                if(_consent.consentType.Equals("OB_Payment"))
+                {
+                    refreshDuration = 15 * 24 * 60 * 60; // 15 day
+                }
+            }
             _tokenInfoDetail.RefreshTokenDuration = refreshDuration;
         }
         catch (FormatException ex)
@@ -327,6 +352,13 @@ public class TokenService : ServiceBase, ITokenService
                 Detail = "Related Access Token Not Found",
                 Response = null
             };
+        }
+        
+        //OpenBanking Set Consent
+        if(relatedToken.ConsentId is Guid)
+        {
+            var consent = await _consentService.GetConsent(relatedToken.ConsentId.Value);
+            _consent = consent.Response;
         }
 
         tokenRequest.Scopes = relatedToken.Scopes;

@@ -148,8 +148,8 @@ internal class Program
 
         var app = builder.Build();
         app.UseAllElasticApm(app.Configuration);
-        app.UseTransactionMiddleware();
 
+        app.UseTransactionMiddleware();
 
         //Db Migrate
         using var scope = app.Services.CreateScope();
