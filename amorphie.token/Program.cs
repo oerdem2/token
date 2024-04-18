@@ -1,3 +1,6 @@
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Unicode;
 using amorphie.core.Extension;
 using amorphie.token;
 using amorphie.token.data;
@@ -9,9 +12,11 @@ using amorphie.token.Services.Consent;
 using amorphie.token.Services.FlowHandler;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.MessagingGateway;
+using amorphie.token.Services.Migration;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.TransactionHandler;
 using Elastic.Apm.NetCoreAll;
+using Elastic.Transport;
 using Microsoft.EntityFrameworkCore;
 using Refit;
 using Serilog;
@@ -30,13 +35,15 @@ internal class Program
             {
                 await client.WaitForSidecarAsync(tokenSource.Token);
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
-                Console.WriteLine("Dapr Sidecar Doesn't Respond");
+                Console.WriteLine("Dapr Sidecar Doesn't Respond "+ex.ToString());
                 return;
             }
 
         }
+
+
 
         await builder.Configuration.AddVaultSecrets(builder.Configuration["DAPR_SECRET_STORE_NAME"], new string[] { "ServiceConnections" });
 
@@ -127,8 +134,12 @@ internal class Program
         builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddScoped<IClaimHandlerService, ClaimHandlerService>();
         builder.Services.AddScoped<ICardHandler, CardHandler>();
+
         builder.Services.AddTransient<IPasswordRememberService, PasswordRememberService>();
         builder.Services.AddTransient<IEkycProvider, EkycProvider>();
+
+        builder.Services.AddScoped<IMigrationService, MigrationService>();
+
 
         builder.Services.AddRefitClient<IProfile>()
         .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["ProfileBaseAddress"]!))
@@ -159,13 +170,16 @@ internal class Program
 
         var app = builder.Build();
         app.UseAllElasticApm(app.Configuration);
-        app.UseTransactionMiddleware();
 
+        app.UseTransactionMiddleware();
 
         //Db Migrate
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
         db.Database.Migrate();
+
+        var migrateService = scope.ServiceProvider.GetRequiredService<IMigrationService>();
+        await migrateService.MigrateStaticData();
 
         app.MapHealthChecks("/health");
 

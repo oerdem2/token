@@ -117,6 +117,7 @@ public class LoginController : Controller
     [HttpGet("public/CheckDevice/{reference}")]
     public async Task<IActionResult> CheckDevice(string reference)
     {
+     
         var userResponse = await _ibUserService.GetUser(reference);
         if (userResponse.StatusCode != 200)
         {
@@ -127,7 +128,7 @@ public class LoginController : Controller
 
         if (device != null)
         {
-            return Ok();
+            return Ok(new{os=device.Platform.ToLower().Equals("android") ? 1 : 2});
         }
         else
         {

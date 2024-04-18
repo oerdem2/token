@@ -27,7 +27,7 @@ public static class ValidateSecretQuestionAnswer
                 .OrderByDescending(q => q.CreatedAt).FirstOrDefaultAsync();
 
         PasswordHasher passwordHasher = new();
-        var answer = passwordHasher.DecryptString(securityQuestion.EncryptedAnswer, securityQuestion.Id.ToString("N")).Trim();
+        var answer = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").Equals("Prod") ? passwordHasher.DecryptString(securityQuestion.EncryptedAnswer, securityQuestion.Id.ToString("N")).Trim() : securityQuestion.EncryptedAnswer;
 
         int firstCharIndex = Convert.ToInt32(body.GetProperty("answerFirstCharIndex").ToString());
         int secondCharIndex = Convert.ToInt32(body.GetProperty("answerSecondCharIndex").ToString());
