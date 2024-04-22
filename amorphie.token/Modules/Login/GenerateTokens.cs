@@ -67,6 +67,7 @@ namespace amorphie.token.Modules.Login
             var installationId = body.GetProperty("Headers").GetProperty("xtokenid").ToString();
             var platform = body.GetProperty("Headers").GetProperty("xdeployment").ToString();
             var model = body.GetProperty("Headers").GetProperty("xdeviceinfo").ToString();
+            var version = body.GetProperty("Headers").GetProperty("xdeviceversion").ToString();
             ServiceResponse<TokenResponse> result = await tokenService.GenerateTokenWithPasswordFromWorkflow(requestBody.MapTo<GenerateTokenRequest>(), clientInfo, userInfo, profile, deviceId);
 
             if (result.StatusCode == 200)
@@ -82,7 +83,8 @@ namespace amorphie.token.Modules.Login
                         DeviceModel = model,
                         DevicePlatform = platform,
                         ClientId = clientInfo.code ?? clientInfo.id,
-                        UserId = userInfo.Id
+                        UserId = userInfo.Id,
+                        DeviceVersion = version
                     });
                 }
 

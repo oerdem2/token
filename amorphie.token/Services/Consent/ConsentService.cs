@@ -178,6 +178,36 @@ namespace amorphie.token.Services.Consent
             }
 
         }
+
+        public async Task<ServiceResponse> CheckAuthorizationConsent(string clientId, string currentUser, string scopeUser)
+        {
+            try
+            {
+                var consent = await _daprClient.InvokeMethodAsync<ConsentResponse>(HttpMethod.Get, Configuration["ConsentServiceAppName"], $"/Authorization/CheckConsent/clientCode={clientId}&userTCKN={currentUser}&scopeTCKN={scopeUser}");
+
+                return new ServiceResponse()
+                {
+                    StatusCode = 200,
+                    Detail = ""
+                };
+            }
+            catch (InvocationException ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = (int)ex.Response.StatusCode,
+                    Detail = await ex.Response.Content.ReadAsStringAsync()
+                };
+            }
+            catch (System.Exception ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = 500,
+                    Detail = ex.ToString()
+                };
+            }
+        }
     }
 }
 
