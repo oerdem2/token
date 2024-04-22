@@ -16,6 +16,8 @@ using System.Security.Claims;
 using Newtonsoft.Json.Linq;
 using MongoDB.Bson.IO;
 using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
+using System.Security.Cryptography;
 
 
 namespace amorphie.token.core.Controllers;
@@ -52,6 +54,16 @@ public class TokenController : Controller
         _profileService = profileService;
 
 
+    }
+
+    [HttpGet("public/CodeChallange/{code_verifier}")]
+    public  IActionResult CodeChallange(string code_verifier)
+    {
+        var codeVerifierAsByte = System.Text.Encoding.ASCII.GetBytes(code_verifier);
+
+        using var sha256 = SHA256.Create();
+        var hashedCodeVerifier = Base64UrlEncoder.Encode(sha256.ComputeHash(codeVerifierAsByte));
+        return Content(hashedCodeVerifier);
     }
 
     [HttpPut("public/Forget/{clientId}")]
@@ -250,6 +262,29 @@ public class TokenController : Controller
         claimValues["aud"] = new List<string>() { "BackOfficeApi", "WorkflowApi", "RetailLoanApi", "AutoQueryApi", "CardApi", "IntegrationLegacyApi", "CallCenterApi", "IbGwApi", "Apisix", "ScheduleApi", "TransactionApi", "IProvisionApi", "EndorsementApi", "QuerynetApi" };
         claimValues.Add("active", true);
         return Results.Json(claimValues);
+    }
+
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [HttpGet("public/callback")]
+    public async Task<IActionResult> Token([FromQuery(Name = "code")] string code)
+    {
+        var tokenReq = new TokenRequest();
+        tokenReq.ClientId = "4fa85f64-5711-4562-b3fc-2c963f66afa6";
+        tokenReq.ClientSecret = "sercan";
+        tokenReq.CodeVerifier = "123";
+        tokenReq.Code = code;
+        tokenReq.GrantType = "authorization_code";
+        tokenReq.Scopes = ["retail-customer"];
+
+        using var httpClient = new HttpClient();
+        StringContent request = new(JsonSerializer.Serialize(tokenReq), Encoding.UTF8, "application/json");
+        var httpResponse = await httpClient.PostAsync(_configuration["localAddress"] + "public/Token", request);
+        var resp = await httpResponse.Content.ReadFromJsonAsync<TokenResponse>();
+
+        ViewBag.accessToken = resp.AccessToken;
+        ViewBag.refreshToken = resp.RefreshToken;
+
+        return View("callback");
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
