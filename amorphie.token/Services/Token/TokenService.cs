@@ -228,6 +228,7 @@ public class TokenService : ServiceBase, ITokenService
         _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.AccessToken, _tokenInfoDetail.AccessTokenId, _client.id!, DateTime.UtcNow.AddSeconds(accessDuration), true, _user?.Reference ?? ""
         , scopes, _user?.Id ?? null, null, _consent?.id, _deviceId));
 
+
         return access_token;
     }
 

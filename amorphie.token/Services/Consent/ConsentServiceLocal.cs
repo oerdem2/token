@@ -107,6 +107,7 @@ namespace amorphie.token.Services.Consent
 
             var httpResponseMessage = await httpClient.PostAsync(
                 "OpenBankingConsentHHS/UpdateConsentStatusForUsage", req);
+                
             if (httpResponseMessage.IsSuccessStatusCode)
             {
                 return new ServiceResponse() { StatusCode = 200 };
