@@ -113,6 +113,11 @@ namespace amorphie.token.Services.ClaimHandler
 
             }
 
+            if (claimPath.First().Equals("const"))
+            {
+                 return new Claim(claimName, claimPath[1]);
+            }
+
             return null;
         }
 

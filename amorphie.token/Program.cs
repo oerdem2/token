@@ -14,6 +14,7 @@ using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.MessagingGateway;
 using amorphie.token.Services.Migration;
 using amorphie.token.Services.Profile;
+using amorphie.token.Services.Role;
 using amorphie.token.Services.TransactionHandler;
 using Elastic.Apm.NetCoreAll;
 using Elastic.Transport;
@@ -93,6 +94,7 @@ internal class Program
             builder.Services.AddScoped<IUserService, UserServiceLocal>();
             builder.Services.AddScoped<ITagService, TagServiceLocal>();
             builder.Services.AddScoped<IConsentService, ConsentServiceLocal>();
+            builder.Services.AddScoped<IRoleService, RoleServiceLocal>();
 
 
             builder.Services.AddHttpClient("Client", httpClient =>
@@ -112,13 +114,18 @@ internal class Program
                 httpClient.BaseAddress = new Uri(builder.Configuration["ConsentBaseAddress"]!);
             });
 
-
+            builder.Services.AddHttpClient("Role", httpClient =>
+            {
+                httpClient.BaseAddress = new Uri(builder.Configuration["RoleBaseAddress"]!);
+            });
+ 
         }
         else
         {
             builder.Services.AddScoped<IClientService, ClientService>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ITagService, TagService>();
+            builder.Services.AddScoped<IRoleService, RoleService>();
             //builder.Services.AddScoped<IConsentService, ConsentService>();
             builder.Services.AddScoped<IConsentService, ConsentServiceLocal>();
             builder.Services.AddHttpClient("Consent", httpClient =>
