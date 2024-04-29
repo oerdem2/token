@@ -53,7 +53,7 @@ namespace amorphie.token.Modules.Login
             {
                 variables.Add("hasConsent", false);
             }
-            
+
 
             return Results.Ok(variables);
         }
