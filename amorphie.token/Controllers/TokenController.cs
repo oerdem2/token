@@ -253,6 +253,28 @@ public class TokenController : Controller
 
         }
 
+        var privateClaims = await _daprClient.GetStateAsync<Dictionary<string,string>>(_configuration["DAPR_STATE_STORE_NAME"], $"{accessTokenInfo.Id.ToString()}_privateClaims");
+        if(privateClaims is not null && privateClaims.Count() > 0)
+        {
+            foreach (var claim in privateClaims)
+            {
+                if (!claimValues.ContainsKey(claim.Key))
+                {
+                    if (validatedToken!.Claims.Count(c => c.Type == claim.Key) > 1)
+                    {
+                        claimValues.Add(claim.Key.Replace(".", "_"), validatedToken!.Claims.Where(c => c.Type == claim.Key).Select(c => c.Value));
+                    }
+                    else
+                    {
+                        if (!claim.Key.Equals("exp") && !claim.Key.Equals("nbf") && !claim.Key.Equals("iat"))
+                            claimValues.Add(claim.Key.Replace(".", "_"), claim.Value);
+                        else
+                            claimValues.Add(claim.Key.Replace(".", "_"), long.Parse(claim.Value));
+                    }
+                }
+            }
+        }
+
         if (!claimValues.ContainsKey("client_id"))
             claimValues.Add("client_id", client.code ?? client.id!);
         if (!claimValues.ContainsKey("clientId"))
