@@ -16,6 +16,8 @@ using System.Security.Claims;
 using Newtonsoft.Json.Linq;
 using MongoDB.Bson.IO;
 using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
+using System.Security.Cryptography;
 
 
 namespace amorphie.token.core.Controllers;
@@ -54,14 +56,21 @@ public class TokenController : Controller
 
     }
 
+    [HttpGet("public/CodeChallange/{code_verifier}")]
+    public  IActionResult CodeChallange(string code_verifier)
+    {
+        var codeVerifierAsByte = System.Text.Encoding.ASCII.GetBytes(code_verifier);
+
+        using var sha256 = SHA256.Create();
+        var hashedCodeVerifier = Base64UrlEncoder.Encode(sha256.ComputeHash(codeVerifierAsByte));
+        return Content(hashedCodeVerifier);
+    }
+
     [HttpPut("public/Forget/{clientId}")]
     public async Task<IActionResult> ForgetUser(string clientId, string reference)
     {
         try
         {
-            Console.WriteLine("Remove Device Called");
-            Console.WriteLine("Remove Device Arg: " + clientId);
-            Console.WriteLine("Remove Device Arg: " + reference);
             await _userService.RemoveDevice(reference, clientId);
 
             return Ok();
@@ -174,7 +183,7 @@ public class TokenController : Controller
     [Consumes("application/x-www-form-urlencoded")]
     public async Task<IResult> Introspect([FromForm] string token, [FromQuery] bool isTemporary = false)
     {
-        Console.WriteLine("Introspect Starting..");
+        
         var temporary = JwtHelper.GetClaim(token, "isTemporary");
 
         if (temporary != null && temporary.Equals("1"))
@@ -186,7 +195,7 @@ public class TokenController : Controller
         }
 
         var jti = JwtHelper.GetClaim(token, "jti");
-        Console.WriteLine("Introspect jti : " + jti);
+        
         if (jti == null)
             return Results.Json(new { active = false });
 
@@ -194,9 +203,7 @@ public class TokenController : Controller
             return Results.Json(new { active = false });
 
         var accessTokenInfo = _databaseContext.Tokens.FirstOrDefault(t => t.Id == Guid.Parse(jti));
-        Console.WriteLine("Token Type : " + accessTokenInfo.TokenType);
-        Console.WriteLine("Token Status : " + accessTokenInfo.IsActive);
-
+        
         if (accessTokenInfo == null)
             return Results.Json(new { active = false });
         if (accessTokenInfo.TokenType != TokenType.AccessToken || !accessTokenInfo.IsActive)
@@ -246,6 +253,28 @@ public class TokenController : Controller
 
         }
 
+        var privateClaims = await _daprClient.GetStateAsync<Dictionary<string,string>>(_configuration["DAPR_STATE_STORE_NAME"], $"{accessTokenInfo.Id.ToString()}_privateClaims");
+        if(privateClaims is not null && privateClaims.Count() > 0)
+        {
+            foreach (var claim in privateClaims)
+            {
+                if (!claimValues.ContainsKey(claim.Key))
+                {
+                    if (validatedToken!.Claims.Count(c => c.Type == claim.Key) > 1)
+                    {
+                        claimValues.Add(claim.Key.Replace(".", "_"), validatedToken!.Claims.Where(c => c.Type == claim.Key).Select(c => c.Value));
+                    }
+                    else
+                    {
+                        if (!claim.Key.Equals("exp") && !claim.Key.Equals("nbf") && !claim.Key.Equals("iat"))
+                            claimValues.Add(claim.Key.Replace(".", "_"), claim.Value);
+                        else
+                            claimValues.Add(claim.Key.Replace(".", "_"), long.Parse(claim.Value));
+                    }
+                }
+            }
+        }
+
         if (!claimValues.ContainsKey("client_id"))
             claimValues.Add("client_id", client.code ?? client.id!);
         if (!claimValues.ContainsKey("clientId"))
@@ -255,6 +284,29 @@ public class TokenController : Controller
         claimValues["aud"] = new List<string>() { "BackOfficeApi", "WorkflowApi", "RetailLoanApi", "AutoQueryApi", "CardApi", "IntegrationLegacyApi", "CallCenterApi", "IbGwApi", "Apisix", "ScheduleApi", "TransactionApi", "IProvisionApi", "EndorsementApi", "QuerynetApi" };
         claimValues.Add("active", true);
         return Results.Json(claimValues);
+    }
+
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [HttpGet("public/callback")]
+    public async Task<IActionResult> Token([FromQuery(Name = "code")] string code)
+    {
+        var tokenReq = new TokenRequest();
+        tokenReq.ClientId = "4fa85f64-5711-4562-b3fc-2c963f66afa6";
+        tokenReq.ClientSecret = "sercan";
+        tokenReq.CodeVerifier = "123";
+        tokenReq.Code = code;
+        tokenReq.GrantType = "authorization_code";
+        tokenReq.Scopes = ["retail-customer"];
+
+        using var httpClient = new HttpClient();
+        StringContent request = new(JsonSerializer.Serialize(tokenReq), Encoding.UTF8, "application/json");
+        var httpResponse = await httpClient.PostAsync(_configuration["localAddress"] + "public/Token", request);
+        var resp = await httpResponse.Content.ReadFromJsonAsync<TokenResponse>();
+
+        ViewBag.accessToken = resp.AccessToken;
+        ViewBag.refreshToken = resp.RefreshToken;
+
+        return View("callback");
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
@@ -366,7 +418,6 @@ public class TokenController : Controller
     [SwaggerResponse(200, "Logons Returned Successfully", typeof(LogonDto))]
     public async Task<IActionResult> GetLastLogonsList(string clientId, string reference, int page = 0, int pageSize = 20)
     {
-        Console.WriteLine("Environment : " + Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"));
         var lastSuccessLogon = await _databaseContext.Logon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference) && l.LogonStatus == LogonStatus.Completed).Select(l => new LogonDetailDto { LogonDate = l.CreatedAt, Channel = "ON Mobil", Status = 1 }).ToListAsync();
         var lastFailedLogon = await _databaseContext.FailedLogon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference)).Select(l => new LogonDetailDto { LogonDate = l.CreatedAt, Channel = "ON Mobil", Status = 0 }).ToListAsync();
         lastFailedLogon.AddRange(lastSuccessLogon);
@@ -419,6 +470,7 @@ public class TokenController : Controller
             generateTokenRequest.GrantType = "authorization_code";
             generateTokenRequest.Scopes = new List<string>() { "open-banking" };
             generateTokenRequest.Code = openBankingTokenRequest.AuthCode;
+            generateTokenRequest.ConsentId = consent.Response?.id;
 
             var token = await _tokenService.GenerateOpenBankingToken(generateTokenRequest, consent.Response);
             if (token.StatusCode != 200)

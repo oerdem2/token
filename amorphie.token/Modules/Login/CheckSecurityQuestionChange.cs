@@ -12,7 +12,8 @@ namespace amorphie.token.Modules.Login
         [ApiExplorerSettings(IgnoreApi = true)]
         public static async Task<IResult> checkSecurityQuestionChange(
         [FromBody] dynamic body,
-        [FromServices] IbDatabaseContext ibContext
+        [FromServices] IbDatabaseContext ibContext,
+        [FromServices] IUserService userService
         )
         {
             await Task.CompletedTask;
@@ -30,44 +31,50 @@ namespace amorphie.token.Modules.Login
             var ibUserSerialized = body.GetProperty("ibUserSerialized").ToString();
             IBUser ibUser = JsonSerializer.Deserialize<IBUser>(ibUserSerialized);
 
-            var securityQuestion = await ibContext.Question.Where(q => q.UserId == ibUser.Id)
-                .OrderByDescending(q => q.CreatedAt).FirstOrDefaultAsync();
+            var amorphieUserSerialized = body.GetProperty("userSerialized").ToString();
+            LoginResponse amorphieUser = JsonSerializer.Deserialize<LoginResponse>(amorphieUserSerialized);
+            
+            // var securityQuestion = await ibContext.Question.Where(q => q.UserId == ibUser.Id)
+            //     .OrderByDescending(q => q.CreatedAt).FirstOrDefaultAsync();
+
+            UserSecurityQuestionDto securityQuestion;
+            var securityQuestionResponse = await userService.GetLastSecurityQuestion(amorphieUser.Id);
+            if(securityQuestionResponse.StatusCode == 200)
+            {
+                securityQuestion = securityQuestionResponse.Response;
+            }
+            else
+            {
+                securityQuestion = null;
+            }
 
             dynamic variables = new Dictionary<string, dynamic>();
-            if (securityQuestion == null)
+            if (securityQuestion == null || securityQuestion.Status != QuestionStatusType.Active)
             {
                 variables.Add("status", true);
                 variables.Add("changeSecurityQuestion", true);
             }
             else
             {
-                var securityQuestionDefinition = await ibContext.QuestionDefinition.
-                    FirstOrDefaultAsync(d => d.Id == securityQuestion.DefinitionId && d.IsActive && d.Type == 10);
-                if (securityQuestionDefinition == null || securityQuestion?.Status != 10)
-                {
-                    variables.Add("status", true);
-                    variables.Add("changeSecurityQuestion", true);
-                }
-                else
-                {
-                    variables.Add("status", true);
-                    variables.Add("changeSecurityQuestion", false);
-                }
+                variables.Add("status", true);
+                variables.Add("changeSecurityQuestion", false);
             }
 
             if (variables["changeSecurityQuestion"] == true)
             {
-                var securityQuestions = await ibContext.QuestionDefinition.Where(q => q.IsActive && q.Type == 10).Select(
-                    q => new
-                    {
-                        Id = q.Id,
-                        DescriptionTr = q.DescriptionTr,
-                        DescriptionEn = q.DescriptionEn,
-                        Key = q.Key,
-                        ValueTypeClr = q.ValueTypeClr,
-                        Priority = q.Priority
-                    }
-                ).ToListAsync();
+                // var securityQuestions = await ibContext.QuestionDefinition.Where(q => q.IsActive && q.Type == 10).Select(
+                //     q => new
+                //     {
+                //         Id = q.Id,
+                //         DescriptionTr = q.DescriptionTr,
+                //         DescriptionEn = q.DescriptionEn,
+                //         Key = q.Key,
+                //         ValueTypeClr = q.ValueTypeClr,
+                //         Priority = q.Priority
+                //     }
+                // ).ToListAsync();
+                var securityQuestionsResponse = await userService.GetSecurityQuestions();
+                var securityQuestions = securityQuestionsResponse.Response;
                 dataChanged.additionalData = new ExpandoObject();
                 dataChanged.additionalData.securityQuestions = securityQuestions;
                 targetObject.Data = dataChanged;

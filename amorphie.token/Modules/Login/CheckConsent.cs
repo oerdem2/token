@@ -47,12 +47,14 @@ namespace amorphie.token.Modules.Login
             Console.WriteLine("checkConsent status code : " + checkConsent.StatusCode);
             if (checkConsent.StatusCode == 200)
             {
-                variables.Add("hasConsent", true);
+
+                variables.Add("hasConsent", false);
             }
             else
             {
-                variables.Add("hasConsent", false);
+                variables.Add("hasConsent", true);
             }
+        
 
 
             return Results.Ok(variables);

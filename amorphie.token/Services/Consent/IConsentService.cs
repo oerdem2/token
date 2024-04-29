@@ -13,5 +13,7 @@ namespace amorphie.token.Services.Consent
         public Task<ServiceResponse<DocumentResponse>> CheckDocument(string clientId, string roleId, string citizenshipNo);
         public Task<ServiceResponse> CheckConsent(string clientId, string roleId, string citizenshipNo);
         public Task<ServiceResponse> SaveConsent(string clientId, string roleId, string citizenshipNo);
+        public Task<ServiceResponse> CheckAuthorizationConsent(string clientId, string currentUser, string scopeUser);
+
     }
 }

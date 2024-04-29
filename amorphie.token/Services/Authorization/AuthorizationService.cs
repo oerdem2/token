@@ -32,6 +32,7 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         await _daprClient.SaveStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"], authorizationCode, newAuthorizationCodeInfo);
     }
 
+
     public async Task<ServiceResponse<AuthorizationResponse>> Authorize(AuthorizationServiceRequest request)
     {
         AuthorizationResponse authorizationResponse = new();
@@ -83,7 +84,7 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
 
             var code = await GenerateAuthorizationCode(authCode);
 
-            authorizationResponse.RedirectUri = $"{client.returnuri}?response_type=code&state={request.State}";
+            authorizationResponse.RedirectUri = $"{client.returnuri}?response_type=code&code={code}&state={request.State}";
             authorizationResponse.Code = code;
             authorizationResponse.RequestedScopes = requestedScopes;
             authorizationResponse.State = request.State!;
