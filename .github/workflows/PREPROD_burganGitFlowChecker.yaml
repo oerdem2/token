@@ -1,12 +1,9 @@
-
 name: Burgan Git Flow Checker
-
 
 on:
   pull_request:
     branches:
       - preprod
-
 
 jobs:
   check_commits_preprod:
