@@ -1,8 +1,5 @@
 
 using System.Dynamic;
-using System.Text;
-using System.Text.Json;
-using Microsoft.AspNetCore.Mvc;
 
 namespace amorphie.token.Modules.Login
 {
@@ -102,6 +99,28 @@ namespace amorphie.token.Modules.Login
             app.MapPost("/amorphie-remember-password-validate-question", ValidateSecretQuestionAnswer.validateSecretQuestionAnswer)
             .ExcludeFromDescription()
             .Produces(StatusCodes.Status200OK);
+
+            app.MapPost("/amorphie-remember-password-set-initial-screen", SetInitialScreen.checkInitialScreens)
+           .ExcludeFromDescription()
+           .Produces(StatusCodes.Status200OK);
+
+            //Ekyc processes 
+            app.MapPost("/amorphie-ekyc-prepare", EkycPrepare.Prepare)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+
+            app.MapPost("/amorphie-ekyc-ocr-check", EkycOcrCheck.Check)
+               .ExcludeFromDescription()
+               .Produces(StatusCodes.Status200OK);
+
+            app.MapPost("/amorphie-ekyc-nfc-check", EkycNfcCheck.Check)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+
+            app.MapPost("/amorphie-ekyc-face-check", EkcyFaceCheck.Check)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+
 
             app.MapGet("/amorphie-login-test", () =>
             {

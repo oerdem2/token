@@ -67,20 +67,27 @@ namespace amorphie.token.Modules.Login
             var installationId = body.GetProperty("Headers").GetProperty("xtokenid").ToString();
             var platform = body.GetProperty("Headers").GetProperty("xdeployment").ToString();
             var model = body.GetProperty("Headers").GetProperty("xdeviceinfo").ToString();
+            var version = body.GetProperty("Headers").GetProperty("xdeviceversion").ToString();
             ServiceResponse<TokenResponse> result = await tokenService.GenerateTokenWithPasswordFromWorkflow(requestBody.MapTo<GenerateTokenRequest>(), clientInfo, userInfo, profile, deviceId);
 
             if (result.StatusCode == 200)
             {
 
-                await userService.SaveDevice(new UserSaveMobileDeviceDto()
+                //For Default User
+                if (userInfo.Reference != "99999999998")
                 {
-                    DeviceId = deviceId,
-                    InstallationId = Guid.Parse(installationId),
-                    DeviceModel = model,
-                    DevicePlatform = platform,
-                    ClientId = clientInfo.code ?? clientInfo.id,
-                    UserId = userInfo.Id
-                });
+                    await userService.SaveDevice(new UserSaveMobileDeviceDto()
+                    {
+                        DeviceId = deviceId,
+                        InstallationId = Guid.Parse(installationId),
+                        DeviceModel = model,
+                        DevicePlatform = platform,
+                        ClientId = clientInfo.code ?? clientInfo.id,
+                        UserId = userInfo.Id,
+                        DeviceVersion = version
+                    });
+                }
+
 
                 dataChanged.additionalData = result.Response;
                 targetObject.Data = dataChanged;

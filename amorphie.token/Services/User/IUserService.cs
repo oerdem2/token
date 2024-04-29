@@ -11,6 +11,10 @@ public interface IUserService
     public Task<ServiceResponse<LoginResponse>> GetUserById(Guid userId);
     public Task<ServiceResponse<LoginResponse>> GetUserByReference(string reference);
     public Task<ServiceResponse> SaveUser(UserInfo userInfo);
+    public Task<ServiceResponse<UserSecurityQuestionDto>> GetLastSecurityQuestion(Guid id);
+    public Task<ServiceResponse<UserSecurityImageDto>> GetLastSecurityImage(Guid id);
+    public Task<ServiceResponse<IEnumerable<SecurityQuestionDto>>> GetSecurityQuestions();
+    public Task<ServiceResponse<IEnumerable<SecurityImageDto>>> GetSecurityImages();
     public Task<ServiceResponse> MigrateSecurityQuestion(MigrateSecurityQuestionRequest migrateSecurityQuestionRequest);
     public Task<ServiceResponse> MigrateSecurityImage(MigrateSecurityImageRequest migrateSecurityImageRequest);
     public Task<ServiceResponse> MigrateSecurityImages(List<SecurityImageRequestDto> securityImageRequestDtos);

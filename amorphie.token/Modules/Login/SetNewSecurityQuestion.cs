@@ -2,6 +2,7 @@ using System.Dynamic;
 using System.Text.Json;
 using amorphie.token.core.Models.InternetBanking;
 using amorphie.token.data;
+using amorphie.token.Services.Migration;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,7 +13,8 @@ namespace amorphie.token.Modules.Login
         [ApiExplorerSettings(IgnoreApi = true)]
         public static async Task<IResult> setNewSecurityQuestion(
         [FromBody] dynamic body,
-        [FromServices] IbDatabaseContext ibContext
+        [FromServices] IbDatabaseContext ibContext,
+        [FromServices] IMigrationService migrationService
         )
         {
             await Task.CompletedTask;
@@ -21,6 +23,9 @@ namespace amorphie.token.Modules.Login
 
             var ibUserSerialized = body.GetProperty("ibUserSerialized").ToString();
             IBUser ibUser = JsonSerializer.Deserialize<IBUser>(ibUserSerialized);
+            
+            var amorphieUserSerialized = body.GetProperty("userSerialized").ToString();
+            LoginResponse amorphieUser = JsonSerializer.Deserialize<LoginResponse>(amorphieUserSerialized);
 
             var transitionName = body.GetProperty("LastTransition").ToString();
             var securityQuestionId = body.GetProperty("TRX-" + transitionName).GetProperty("Data").GetProperty(WorkflowConstants.ENTITY_DATA_FIELD).GetProperty("questionId").ToString();
@@ -42,6 +47,8 @@ namespace amorphie.token.Modules.Login
             await ibContext.Question.AddAsync(securityQuestion);
             await ibContext.SaveChangesAsync();
 
+            var migrateUserInfoResult = await migrationService.MigrateUserData(amorphieUser.Id,ibUser.Id);
+            
             dynamic variables = new ExpandoObject();
             variables.status = true;
 

@@ -35,4 +35,6 @@ public class ClientResponse
     public List<Token>? tokens { get; set; }
     [JsonPropertyName("jwtSecretSalt")]
     public string? jwtSalt { get; set; }
+    public bool CanCreateLoginUrl{get;set;} = default!;
+    public string[]? CreateLoginUrlClients { get; set; } = default!;
 }
