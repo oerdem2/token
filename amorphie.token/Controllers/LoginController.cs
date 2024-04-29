@@ -172,8 +172,6 @@ public class LoginController : Controller
                 await _ibContext.SaveChangesAsync();
             }
 
-
-
             var userInfoResult = await _profileService.GetCustomerSimpleProfile(openBankingLoginRequest.username!);
             if (userInfoResult.StatusCode != 200)
             {
