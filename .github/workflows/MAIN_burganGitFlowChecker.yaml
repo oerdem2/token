@@ -1,11 +1,9 @@
 
 name: Burgan Git Flow Checker
-
 on:
   pull_request:
     branches:
       - main
-
 jobs:
   check_commits_main:
     runs-on: ubuntu-latest
@@ -51,5 +49,4 @@ jobs:
 
 
           echo "You should merge your commits to Preprod branch"
-
 
