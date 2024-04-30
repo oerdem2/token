@@ -170,7 +170,6 @@ internal class Program
             httpClient.BaseAddress = new Uri(builder.Configuration["EnquraBaseAddress"]!);
         });
 
-
         // Bind options from configuration :)
         builder.Services.AddOptions<CardValidationOptions>()
         .Bind(builder.Configuration.GetSection("CardValidation"));
@@ -185,8 +184,8 @@ internal class Program
         var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
         db.Database.Migrate();
 
-        var migrateService = scope.ServiceProvider.GetRequiredService<IMigrationService>();
-        await migrateService.MigrateStaticData();
+        // var migrateService = scope.ServiceProvider.GetRequiredService<IMigrationService>();
+        // await migrateService.MigrateStaticData();
 
         app.MapHealthChecks("/health");
 
