@@ -45,18 +45,17 @@ namespace amorphie.token.Modules.Login
             var checkConsent = await consentService.CheckConsent(clientInfo.id!, "7b19daa2-8793-45d2-9d96-aa7540c9d1ab", userInfo.Reference);
 
             Console.WriteLine("checkConsent status code : " + checkConsent.StatusCode);
-            // if (checkConsent.StatusCode == 200)
-            // {
-            //     variables.Add("hasConsent", true);
-            // }
-            // else
-            // {
-            //     variables.Add("hasConsent", false);
-            // }
-            if (userInfo.Reference.Equals("62845308062"))
+            if (checkConsent.StatusCode == 200)
+            {
+
                 variables.Add("hasConsent", false);
+            }
             else
+            {
                 variables.Add("hasConsent", true);
+            }
+        
+
 
             return Results.Ok(variables);
         }

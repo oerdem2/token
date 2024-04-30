@@ -41,7 +41,6 @@ namespace amorphie.token.Services.Consent
             var httpResponseMessage = await httpClient.GetAsync(
                 $"Authorization/CheckAuthorizationForLogin/clientCode={clientId}&roleId={roleId}&userTCKN={citizenshipNo}&scopeTCKN={citizenshipNo}");
 
-            Console.WriteLine("url : " + httpResponseMessage.RequestMessage.RequestUri);
             if (httpResponseMessage.IsSuccessStatusCode)
             {
                 return new ServiceResponse() { StatusCode = 200 };
@@ -100,16 +99,32 @@ namespace amorphie.token.Services.Consent
         public async Task<ServiceResponse> UpdateConsentForUsage(Guid consentId)
         {
             var httpClient = _httpClientFactory.CreateClient("Consent");
-            Console.WriteLine("Consent Id For Usage Id : " + consentId);
             StringContent req = new StringContent(JsonSerializer.Serialize(new
             {
                 id = consentId,
                 state = "K"
             }), System.Text.Encoding.UTF8, "application/json");
-            Console.WriteLine("Consent Id For Usage Id : " + JsonSerializer.Serialize(req));
+
             var httpResponseMessage = await httpClient.PostAsync(
                 "OpenBankingConsentHHS/UpdateConsentStatusForUsage", req);
-            Console.WriteLine("Consent Id For Usage Response Code : " + httpResponseMessage.IsSuccessStatusCode);
+                
+            if (httpResponseMessage.IsSuccessStatusCode)
+            {
+                return new ServiceResponse() { StatusCode = 200 };
+            }
+            else
+            {
+                return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode };
+            }
+        }
+
+        public async Task<ServiceResponse> CheckAuthorizationConsent(string clientId, string currentUser, string scopeUser)
+        {
+            var httpClient = _httpClientFactory.CreateClient("Consent");
+
+            var httpResponseMessage = await httpClient.GetAsync(
+                $"Authorization/CheckConsent/clientCode={clientId}&userTCKN={currentUser}&scopeTCKN={scopeUser}");
+
             if (httpResponseMessage.IsSuccessStatusCode)
             {
                 return new ServiceResponse() { StatusCode = 200 };

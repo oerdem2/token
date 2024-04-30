@@ -128,7 +128,7 @@ public class LoginController : Controller
 
         if (device != null)
         {
-            return Ok();
+            return Ok(new{os=device.Platform.ToLower().Equals("android") ? 1 : 2});
         }
         else
         {
@@ -171,8 +171,6 @@ public class LoginController : Controller
                 passwordRecord.AccessFailedCount = 0;
                 await _ibContext.SaveChangesAsync();
             }
-
-
 
             var userInfoResult = await _profileService.GetCustomerSimpleProfile(openBankingLoginRequest.username!);
             if (userInfoResult.StatusCode != 200)

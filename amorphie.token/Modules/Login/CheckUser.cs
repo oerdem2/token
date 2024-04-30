@@ -157,7 +157,7 @@ namespace amorphie.token.Modules.Login
             var amorphieUserResult = await userService.Login(new LoginRequest() { Reference = request.Username!, Password = request.Password! });
             var amorphieUser = amorphieUserResult.Response;
 
-            //var migrateUserInfoResult = await migrationService.MigrateUserData(amorphieUser.Id,user.Id);
+            var migrateUserInfoResult = await migrationService.MigrateUserData(amorphieUser.Id,user.Id);
 
             variables.status = true;
 

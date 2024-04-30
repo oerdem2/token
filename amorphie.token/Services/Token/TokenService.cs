@@ -6,10 +6,13 @@ using System.Security.Cryptography;
 using System.Text;
 using amorphie.token.core.Models.Consent;
 using amorphie.token.core.Models.Profile;
+using amorphie.token.core.Models.Role;
 using amorphie.token.data;
 using amorphie.token.Services.ClaimHandler;
+using amorphie.token.Services.Consent;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
+using amorphie.token.Services.Role;
 using amorphie.token.Services.TransactionHandler;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -24,6 +27,7 @@ public class TokenService : ServiceBase, ITokenService
     private readonly DatabaseContext _databaseContext;
     private readonly ITransactionService _transactionService;
     private readonly IClaimHandlerService _claimService;
+    private readonly IConsentService _consentService;
 
     private TokenInfoDetail _tokenInfoDetail;
     private GenerateTokenRequest? _tokenRequest;
@@ -34,9 +38,12 @@ public class TokenService : ServiceBase, ITokenService
     private IInternetBankingUserService? _internetBankingUserService;
     private IbDatabaseContext _ibContext;
     private IProfileService? _profileService;
+    private IRoleService? _roleService;
+    private ConsentDto _selectedConsent;
+    private RoleDefinitionDto _role;
     private string _deviceId;
     public TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, IClaimHandlerService claimService,
-    ITransactionService transactionService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext
+    ITransactionService transactionService,IRoleService roleService, IConsentService consentService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext
     , IInternetBankingUserService internetBankingUserService, IProfileService profileService, IbDatabaseContext ibContext) : base(logger, configuration)
     {
         _clientService = clientService;
@@ -47,6 +54,8 @@ public class TokenService : ServiceBase, ITokenService
         _claimService = claimService;
         _internetBankingUserService = internetBankingUserService;
         _profileService = profileService;
+        _consentService = consentService;
+        _roleService = roleService;
         _ibContext = ibContext;
         _tokenInfoDetail = new();
     }
@@ -74,11 +83,11 @@ public class TokenService : ServiceBase, ITokenService
 
         if (accessTokenInfo != null)
         {
-            await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"], accessTokenInfo!.Id.ToString(), accessTokenInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", _tokenInfoDetail.AccessTokenDuration.ToString() } });
+            await _daprClient.SaveStateAsync(Configuration["DAPR_STATE_STORE_NAME"], accessTokenInfo!.Id.ToString(), accessTokenInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", _tokenInfoDetail.AccessTokenDuration.ToString() } });
         }
         if (refreshTokenInfo != null)
         {
-            await _daprClient.SaveStateAsync<TokenInfo>(Configuration["DAPR_STATE_STORE_NAME"], refreshTokenInfo!.Id.ToString(), refreshTokenInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", _tokenInfoDetail.RefreshTokenDuration.ToString() } });
+            await _daprClient.SaveStateAsync(Configuration["DAPR_STATE_STORE_NAME"], refreshTokenInfo!.Id.ToString(), refreshTokenInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", _tokenInfoDetail.RefreshTokenDuration.ToString() } });
         }
     }
 
@@ -160,6 +169,17 @@ public class TokenService : ServiceBase, ITokenService
         try
         {
             accessDuration = TimeHelper.ConvertStrDurationToSeconds(accessInfo.duration!);
+            if(_consent is not null)
+            {
+                if(_consent.consentType.Equals("OB_Account"))
+                {
+                    accessDuration = 24 * 60 * 60; // 1 day
+                }
+                if(_consent.consentType.Equals("OB_Payment"))
+                {
+                    accessDuration = 5 * 60; // 5 min
+                }
+            }
             _tokenInfoDetail.AccessTokenDuration = accessDuration;
         }
         catch (FormatException ex)
@@ -180,11 +200,30 @@ public class TokenService : ServiceBase, ITokenService
                 tokenClaims.Add(new Claim("client_id", _client.code ?? _client.id));
                 tokenClaims.Add(new Claim("email", _profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
                 tokenClaims.Add(new Claim("phone_number", _profile.data.phones.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString()));
-                string role = _user.Reference == "99999999998"?"Viewer":"FullAuthorized";
-                tokenClaims.Add(new Claim("role", role));
+                if(_user.Reference == "99999999998")
+                {
+                    tokenClaims.Add(new Claim("role", "Viewer"));
+                }
+                else
+                {
+                    try
+                    {
+                        var roleName = _role.Tags.First();
+                        tokenClaims.Add(new Claim("role", roleName));
+                    }
+                    catch (Exception)
+                    {
+                        tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                    }
+                    
+                }
+                
+                
                 tokenClaims.Add(new Claim("credentials", "IsInternetCustomer###1"));
                 tokenClaims.Add(new Claim("credentials", "IsAnonymous###1"));
                 tokenClaims.Add(new Claim("azp", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                tokenClaims.Add(new Claim("uppercase_name", _profile?.data?.profile?.uppercase_name ?? string.Empty));
+                tokenClaims.Add(new Claim("uppercase_surname", _profile?.data?.profile?.uppercase_surname ?? string.Empty));
                 tokenClaims.Add(new Claim("logon_ip", _transactionService.IpAddress ?? "undefined"));
             }
 
@@ -198,6 +237,13 @@ public class TokenService : ServiceBase, ITokenService
 
         tokenClaims.Add(new Claim("iat", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()));
 
+        if (accessInfo.privateClaims != null && accessInfo.privateClaims.Count() > 0)
+        {
+            var populatedPrivateClaims = await _claimService.PopulateClaims(accessInfo.privateClaims, _user, _profile, _consent);
+            var dictFromPrivateClaims = populatedPrivateClaims.ToDictionary(c => c.Type, c => c.Value);
+            await _daprClient.SaveStateAsync(Configuration["DAPR_STATE_STORE_NAME"], $"{_tokenInfoDetail!.AccessTokenId.ToString()}_privateClaims", dictFromPrivateClaims, metadata: new Dictionary<string, string> { { "ttlInSeconds", (_tokenInfoDetail.AccessTokenDuration+60).ToString() } });
+        }
+
         var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_client.jwtSalt!));
         var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha384);
 
@@ -210,7 +256,7 @@ public class TokenService : ServiceBase, ITokenService
 
 
         _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.AccessToken, _tokenInfoDetail.AccessTokenId, _client.id!, DateTime.UtcNow.AddSeconds(accessDuration), true, _user?.Reference ?? ""
-        , scopes, _user?.Id ?? null, null, _tokenRequest!.ConsentId, _deviceId));
+        , scopes, _user?.Id ?? null, null, _consent?.id, _deviceId));
 
         return access_token;
     }
@@ -234,6 +280,17 @@ public class TokenService : ServiceBase, ITokenService
         try
         {
             refreshDuration = TimeHelper.ConvertStrDurationToSeconds(refreshInfo.duration!);
+            if(_consent is not null)
+            {
+                if(_consent.consentType.Equals("OB_Account"))
+                {
+                    refreshDuration = 90 * 24 * 60 * 60; // Until Consent Expires
+                }
+                if(_consent.consentType.Equals("OB_Payment"))
+                {
+                    refreshDuration = 15 * 24 * 60 * 60; // 15 day
+                }
+            }
             _tokenInfoDetail.RefreshTokenDuration = refreshDuration;
         }
         catch (FormatException ex)
@@ -325,6 +382,13 @@ public class TokenService : ServiceBase, ITokenService
                 Detail = "Related Access Token Not Found",
                 Response = null
             };
+        }
+        
+        //OpenBanking Set Consent
+        if(relatedToken.ConsentId is Guid)
+        {
+            var consent = await _consentService.GetConsent(relatedToken.ConsentId.Value);
+            _consent = consent.Response;
         }
 
         tokenRequest.Scopes = relatedToken.Scopes;
@@ -808,6 +872,41 @@ public class TokenService : ServiceBase, ITokenService
                 Detail = "User is disabled"
             };
         }
+
+        // var consentListResponse = await _roleService.GetConsents(_client.code, _user.Reference);
+        // if(consentListResponse.StatusCode != 200)
+        // {
+        //     return new ServiceResponse<TokenResponse>()
+        //     {
+        //         StatusCode = consentListResponse.StatusCode,
+        //         Detail = consentListResponse.Detail
+        //     };
+        // }
+        // var consentList = consentListResponse.Response;
+
+        // if(consentList.Count() != 1)
+        // {
+        //     return new ServiceResponse<TokenResponse>()
+        //     {
+        //         StatusCode = 480,
+        //         Detail = "Password Grant Type Doesn't Support Multiple Consents"
+        //     };
+        // }
+
+        // var consent = consentList.First();
+        // _selectedConsent = consent;
+
+        // var roleResponse = await _roleService.GetRoleDefinition(consent.RoleId);
+        // if(roleResponse.StatusCode != 200)
+        // {
+        //     return new ServiceResponse<TokenResponse>()
+        //     {
+        //         StatusCode = roleResponse.StatusCode,
+        //         Detail = roleResponse.Detail
+        //     };
+        // }
+        // var role = roleResponse.Response;
+        // _role = role;
 
         var tokenResponse = await GenerateTokenResponse();
 
