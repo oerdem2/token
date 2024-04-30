@@ -58,6 +58,8 @@ namespace amorphie.token.Services.Profile
             try
             {
                 var apiResponse = await _simpleProfile.GetProfile(reference, Configuration["SimpleProfilePassword"]!);
+                apiResponse.data.profile.uppercase_name = apiResponse.data.profile.name;
+                apiResponse.data.profile.uppercase_surname = apiResponse.data.profile.surname;
                 apiResponse.data.profile.name = apiResponse?.data?.profile?.name?.ConvertTitleCase();
                 apiResponse.data.profile.surname = apiResponse.data.profile.surname?.ConvertTitleCase();
 

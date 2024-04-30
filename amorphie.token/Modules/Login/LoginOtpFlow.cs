@@ -40,6 +40,11 @@ public static class LoginOtpFlow
         var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
         if (env != null && !env.Equals("Prod"))
             code = "123456";
+            
+        //For Default User    
+        if (userInfo.Reference == "99999999998")
+            code = "963579";
+        
 
         await daprClient.SaveStateAsync(configuration["DAPR_STATE_STORE_NAME"], $"{transactionId}_Login_Otp_Code", code, metadata: new Dictionary<string, string> { { "ttlInSeconds", "180" } });
 
