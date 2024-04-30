@@ -209,7 +209,11 @@ public class TokenService : ServiceBase, ITokenService
                     try
                     {
                         var roleName = _role.Tags.First();
-                        tokenClaims.Add(new Claim("role", roleName));
+                        //TODO - Throw Exception For Else Case
+                        if(!string.IsNullOrWhiteSpace(roleName))
+                            tokenClaims.Add(new Claim("role", roleName));
+                        else
+                            tokenClaims.Add(new Claim("role", "FullAuthorized"));
                     }
                     catch (Exception)
                     {
