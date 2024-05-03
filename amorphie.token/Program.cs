@@ -45,7 +45,6 @@ internal class Program
         }
 
 
-
         await builder.Configuration.AddVaultSecrets(builder.Configuration["DAPR_SECRET_STORE_NAME"], new string[] { "ServiceConnections" });
 
         // Add services to the container.
@@ -86,6 +85,7 @@ internal class Program
         builder.Services.AddDbContext<DatabaseContext>
             (options => options.UseNpgsql(builder.Configuration["DatabaseConnection"], b => b.MigrationsAssembly("amorphie.token.data")));
         builder.Services.AddDbContext<IbDatabaseContext>(options => options.UseSqlServer(builder.Configuration["IbDatabaseConnection"]));
+        builder.Services.AddDbContext<IbDatabaseContextMordor>(options => options.UseSqlServer(builder.Configuration["IbDatabaseMordorConnection"]));
         builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
         if (builder.Environment.IsDevelopment())

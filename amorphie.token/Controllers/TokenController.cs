@@ -18,6 +18,7 @@ using MongoDB.Bson.IO;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using System.Security.Cryptography;
+using System.Net.Mime;
 
 
 namespace amorphie.token.core.Controllers;
@@ -54,6 +55,16 @@ public class TokenController : Controller
         _profileService = profileService;
 
 
+    }
+
+    [HttpGet(".well-known/openid-configuration")]
+    public  IActionResult tt(string code_verifier)
+    {
+        return Ok(new 
+        {
+            authorization_endpoint="http://localhost:4900/public/Authorize",
+            token_endpoint = "http://localhost:4900/public/Token"
+        });
     }
 
     [HttpGet("public/CodeChallange/{code_verifier}")]
@@ -310,8 +321,9 @@ public class TokenController : Controller
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
+    [Consumes("application/x-www-form-urlencoded")]
     [HttpPost("public/Token")]
-    public async Task<IActionResult> Token([FromBody] TokenRequest tokenRequest)
+    public async Task<IActionResult> TokenForm([FromForm] TokenRequestForm tokenRequest)
     {
         string? xforwardedfor = HttpContext.Request.Headers.ContainsKey("X-Forwarded-For") ? HttpContext.Request.Headers.FirstOrDefault(h => h.Key.ToLower().Equals("x-forwarded-for")).Value.ToString() : HttpContext.Connection.RemoteIpAddress?.ToString();
         var ipAddress = xforwardedfor?.Split(",")[0].Trim() ?? xforwardedfor;
@@ -385,6 +397,85 @@ public class TokenController : Controller
         }
 
         return Problem(detail: "Invalid Grant Type", statusCode: 480);
+    }
+
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [Consumes("application/json")]
+    [HttpPost("public/Token")]
+    public async Task<IResult> Token([FromBody] TokenRequest tokenRequest)
+    {
+        string? xforwardedfor = HttpContext.Request.Headers.ContainsKey("X-Forwarded-For") ? HttpContext.Request.Headers.FirstOrDefault(h => h.Key.ToLower().Equals("x-forwarded-for")).Value.ToString() : HttpContext.Connection.RemoteIpAddress?.ToString();
+        var ipAddress = xforwardedfor?.Split(",")[0].Trim() ?? xforwardedfor;
+        _transactionService.IpAddress = ipAddress;
+
+        var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
+        if (tokenRequest.GrantType == "device")
+        {
+            var token = await _tokenService.GenerateTokenWithDevice(generateTokenRequest);
+            if (token.StatusCode == 200)
+            {
+                return Results.Json(token.Response);
+            }
+            else
+            {
+                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object>{{"errorCode",token.StatusCode}});
+            }
+        }
+        if (tokenRequest.GrantType == "authorization_code")
+        {
+            var token = await _tokenService.GenerateToken(generateTokenRequest);
+            if (token.StatusCode == 200)
+            {
+                return Results.Json(token.Response);
+            }
+            else
+            {
+                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object>{{"errorCode",token.StatusCode}});
+            }
+        }
+        if (tokenRequest.GrantType == "password")
+        {
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")!.Equals("Prod"))
+                return Results.StatusCode(403);
+
+            var token = await _tokenService.GenerateTokenWithPassword(generateTokenRequest);
+            if (token.StatusCode == 200)
+            {
+                return Results.Json(token.Response);
+            }
+            else
+            {
+                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object>{{"errorCode",token.StatusCode}});
+            }
+        }
+
+        if (tokenRequest.GrantType == "refresh_token")
+        {
+            var token = await _tokenService.GenerateTokenWithRefreshToken(generateTokenRequest);
+            if (token.StatusCode == 200)
+            {
+                return Results.Json(token.Response);
+            }
+            else
+            {
+                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object>{{"errorCode",token.StatusCode}});
+            }
+        }
+
+        if (tokenRequest.GrantType == "client_credentials")
+        {
+            var token = await _tokenService.GenerateTokenWithClientCredentials(generateTokenRequest);
+            if (token.StatusCode == 200)
+            {
+                return Results.Json(token.Response);
+            }
+            else
+            {
+                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object>{{"errorCode",token.StatusCode}});
+            }
+        }
+
+        return Results.Problem(detail: "Invalid Grant Type", statusCode: 480);
     }
 
     [HttpGet("private/CheckScope/{reference}/{scope}")]
