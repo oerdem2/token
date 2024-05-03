@@ -1,6 +1,5 @@
 
 
-using System.Dynamic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -13,9 +12,7 @@ using amorphie.token.Services.Consent;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.TransactionHandler;
-using Google.Protobuf.WellKnownTypes;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.IdentityModel.Tokens;
 
 namespace amorphie.token.Services.Token;
@@ -28,6 +25,7 @@ public class TokenService : ServiceBase, ITokenService
     private readonly DatabaseContext _databaseContext;
     private readonly ITransactionService _transactionService;
     private readonly IClaimHandlerService _claimService;
+    private readonly IConsentService _consentService;
 
     private TokenInfoDetail _tokenInfoDetail;
     private GenerateTokenRequest? _tokenRequest;
@@ -40,7 +38,7 @@ public class TokenService : ServiceBase, ITokenService
     private IProfileService? _profileService;
     private string _deviceId;
     public TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, IClaimHandlerService claimService,
-    ITransactionService transactionService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext
+    ITransactionService transactionService,IConsentService consentService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext
     , IInternetBankingUserService internetBankingUserService, IProfileService profileService, IbDatabaseContext ibContext) : base(logger, configuration)
     {
         _clientService = clientService;
@@ -51,6 +49,7 @@ public class TokenService : ServiceBase, ITokenService
         _claimService = claimService;
         _internetBankingUserService = internetBankingUserService;
         _profileService = profileService;
+        _consentService = consentService;
         _ibContext = ibContext;
         _tokenInfoDetail = new();
     }
@@ -104,7 +103,7 @@ public class TokenService : ServiceBase, ITokenService
             if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
             {
                 claims.Add(new Claim("client_id", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
-                claims.Add(new Claim("email", _profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address));
+                claims.Add(new Claim("email", _profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
                 claims.Add(new Claim("phone_number", _profile.data.phones.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString()));
                 claims.Add(new Claim("role", "FullAuthorized"));
                 claims.Add(new Claim("credentials", "IsInternetCustomer###1"));
@@ -164,6 +163,17 @@ public class TokenService : ServiceBase, ITokenService
         try
         {
             accessDuration = TimeHelper.ConvertStrDurationToSeconds(accessInfo.duration!);
+            if(_consent is not null)
+            {
+                if(_consent.consentType.Equals("OB_Account"))
+                {
+                    accessDuration = 24 * 60 * 60; // 1 day
+                }
+                if(_consent.consentType.Equals("OB_Payment"))
+                {
+                    accessDuration = 5 * 60; // 5 min
+                }
+            }
             _tokenInfoDetail.AccessTokenDuration = accessDuration;
         }
         catch (FormatException ex)
@@ -174,7 +184,6 @@ public class TokenService : ServiceBase, ITokenService
 
         if (accessInfo.claims != null && accessInfo.claims.Count() > 0 && !_tokenRequest.GrantType.Equals("client_credentials"))
         {
-
             var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user, _profile, _consent);
             tokenClaims.AddRange(populatedClaims);
             if (_tokenRequest.Scopes.Contains("temporary"))
@@ -183,14 +192,19 @@ public class TokenService : ServiceBase, ITokenService
             if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
             {
                 tokenClaims.Add(new Claim("client_id", _client.code ?? _client.id));
-                tokenClaims.Add(new Claim("email", _profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address));
+                tokenClaims.Add(new Claim("email", _profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
                 tokenClaims.Add(new Claim("phone_number", _profile.data.phones.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString()));
-                tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                string role = _user.Reference == "99999999998"?"Viewer":"FullAuthorized";
+                tokenClaims.Add(new Claim("role", role));
                 tokenClaims.Add(new Claim("credentials", "IsInternetCustomer###1"));
                 tokenClaims.Add(new Claim("credentials", "IsAnonymous###1"));
                 tokenClaims.Add(new Claim("azp", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                tokenClaims.Add(new Claim("uppercase_name", _profile?.data?.profile?.uppercase_name ?? string.Empty));
+                tokenClaims.Add(new Claim("uppercase_surname", _profile?.data?.profile?.uppercase_surname ?? string.Empty));
                 tokenClaims.Add(new Claim("logon_ip", _transactionService.IpAddress ?? "undefined"));
             }
+
+            
         }
         tokenClaims.Add(new Claim("jti", _tokenInfoDetail.AccessTokenId.ToString()));
         if (_user != null)
@@ -212,7 +226,7 @@ public class TokenService : ServiceBase, ITokenService
 
 
         _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.AccessToken, _tokenInfoDetail.AccessTokenId, _client.id!, DateTime.UtcNow.AddSeconds(accessDuration), true, _user?.Reference ?? ""
-        , scopes, _user?.Id ?? null, null, _tokenRequest!.ConsentId, _deviceId));
+        , scopes, _user?.Id ?? null, null, _consent.id, _deviceId));
 
         return access_token;
     }
@@ -236,6 +250,17 @@ public class TokenService : ServiceBase, ITokenService
         try
         {
             refreshDuration = TimeHelper.ConvertStrDurationToSeconds(refreshInfo.duration!);
+            if(_consent is not null)
+            {
+                if(_consent.consentType.Equals("OB_Account"))
+                {
+                    refreshDuration = 90 * 24 * 60 * 60; // Until Consent Expires
+                }
+                if(_consent.consentType.Equals("OB_Payment"))
+                {
+                    refreshDuration = 15 * 24 * 60 * 60; // 15 day
+                }
+            }
             _tokenInfoDetail.RefreshTokenDuration = refreshDuration;
         }
         catch (FormatException ex)
@@ -327,6 +352,13 @@ public class TokenService : ServiceBase, ITokenService
                 Detail = "Related Access Token Not Found",
                 Response = null
             };
+        }
+        
+        //OpenBanking Set Consent
+        if(relatedToken.ConsentId is Guid)
+        {
+            var consent = await _consentService.GetConsent(relatedToken.ConsentId.Value);
+            _consent = consent.Response;
         }
 
         tokenRequest.Scopes = relatedToken.Scopes;
@@ -460,6 +492,7 @@ public class TokenService : ServiceBase, ITokenService
             };
         }
 
+        await _databaseContext.Tokens.Where(t => t.Reference == _tokenRequest.Username && t.IsActive).ExecuteUpdateAsync(s => s.SetProperty(t => t.IsActive, false));
         await PersistTokenInfo();
 
         return new ServiceResponse<TokenResponse>()

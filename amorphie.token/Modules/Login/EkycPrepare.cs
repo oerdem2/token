@@ -19,6 +19,7 @@ public static class EkycPrepare
         var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
 
         dynamic dataChanged = Newtonsoft.Json.JsonConvert.DeserializeObject<ExpandoObject>(dataBody.ToString());
+        dynamic dataChanged = Newtonsoft.Json.JsonConvert.DeserializeObject<ExpandoObject>(dataBody.ToString());
 
         dynamic targetObject = new System.Dynamic.ExpandoObject();
         targetObject.Data = dataChanged;
@@ -67,6 +68,10 @@ public static class EkycPrepare
         dataChanged.additionalData.customerSurname = registerResult.Surname;
 
 
+        targetObject.Data = dataChanged;
+        targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
+        targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
+        variables.Add($"TRX{transitionName.ToString().Replace("-", "")}", targetObject);
         targetObject.Data = dataChanged;
         targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
         targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());

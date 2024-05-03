@@ -19,6 +19,7 @@ public static class DisableUser
     IInternetBankingUserService internetBankingUserService
     )
     {
+        var langCode = ErrorHelper.GetLangCode(body);
         var transactionId = body.GetProperty("InstanceId").ToString();
 
         var requestBodySerialized = body.GetProperty("requestBody").ToString();
@@ -49,7 +50,7 @@ public static class DisableUser
 
 
         variables.status = true;
-
+        variables.message = ErrorHelper.GetErrorMessage(LoginErrors.BlockedUser, langCode);
         return Results.Ok(variables);
     }
 

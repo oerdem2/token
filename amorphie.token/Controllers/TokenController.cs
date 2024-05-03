@@ -15,6 +15,7 @@ using amorphie.token.core.Extensions;
 using System.Security.Claims;
 using Newtonsoft.Json.Linq;
 using MongoDB.Bson.IO;
+using Newtonsoft.Json;
 
 
 namespace amorphie.token.core.Controllers;
@@ -58,9 +59,6 @@ public class TokenController : Controller
     {
         try
         {
-            Console.WriteLine("Remove Device Called");
-            Console.WriteLine("Remove Device Arg: " + clientId);
-            Console.WriteLine("Remove Device Arg: " + reference);
             await _userService.RemoveDevice(reference, clientId);
 
             return Ok();
@@ -148,27 +146,7 @@ public class TokenController : Controller
         return StatusCode(500);
     }
 
-    [HttpPost]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    public async Task<IActionResult> JsonTest()
-    {
 
-        await Task.CompletedTask;
-        var body = "[{\"test\":\"mest\"}]";
-
-        JToken t = Newtonsoft.Json.JsonConvert.DeserializeObject<JToken>(body);
-        if (t.Type == JTokenType.Object)
-        {
-            int i = 5;
-        }
-        if (t.Type == JTokenType.Array)
-        {
-            int i = 5;
-        }
-
-        JObject k = t.ToObject<JObject>();
-        return Ok();
-    }
 
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> Demo()
@@ -193,9 +171,7 @@ public class TokenController : Controller
     [Consumes("application/x-www-form-urlencoded")]
     public async Task<IResult> Introspect([FromForm] string token, [FromQuery] bool isTemporary = false)
     {
-        foreach (var f in HttpContext.Request.Form)
-        {
-        }
+        
         var temporary = JwtHelper.GetClaim(token, "isTemporary");
 
         if (temporary != null && temporary.Equals("1"))
@@ -207,7 +183,7 @@ public class TokenController : Controller
         }
 
         var jti = JwtHelper.GetClaim(token, "jti");
-
+        
         if (jti == null)
             return Results.Json(new { active = false });
 
@@ -215,6 +191,7 @@ public class TokenController : Controller
             return Results.Json(new { active = false });
 
         var accessTokenInfo = _databaseContext.Tokens.FirstOrDefault(t => t.Id == Guid.Parse(jti));
+        
         if (accessTokenInfo == null)
             return Results.Json(new { active = false });
         if (accessTokenInfo.TokenType != TokenType.AccessToken || !accessTokenInfo.IsActive)
@@ -384,7 +361,6 @@ public class TokenController : Controller
     [SwaggerResponse(200, "Logons Returned Successfully", typeof(LogonDto))]
     public async Task<IActionResult> GetLastLogonsList(string clientId, string reference, int page = 0, int pageSize = 20)
     {
-        Console.WriteLine("Environment : " + Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"));
         var lastSuccessLogon = await _databaseContext.Logon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference) && l.LogonStatus == LogonStatus.Completed).Select(l => new LogonDetailDto { LogonDate = l.CreatedAt, Channel = "ON Mobil", Status = 1 }).ToListAsync();
         var lastFailedLogon = await _databaseContext.FailedLogon.OrderByDescending(l => l.CreatedAt).Where(l => l.ClientId.Equals(clientId) && l.Reference.Equals(reference)).Select(l => new LogonDetailDto { LogonDate = l.CreatedAt, Channel = "ON Mobil", Status = 0 }).ToListAsync();
         lastFailedLogon.AddRange(lastSuccessLogon);
@@ -437,6 +413,7 @@ public class TokenController : Controller
             generateTokenRequest.GrantType = "authorization_code";
             generateTokenRequest.Scopes = new List<string>() { "open-banking" };
             generateTokenRequest.Code = openBankingTokenRequest.AuthCode;
+            generateTokenRequest.ConsentId = consent.Response?.id;
 
             var token = await _tokenService.GenerateOpenBankingToken(generateTokenRequest, consent.Response);
             if (token.StatusCode != 200)

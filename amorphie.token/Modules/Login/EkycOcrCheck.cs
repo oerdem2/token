@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace amorphie.token;
 
 public static class EkycOcrCheck
+public static class EkycOcrCheck
 {
     [ApiExplorerSettings(IgnoreApi = true)]
     public static async Task<IResult> Check(

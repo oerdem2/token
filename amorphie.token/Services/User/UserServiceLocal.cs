@@ -157,4 +157,156 @@ public class UserServiceLocal : IUserService
             throw new ServiceException((int)Errors.InvalidUser, "User Endpoint Did Not Response Successfully");
         }
     }
+
+    public async Task<ServiceResponse> MigrateSecurityQuestion(MigrateSecurityQuestionRequest migrateSecurityQuestionRequest)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var request = new StringContent(JsonSerializer.Serialize(migrateSecurityQuestionRequest), Encoding.UTF8, "application/json");
+        var httpResponseMessage = await httpClient.PostAsync(
+            "userSecurityQuestion/migrate", request);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            return new ServiceResponse() { StatusCode = 200 };
+        }
+        else
+        {
+            return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode, Detail = "Migrate Security Question Error" };
+        }
+    }
+
+    public async Task<ServiceResponse> MigrateSecurityImage(MigrateSecurityImageRequest migrateSecurityImageRequest)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var request = new StringContent(JsonSerializer.Serialize(migrateSecurityImageRequest), Encoding.UTF8, "application/json");
+        var httpResponseMessage = await httpClient.PostAsync(
+            "userSecurityImage/migrate", request);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            return new ServiceResponse() { StatusCode = 200 };
+        }
+        else
+        {
+            return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode, Detail = "Migrate Security Image Error" };
+        }
+    }
+
+    public async Task<ServiceResponse> MigrateSecurityQuestions(List<SecurityQuestionRequestDto> securityQuestionRequestDtos)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var request = new StringContent(JsonSerializer.Serialize(securityQuestionRequestDtos), Encoding.UTF8, "application/json");
+        var httpResponseMessage = await httpClient.PostAsync(
+            "userSecurityQuestion/migrateQuestions", request);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            return new ServiceResponse() { StatusCode = 200 };
+        }
+        else
+        {
+            return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode, Detail = "Migrate Security Questions Error" };
+        }
+    }
+
+    public async Task<ServiceResponse> MigrateSecurityImages(List<SecurityImageRequestDto> securityImageRequestDtos)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var request = new StringContent(JsonSerializer.Serialize(securityImageRequestDtos), Encoding.UTF8, "application/json");
+        var httpResponseMessage = await httpClient.PostAsync(
+            "userSecurityImage/migrateImages", request);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            return new ServiceResponse() { StatusCode = 200 };
+        }
+        else
+        {
+            return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode, Detail = "Migrate Security Images Error" };
+        }
+    }
+
+    public async Task<ServiceResponse<IEnumerable<SecurityQuestionDto>>> GetSecurityQuestions()
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var httpResponseMessage = await httpClient.GetAsync(
+            "securityQuestion/getAll");
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            var questions = await httpResponseMessage.Content.ReadFromJsonAsync<IEnumerable<SecurityQuestionDto>>();
+            if (questions == null)
+            {
+                return new ServiceResponse<IEnumerable<SecurityQuestionDto>>() { StatusCode = 200, Response = questions };
+            }
+            return new ServiceResponse<IEnumerable<SecurityQuestionDto>>() { StatusCode = 200, Response = questions };
+        }
+        else
+        {
+            throw new ServiceException(500, "User Endpoint Did Not Response Successfully");
+        }
+    }
+
+    public async Task<ServiceResponse<IEnumerable<SecurityImageDto>>> GetSecurityImages()
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var httpResponseMessage = await httpClient.GetAsync(
+            "securityImage/getAll");
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            var images = await httpResponseMessage.Content.ReadFromJsonAsync<IEnumerable<SecurityImageDto>>();
+            if (images == null)
+            {
+                return new ServiceResponse<IEnumerable<SecurityImageDto>>() { StatusCode = 404, Response = images };
+            }
+            return new ServiceResponse<IEnumerable<SecurityImageDto>>() { StatusCode = 200, Response = images };
+        }
+        else
+        {
+            throw new ServiceException(500, "User Endpoint Did Not Response Successfully");
+        }
+    }
+
+    public async Task<ServiceResponse<UserSecurityQuestionDto>> GetLastSecurityQuestion(Guid id)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var httpResponseMessage = await httpClient.GetAsync(
+            "userSecurityQuestion/getLastSecurityQuestion/"+id);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            var lastQuestion = await httpResponseMessage.Content.ReadFromJsonAsync<UserSecurityQuestionDto>();
+            if (lastQuestion == null)
+            {
+                return new ServiceResponse<UserSecurityQuestionDto>() { StatusCode = 404, Response = lastQuestion };
+            }
+            return new ServiceResponse<UserSecurityQuestionDto>() { StatusCode = 200, Response = lastQuestion };
+        }
+        else
+        {
+            throw new ServiceException(500, "User Endpoint Did Not Response Successfully");
+        }
+    }
+
+    public async Task<ServiceResponse<UserSecurityImageDto>> GetLastSecurityImage(Guid id)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var httpResponseMessage = await httpClient.GetAsync(
+            "userSecurityImage/getLastSecurityImage/"+id);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            var lastImage = await httpResponseMessage.Content.ReadFromJsonAsync<UserSecurityImageDto>();
+            if (lastImage == null)
+            {
+                return new ServiceResponse<UserSecurityImageDto>() { StatusCode = 404, Response = lastImage };
+            }
+            return new ServiceResponse<UserSecurityImageDto>() { StatusCode = 200, Response = lastImage };
+        }
+        else
+        {
+            throw new ServiceException(500, "User Endpoint Did Not Response Successfully");
+        }
+    }
 }

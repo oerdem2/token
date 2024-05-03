@@ -15,7 +15,7 @@ namespace amorphie.token.Modules.Login
         [FromBody] dynamic body,
         [FromServices] IbDatabaseContext ibContext,
         [FromServices] IPasswordRememberService passwordRememberService
-       
+
         )
         {
             // await Task.CompletedTask;
@@ -55,24 +55,25 @@ namespace amorphie.token.Modules.Login
                 if (securityQuestionDefinition == null || securityQuestion?.Status != 10)
                 {
                     variables.Add("status", true);
-                    
+
                 }
                 else
                 {
-                    variables.Add("status", true);            
+                    variables.Add("status", true);
                     resultList.Add("PAGE_QUESTION");
                 }
             }
 
             var hasCards = await passwordRememberService.HasCardAsync(request.Username);
-            if(hasCards.Response){
+            if (hasCards.Response)
+            {
                 resultList.Add("PAGE_CARD");
             }
 
-            variables.Add("pages",resultList);
+            variables.Add("pages", resultList);
 
 
-        
+
 
             return Results.Ok(variables);
         }
