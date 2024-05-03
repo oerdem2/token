@@ -19,7 +19,7 @@ public static class EkycPrepare
         var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
 
         dynamic dataChanged = Newtonsoft.Json.JsonConvert.DeserializeObject<ExpandoObject>(dataBody.ToString());
-        dynamic dataChanged = Newtonsoft.Json.JsonConvert.DeserializeObject<ExpandoObject>(dataBody.ToString());
+       
 
         dynamic targetObject = new System.Dynamic.ExpandoObject();
         targetObject.Data = dataChanged;
