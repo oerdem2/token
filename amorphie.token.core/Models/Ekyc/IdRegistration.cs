@@ -1,4 +1,6 @@
-﻿namespace amorphie.token.core;
+﻿using amorphie.token.core.Models.Profile;
+
+namespace amorphie.token.core;
 
  public class IdRegistration
  {
@@ -44,27 +46,51 @@
          }
      }
 
-     public IdRegistration(KpsIdentity kpsIdentity)
+    //       public static string GetIdentityType(KpsCertificationType? kpsCertificationType)
+    //  {
+    //      switch (kpsCertificationType)
+    //      {
+    //          case KpsCertificationType.NewCertificate:
+    //              return "TC Kimlik Kartı";
+    //          case KpsCertificationType.OldCertificate:
+    //              return "TC Kimlik Kartı";
+    //          case KpsCertificationType.ForeignCertificate:
+    //              return "Yabancı Kimlik Kartı";
+    //          case KpsCertificationType.TemporaryCertificate:
+    //              return "Geçici Kimlik Kartı";
+    //          case KpsCertificationType.BlueCard:
+    //              return "Mavi Kartı";
+    //          case KpsCertificationType.NewBlueCard:
+    //              return "Yeni Mavi Kart";
+    //          case KpsCertificationType.TemporaryBlueCard:
+    //              return "Yeni Mavi Kart Geçici Kimlik";
+    //          default:
+    //              return "Bilinmiyor";
+    //      }
+    //  }
+
+     public IdRegistration(ProfileResponse profile)
      {
-         FatherName = kpsIdentity?.FatherName;
-         MotherName = kpsIdentity?.MotherName;
-         RegistrationPlace = kpsIdentity?.CityName;
-         RegistrationPlaceFamilyRow = kpsIdentity?.RegistrationPlaceFamilyRowNumber.ToString();
-         RegistrationPlacePersonalRow = kpsIdentity?.RegistrationPlacePersonalRowNumber.ToString();
-         SerialNo = kpsIdentity?.IdentificationCardSerialNumber;
-         RecordNo = kpsIdentity?.RecordNumber.ToString();
-         IdentityType = IdRegistration.GetIdentityType(kpsIdentity?.CertificationType);
-         IdentityNo = kpsIdentity?.CitizenshipNumber.ToString();
-         DocumentNo = kpsIdentity?.IdentificationCardSerialNumber.ToString();
-         Name = kpsIdentity?.Name;
-         Surname = kpsIdentity?.Surname;
-         Gender = kpsIdentity?.GenderDescription;
-         BirthDate = kpsIdentity?.BirthDate != null ? kpsIdentity.BirthDate.Value.ToString("dd.MM.yyyy") : "";
-         BirthPlace = kpsIdentity?.BirthPlace;
+        var address = profile.addresses.FirstOrDefault();
+         FatherName = profile.fatherName;
+         MotherName = profile.motherName;
+         RegistrationPlace = address?.cityName.ToString();
+        //  RegistrationPlaceFamilyRow = profile. //profile?.RegistrationPlaceFamilyRowNumber.ToString();
+        //  RegistrationPlacePersonalRow = profile?.RegistrationPlacePersonalRowNumber.ToString();
+        //  SerialNo = profile.identitySerialNo;
+        //  RecordNo = profile.identitySeries;
+        //  IdentityType = profile.identityType;
+        //  IdentityNo = profile.identityNo;
+        //  DocumentNo = profile.identitySerialNo.ToString();
+         Name = profile?.customerName;
+         Surname = profile?.surname;
+         Gender = profile?.gender;
+         BirthDate = profile?.birthDate != null ? profile.birthDate.ToString("dd.MM.yyyy") : "";
+         BirthPlace = profile?.birthPlace;
          Nationality = "TR";
-         IssuedBy = kpsIdentity?.GivingAuthority;
-         IssuedDate = kpsIdentity?.IssueDate != null ? kpsIdentity.IssueDate.Value.ToString("dd.MM.yyyy") : "";
-         ExpireDate = kpsIdentity?.ValidTillDate != null ? kpsIdentity.ValidTillDate.Value.ToString("dd.MM.yyyy") : "";
+        //  IssuedBy = profile?.representativeCode;
+        //  IssuedDate =  "";
+        //  ExpireDate = "";
      }
 
 

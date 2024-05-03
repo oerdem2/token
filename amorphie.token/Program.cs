@@ -129,6 +129,7 @@ internal class Program
         builder.Services.AddScoped<ICardHandler, CardHandler>();
         builder.Services.AddTransient<IPasswordRememberService, PasswordRememberService>();
         builder.Services.AddTransient<IEkycProvider, EkycProvider>();
+        builder.Services.AddTransient<IEkycService, EkycService>();
 
         builder.Services.AddRefitClient<IProfile>()
         .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["ProfileBaseAddress"]!))
