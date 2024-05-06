@@ -105,12 +105,16 @@ public class TokenService : ServiceBase, ITokenService
 
         if (identityInfo.claims != null && identityInfo.claims.Count() > 0)
         {
+            if(_tokenRequest.GrantType.Equals("client_credentials"))
+            {
+                identityInfo.claims = identityInfo.claims.Where(c => !IsUserBasedClaim(c)).ToList();
+            }
             var populatedClaims = await _claimService.PopulateClaims(identityInfo.claims, _user, _profile);
             if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
             {
                 claims.Add(new Claim("client_id", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
-                claims.Add(new Claim("email", _profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
-                claims.Add(new Claim("phone_number", _profile.data.phones.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString()));
+                claims.Add(new Claim("email", _profile?.data?.emails?.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
+                claims.Add(new Claim("phone_number", _profile?.data?.phones?.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString()));
                 claims.Add(new Claim("role", "FullAuthorized"));
                 claims.Add(new Claim("credentials", "IsInternetCustomer###1"));
                 claims.Add(new Claim("credentials", "IsAnonymous###1"));
@@ -205,12 +209,12 @@ public class TokenService : ServiceBase, ITokenService
                 tokenClaims.Add(new Claim("isTemporary", "1"));
 
             tokenClaims.Add(new Claim("client_id", _client.code ?? _client.id));
-            
+
             if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
             {
-                tokenClaims.Add(new Claim("email", _profile.data.emails.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
-                tokenClaims.Add(new Claim("phone_number", _profile.data.phones.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString() ?? ""));
-                if(_user.Reference == "99999999998")
+                tokenClaims.Add(new Claim("email", _profile?.data?.emails?.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
+                tokenClaims.Add(new Claim("phone_number", _profile?.data?.phones?.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString() ?? ""));
+                if(_user?.Reference == "99999999998")
                 {
                     tokenClaims.Add(new Claim("role", "Viewer"));
                 }
