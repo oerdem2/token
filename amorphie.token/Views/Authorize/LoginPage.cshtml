@@ -27,8 +27,9 @@
         </div>
       </div>
       <div class="content two-columns mb-2 has-divider">
-        <form id="login-form" asp-action="LoginFlow" asp-controller="Login" method="post">
+        <form id="login-form" asp-action="Login" asp-controller="Login" method="post">
             <input type="hidden" asp-for="TransactionId" />
+            <input type="hidden" asp-for="Code" />
             <div class="content-inner">
             <div class="title mb-4">
                 Bireysel İnternet Bankacılığına Hoşgeldiniz
