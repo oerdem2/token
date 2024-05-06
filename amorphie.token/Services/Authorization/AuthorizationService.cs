@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using amorphie.token.data;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.Consent;
+using amorphie.token.core.Models.Profile;
 
 namespace amorphie.token.Services.Authorization;
 
@@ -22,14 +23,16 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         _daprClient = daprClient;
     }
 
-    public async Task AssignUserToAuthorizationCode(LoginResponse user, string authorizationCode)
+    public async Task<AuthorizationCode> AssignUserToAuthorizationCode(LoginResponse user, string authorizationCode,SimpleProfileResponse profile)
     {
         var authorizationCodeInfo = await _daprClient.GetStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"], authorizationCode);
 
         var newAuthorizationCodeInfo = authorizationCodeInfo.MapTo<AuthorizationCode>();
         newAuthorizationCodeInfo.Subject = user;
+        newAuthorizationCodeInfo.Profile = profile;
 
-        await _daprClient.SaveStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"], authorizationCode, newAuthorizationCodeInfo);
+        await _daprClient.SaveStateAsync(Configuration["DAPR_STATE_STORE_NAME"], authorizationCode, newAuthorizationCodeInfo);
+        return await _daprClient.GetStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"], authorizationCode);
     }
 
 
@@ -58,7 +61,12 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
                 };
             }
 
+            if(request.Scope.Count() == 1)
+            {
+                request.Scope = request.Scope[0].Split(" ");
+            }
             var requestedScopes = request.Scope!.ToList();
+            
 
             if (!requestedScopes.All(client!.allowedscopetags!.Contains))
             {
@@ -79,7 +87,8 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
                 CreationTime = DateTime.UtcNow,
                 Subject = request.User ?? null,
                 ConsentId = request.ConsentId?.ToString(),
-                Nonce = request.Nonce
+                Nonce = request.Nonce,
+                State = request.State
             };
 
             var code = await GenerateAuthorizationCode(authCode);
@@ -115,7 +124,7 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         rand.GetBytes(bytes);
         var code = Base64UrlEncoder.Encode(bytes);
 
-        await _daprClient.SaveStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"], code, authorizationCode);
+        await _daprClient.SaveStateAsync(Configuration["DAPR_STATE_STORE_NAME"], code, authorizationCode);
 
         return code;
     }

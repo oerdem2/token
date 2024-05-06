@@ -9,6 +9,7 @@ using amorphie.token.Services.Consent;
 using amorphie.token.Services.TransactionHandler;
 using amorphie.token.core.Models.Workflow;
 using amorphie.token.core.Constants;
+using Microsoft.Identity.Client;
 
 namespace amorphie.token.core.Controllers;
 
@@ -211,19 +212,18 @@ public class AuthorizeController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> Authorize(AuthorizationRequest authorizationRequest)
     {
-        using var httpClient = new HttpClient();
-        var workflowRequest = new WorkflowPostTransitionRequest
+        var authorize = await _authorizationService.Authorize(new AuthorizationServiceRequest
         {
-            EntityData = JsonSerializer.Serialize(authorizationRequest),
-            GetSignalRHub = true
-        };
+            ClientId = authorizationRequest.ClientId,
+            RedirectUri = authorizationRequest.RedirectUri,
+            ResponseType = authorizationRequest.ResponseType,
+            Scope = authorizationRequest.Scope,
+            State = authorizationRequest.State
+        });
 
-        StringContent request = new(JsonSerializer.Serialize(workflowRequest), Encoding.UTF8, "application/json");
-        request.Headers.Add("User", Guid.NewGuid().ToString());
-        request.Headers.Add("Behalf-Of-User", Guid.NewGuid().ToString());
 
-        var httpResponse = await httpClient.PostAsync(_configuration["workflowAuthorizeUri"]!.Replace("{{recordId}}", Guid.NewGuid().ToString()), request);
-        return View("Waiting");
+        return View("LoginPage", new Models.Account.Login(){Code = authorize.Response.Code});
+
     }
 
 

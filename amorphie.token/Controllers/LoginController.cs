@@ -49,15 +49,6 @@ public class LoginController : Controller
         _ibContext = ibContext;
     }
 
-    [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpGet("public/Authorize")]
-    public async Task<IActionResult> OpenBankingAuthorize(Guid riza_no)
-    {
-        var consent = await _consentService.GetConsent(riza_no);
-
-        return View();
-    }
-
 
 
     [ApiExplorerSettings(IgnoreApi = true)]
@@ -89,9 +80,10 @@ public class LoginController : Controller
             if (user?.State.ToLower() == "active" || user?.State.ToLower() == "new")
             {
                 HttpContext.Session.SetString("LoggedUser", JsonSerializer.Serialize(user));
-                await _authorizationService.AssignUserToAuthorizationCode(user, loginRequest.Code!);
-
-                return Redirect($"{loginRequest.RedirectUri}&code={loginRequest.Code}");
+                var profileResponse = await _profileService.GetCustomerSimpleProfile(user.Reference);
+                var authCodeInfo = await _authorizationService.AssignUserToAuthorizationCode(user, loginRequest.Code!,profileResponse.Response);
+                
+                return Redirect($"{authCodeInfo.RedirectUri}?code={loginRequest.Code}&response_type=code&state={authCodeInfo.State}");
             }
             else
             {
