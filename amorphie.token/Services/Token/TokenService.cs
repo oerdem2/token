@@ -214,7 +214,7 @@ public class TokenService : ServiceBase, ITokenService
             {
                 tokenClaims.Add(new Claim("email", _profile?.data?.emails?.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
                 tokenClaims.Add(new Claim("phone_number", _profile?.data?.phones?.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString() ?? ""));
-                if(_user.Reference == "99999999998")
+                if(_user?.Reference == "99999999998")
                 {
                     tokenClaims.Add(new Claim("role", "Viewer"));
                 }
