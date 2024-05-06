@@ -64,6 +64,13 @@ namespace amorphie.token.core.Constants
             {"en-US","You cannot reuse your previous 5 passwords, please set another password."},
         };
 
+        public static readonly Dictionary<string, string> NotAuthorized = new Dictionary<string, string>()
+        {
+            {"tr-TR","Giriş yapma yetkiniz yok."},
+            {"en-EN","You are not authorized to login."},
+            {"en-US","You are not authorized to login."},
+        };
+
         public static readonly Dictionary<LoginErrors, Dictionary<string, string>> LoginErrorMap = new()
         {
             { LoginErrors.UserNotFound, LoginUserNotFound },
@@ -73,6 +80,7 @@ namespace amorphie.token.core.Constants
             { LoginErrors.BlockedUser, LoginBlockedUser },
             { LoginErrors.BlockUser, LoginBlockUser },
             { LoginErrors.SamePassword, SamePassword },
+            { LoginErrors.NotAuthorized, NotAuthorized },
             { LoginErrors.General, General }
         };
     }
