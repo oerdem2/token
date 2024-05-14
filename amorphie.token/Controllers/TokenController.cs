@@ -19,6 +19,8 @@ using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using System.Security.Cryptography;
 using System.Net.Mime;
+using amorphie.token.Modules.Login;
+using Amazon.Internal;
 
 
 namespace amorphie.token.core.Controllers;
@@ -330,6 +332,14 @@ public class TokenController : Controller
         _transactionService.IpAddress = ipAddress;
 
         var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
+        if(generateTokenRequest.Scopes?.Count() == 0)
+        {
+            if(!string.IsNullOrEmpty(tokenRequest.scope))
+            {
+                generateTokenRequest.Scopes = tokenRequest.scope.Split(" ");
+            }
+        }
+
         if (tokenRequest.GrantType == "device")
         {
             var token = await _tokenService.GenerateTokenWithDevice(generateTokenRequest);
@@ -409,6 +419,14 @@ public class TokenController : Controller
         _transactionService.IpAddress = ipAddress;
 
         var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
+        if(generateTokenRequest.Scopes?.Count() == 0)
+        {
+            if(!string.IsNullOrEmpty(tokenRequest.scope))
+            {
+                generateTokenRequest.Scopes = tokenRequest.scope.Split(" ");
+            }
+        }
+
         if (tokenRequest.GrantType == "device")
         {
             var token = await _tokenService.GenerateTokenWithDevice(generateTokenRequest);
