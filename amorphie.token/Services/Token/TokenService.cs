@@ -37,19 +37,21 @@ public class TokenService : ServiceBase, ITokenService
     private SimpleProfileResponse? _profile;
     private IInternetBankingUserService? _internetBankingUserService;
     private IbDatabaseContext _ibContext;
+    private IbSecurityDatabaseContext _ibSecurityContext;
     private IProfileService? _profileService;
     private IRoleService? _roleService;
     private ConsentDto _selectedConsent;
     private RoleDefinitionDto _role;
     private string _deviceId;
     public TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, IClaimHandlerService claimService,
-    ITransactionService transactionService,IRoleService roleService, IConsentService consentService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext
+    ITransactionService transactionService,IRoleService roleService, IConsentService consentService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext,IbSecurityDatabaseContext securityContext
     , IInternetBankingUserService internetBankingUserService, IProfileService profileService, IbDatabaseContext ibContext) : base(logger, configuration)
     {
         _clientService = clientService;
         _userService = userService;
         _daprClient = daprClient;
         _databaseContext = databaseContext;
+        _ibSecurityContext = securityContext;
         _transactionService = transactionService;
         _claimService = claimService;
         _internetBankingUserService = internetBankingUserService;
@@ -550,7 +552,7 @@ public class TokenService : ServiceBase, ITokenService
             Response = tokenResponse
         };
     }
-
+    
     public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithDevice(GenerateTokenRequest tokenRequest)
     {
         _tokenRequest = tokenRequest;
@@ -770,7 +772,7 @@ public class TokenService : ServiceBase, ITokenService
                 Detail = "Client is Not Authorized For Requested Scopes"
             };
         }
-
+    
         var userResponse = await _internetBankingUserService.GetUser(_tokenRequest.Username!);
         if (userResponse.StatusCode != 200)
         {
@@ -947,6 +949,92 @@ public class TokenService : ServiceBase, ITokenService
         };
     }
 
+    public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithSystemUser(GenerateTokenRequest tokenRequest)
+    {
+        _tokenRequest = tokenRequest;
+        ServiceResponse<ClientResponse> clientResponse;
+        if (Guid.TryParse(_tokenRequest.ClientId!, out Guid _))
+        {
+            clientResponse = await _clientService.ValidateClient(_tokenRequest.ClientId!, _tokenRequest.ClientSecret!);
+        }
+        else
+        {
+            clientResponse = await _clientService.ValidateClientByCode(_tokenRequest.ClientId!, _tokenRequest.ClientSecret!);
+        }
+
+        if (clientResponse.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = clientResponse.StatusCode,
+                Detail = clientResponse.Detail
+            };
+        }
+
+        _client = clientResponse.Response;
+        if (!_client!.allowedgranttypes!.Any(g => g.GrantType == tokenRequest.GrantType))
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "Client Has No Authorize To Use Requested Grant Type"
+            };
+        }
+
+        var requestedScopes = tokenRequest.Scopes!.ToList();
+
+        if (!requestedScopes.All(_client.allowedscopetags!.Contains))
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 473,
+                Detail = "Client is Not Authorized For Requested Scopes"
+            };
+        }
+
+        var user = await _ibSecurityContext.AspNetUsers.AsNoTracking().FirstOrDefaultAsync(u => u.UserName.Equals(_tokenRequest.Username));
+        if(user is not {})
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 404,
+                Detail = "User Not Found"
+            };
+        }
+
+        var passwordHasher = new PasswordHasher();
+        var isVerified = passwordHasher.VerifyHashedPassword(user!.PasswordHash!, _tokenRequest.Password!);
+        //Consider SuccessRehashNeeded
+        if (isVerified != PasswordVerificationResult.Success)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "Password Doesn't Match"
+            };
+        }
+
+        
+        var tokenResponse = await GenerateTokenResponse();
+
+        if (tokenResponse.IdToken == string.Empty && tokenResponse.AccessToken == string.Empty)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 500,
+                Detail = "Access Token And Id Token Couldn't Be Generated"
+            };
+        }
+
+        await PersistTokenInfo();
+
+        return new ServiceResponse<TokenResponse>()
+        {
+            StatusCode = 200,
+            Response = tokenResponse
+        };
+    }
+
     public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithClientCredentials(GenerateTokenRequest tokenRequest)
     {
         _tokenRequest = tokenRequest;
@@ -1014,8 +1102,17 @@ public class TokenService : ServiceBase, ITokenService
     public async Task<ServiceResponse<TokenResponse>> GenerateToken(GenerateTokenRequest tokenRequest)
     {
         _tokenRequest = tokenRequest;
+        ServiceResponse<ClientResponse> clientResponse;
 
-        var clientResponse = await _clientService.ValidateClient(tokenRequest.ClientId!, tokenRequest.ClientSecret!);
+        if(Guid.TryParse(tokenRequest.ClientId, out Guid _))
+        {
+            clientResponse = await _clientService.ValidateClient(tokenRequest.ClientId!, tokenRequest.ClientSecret!);
+        }
+        else
+        {
+            clientResponse = await _clientService.ValidateClientByCode(tokenRequest.ClientId!, tokenRequest.ClientSecret!);
+        }
+        
         if (clientResponse.StatusCode != 200)
         {
             return new ServiceResponse<TokenResponse>()

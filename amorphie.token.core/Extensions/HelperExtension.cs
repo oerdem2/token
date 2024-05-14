@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace amorphie.token.core.Extensions
@@ -32,7 +33,24 @@ namespace amorphie.token.core.Extensions
             return returnString.Trim();
         }
 
+        public static string GetWithRegexSingle(this string content, string regex, int groupIndex)
+        {
+            var fixedString = Regex.Replace(content, @"\t|\n|\r", "");
+            return Regex.Match(fixedString, regex).Groups[groupIndex].Value;
+        }
 
+        public static List<string> GetWithRegexMultiple(this string content, string regex, int groupIndex)
+        {
+            var fixedString = Regex.Replace(content, @"\t|\n|\r", "");
+            List<string> returnList = new();
+            var matchList = Regex.Matches(fixedString, regex);
+            foreach (Match match in matchList)
+            {
+                returnList.Add(match.Groups[groupIndex].Value);
+            }
+            return returnList;
+
+        }
 
     }
 }
