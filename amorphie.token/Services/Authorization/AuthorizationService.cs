@@ -41,15 +41,32 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         AuthorizationResponse authorizationResponse = new();
         try
         {
-            var clientResponse = await _clientService.CheckClient(request.ClientId!);
-            if (clientResponse.StatusCode != 200)
+            ServiceResponse<ClientResponse>? clientResponse;
+            if(Guid.TryParse(request.ClientId!,out Guid _))
             {
-                return new ServiceResponse<AuthorizationResponse>()
+                clientResponse = await _clientService.CheckClient(request.ClientId!);
+                if (clientResponse.StatusCode != 200)
                 {
-                    StatusCode = clientResponse.StatusCode,
-                    Detail = clientResponse.Detail
-                };
+                    return new ServiceResponse<AuthorizationResponse>()
+                    {
+                        StatusCode = clientResponse.StatusCode,
+                        Detail = clientResponse.Detail
+                    };
+                }
             }
+            else
+            {
+                clientResponse = await _clientService.CheckClientByCode(request.ClientId!);
+                if (clientResponse.StatusCode != 200)
+                {
+                    return new ServiceResponse<AuthorizationResponse>()
+                    {
+                        StatusCode = clientResponse.StatusCode,
+                        Detail = clientResponse.Detail
+                    };
+                }
+            }
+            
             var client = clientResponse.Response;
 
             if (string.IsNullOrEmpty(request.ResponseType) || request.ResponseType != "code")

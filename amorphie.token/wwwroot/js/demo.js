@@ -43,8 +43,8 @@ async function callUrl()
 async function preLogin()
 {
     var req = {
-        clientCode: "4fa85f64-5711-4562-b3fc-2c963f66afa6",
-        scopeUser : "39719021136",
+        clientCode: "X",
+        scopeUser : "X",
         state:"123",
         nonce:"213",
         codeChallange:"pmWkWSBCL51Bfkhn79xPuKBKHz__H6B-mY6G9_eieuM"
@@ -53,16 +53,17 @@ async function preLogin()
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "clientIdReal":"3fa85f64-5717-4562-b3fc-2c963f66afa6",
+            "clientIdReal":"X",
+            "user_reference":"X",
             "scope":"retail-customer"
         },
         body:JSON.stringify(req)
     });
-
+    console.log(response);
     if(response.redirected)
         window.location = response.url;
 
-    console.log(response);
+    
     
 }
 

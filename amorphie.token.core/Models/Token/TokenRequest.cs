@@ -31,6 +31,8 @@ public class TokenRequest
     public string? RecordId { get; set; }
     [JsonPropertyName("scopes")]
     public IEnumerable<string>? Scopes { get; set; }
+    [JsonPropertyName("scope")]
+    public string? scope { get; set; }
     [JsonPropertyName("device_id")]
     public string? DeviceId { get; set; }
     [JsonPropertyName("installation_id")]
@@ -64,6 +66,8 @@ public class TokenRequestForm
     public string? CodeVerifier { get; set; }
     [FromForm(Name = "scopes")]
     public IEnumerable<string>? Scopes { get; set; }
+    [FromForm(Name = "scope")]
+    public string? scope { get; set; }
     [FromForm(Name = "device_id")]
     public string? DeviceId { get; set; }
     [FromForm(Name = "installation_id")]
