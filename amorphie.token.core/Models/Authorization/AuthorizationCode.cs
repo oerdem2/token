@@ -24,4 +24,5 @@ public class AuthorizationCode
     public string? Nonce { get; set; }
     public string? ConsentId { get; set; }
     public string? State{get;set;}
+    public core.Models.Collection.User? CollectionUser{get;set;}
 }

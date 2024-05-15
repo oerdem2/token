@@ -226,6 +226,24 @@ public class AuthorizeController : Controller
 
     }
 
+    [HttpGet("public/AuthorizeCollection")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> AuthorizeCollection(AuthorizationRequest authorizationRequest)
+    {
+        var authorize = await _authorizationService.Authorize(new AuthorizationServiceRequest
+        {
+            ClientId = authorizationRequest.ClientId,
+            RedirectUri = authorizationRequest.RedirectUri,
+            ResponseType = authorizationRequest.ResponseType,
+            Scope = authorizationRequest.Scope,
+            State = authorizationRequest.State
+        });
+
+
+        return View("CollectionLoginPage", new Models.Account.Login(){Code = authorize.Response.Code});
+
+    }
+
 
 
 }

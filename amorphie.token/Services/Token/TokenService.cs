@@ -42,6 +42,7 @@ public class TokenService : ServiceBase, ITokenService
     private IRoleService? _roleService;
     private ConsentDto _selectedConsent;
     private RoleDefinitionDto _role;
+    private core.Models.Collection.User? _collectionUser;
     private string _deviceId;
     public TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, IClaimHandlerService claimService,
     ITransactionService transactionService,IRoleService roleService, IConsentService consentService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext,IbSecurityDatabaseContext securityContext
@@ -111,7 +112,7 @@ public class TokenService : ServiceBase, ITokenService
             {
                 identityInfo.claims = identityInfo.claims.Where(c => !IsUserBasedClaim(c)).ToList();
             }
-            var populatedClaims = await _claimService.PopulateClaims(identityInfo.claims, _user, _profile);
+            var populatedClaims = await _claimService.PopulateClaims(identityInfo.claims, _user, _profile, collectionUser : _collectionUser);
             if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
             {
                 claims.Add(new Claim("client_id", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
@@ -131,7 +132,6 @@ public class TokenService : ServiceBase, ITokenService
             claims.Add(new Claim("sub", _user.Reference.ToString()));
         }
 
-        claims.Add(new Claim("role","Viewer"));
         int idDuration = 0;
         try
         {
@@ -205,7 +205,7 @@ public class TokenService : ServiceBase, ITokenService
             {
                 accessInfo.claims = accessInfo.claims.Where(c => !IsUserBasedClaim(c)).ToList();
             }
-            var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user, _profile, _consent);
+            var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user, _profile, _consent, collectionUser : _collectionUser);
             tokenClaims.AddRange(populatedClaims);
             if (_tokenRequest.Scopes.Contains("temporary"))
                 tokenClaims.Add(new Claim("isTemporary", "1"));
@@ -260,7 +260,7 @@ public class TokenService : ServiceBase, ITokenService
 
         if (accessInfo.privateClaims != null && accessInfo.privateClaims.Count() > 0)
         {
-            var populatedPrivateClaims = await _claimService.PopulateClaims(accessInfo.privateClaims, _user, _profile, _consent);
+            var populatedPrivateClaims = await _claimService.PopulateClaims(accessInfo.privateClaims, _user, _profile, _consent, collectionUser : _collectionUser);
             var dictFromPrivateClaims = populatedPrivateClaims.ToDictionary(c => c.Type, c => c.Value);
             await _daprClient.SaveStateAsync(Configuration["DAPR_STATE_STORE_NAME"], $"{_tokenInfoDetail!.AccessTokenId.ToString()}_privateClaims", dictFromPrivateClaims, metadata: new Dictionary<string, string> { { "ttlInSeconds", (_tokenInfoDetail.AccessTokenDuration+60).ToString() } });
         }
@@ -1146,6 +1146,7 @@ public class TokenService : ServiceBase, ITokenService
 
         _user = authorizationCodeInfo.Subject;
         _profile = authorizationCodeInfo.Profile;
+        _collectionUser = authorizationCodeInfo.CollectionUser;
         _tokenRequest.Scopes = authorizationCodeInfo.RequestedScopes;
 
         if (!authorizationCodeInfo.ClientId!.Equals(tokenRequest.ClientId, StringComparison.OrdinalIgnoreCase))

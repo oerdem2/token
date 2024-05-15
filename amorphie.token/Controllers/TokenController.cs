@@ -64,7 +64,7 @@ public class TokenController : Controller
     {
         return Ok(new 
         {
-            authorization_endpoint="http://localhost:4900/public/Authorize",
+            authorization_endpoint="http://localhost:4900/public/AuthorizeCollection",
             token_endpoint = "http://localhost:4900/public/Token"
         });
     }
