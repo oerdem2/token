@@ -154,10 +154,14 @@ namespace amorphie.token.Services.ClaimHandler
             else
             {
                 var property = src.GetType().GetProperties().FirstOrDefault(p => p.Name.ToLower() == propName.ToLower());
-                if(property.PropertyType.IsEnum)
+                if(property is {})
                 {
-                    return property != null ? Convert.ToInt32(property.GetValue(src, null)).ToString() : null;
+                    if(property.PropertyType.IsEnum)
+                    {
+                        return property != null ? Convert.ToInt32(property.GetValue(src, null)).ToString() : null;
+                    }
                 }
+                
                 return property != null ? property.GetValue(src, null).ToString() : null;
             }
         }
