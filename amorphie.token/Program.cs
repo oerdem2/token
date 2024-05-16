@@ -38,7 +38,7 @@ internal class Program
             }
             catch (System.Exception ex)
             {
-                Console.WriteLine("Dapr Sidecar Doesn't Respond "+ex.ToString());
+                Console.WriteLine("Dapr Sidecar Doesn't Respond " + ex.ToString());
                 return;
             }
 
@@ -118,7 +118,7 @@ internal class Program
             {
                 httpClient.BaseAddress = new Uri(builder.Configuration["RoleBaseAddress"]!);
             });
- 
+
         }
         else
         {
