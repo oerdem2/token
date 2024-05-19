@@ -14,6 +14,7 @@ namespace amorphie.token.Services.ClaimHandler
         private LoginResponse? _user;
         private ConsentResponse? _consent;
         private SimpleProfileResponse? _profile;
+        private core.Models.Collection.User _collectionUser;
 
         //Using For Tag Service Query Params
         private string? _queryStringForTag;
@@ -113,6 +114,21 @@ namespace amorphie.token.Services.ClaimHandler
 
             }
 
+            if (claimPath.First().Equals("collection"))
+            {
+                if (_collectionUser == null)
+                    return null;
+
+                Type t = _collectionUser!.GetType();
+
+                var propValue = GetPropertyValue(_collectionUser, string.Join('.', claimPath.ToList().Skip(1)));
+                
+                if (propValue != null)
+                    return new Claim(claimName, propValue);
+                else
+                    return null;
+            }
+
             if (claimPath.First().Equals("const"))
             {
                  return new Claim(claimName, claimPath[1]);
@@ -138,18 +154,28 @@ namespace amorphie.token.Services.ClaimHandler
             else
             {
                 var property = src.GetType().GetProperties().FirstOrDefault(p => p.Name.ToLower() == propName.ToLower());
-
+                if(property is {})
+                {
+                    if(property.PropertyType.IsEnum)
+                    {
+                        return property != null ? Convert.ToInt32(property.GetValue(src, null)).ToString() : null;
+                    }
+                }
+                
                 return property != null ? property.GetValue(src, null).ToString() : null;
             }
         }
-        public async Task<List<Claim>> PopulateClaims(List<string> clientClaims, LoginResponse? user, SimpleProfileResponse? profile = null, ConsentResponse? consent = null)
+        public async Task<List<Claim>> PopulateClaims(List<string> clientClaims, LoginResponse? user, SimpleProfileResponse? profile = null, ConsentResponse? consent = null, core.Models.Collection.User collectionUser = null)
         {
             _profile = profile;
             if (consent != null)
             {
                 _consent = consent;
             }
-
+            if(_collectionUser is not {})
+            {
+                _collectionUser = collectionUser;
+            }
             if (user == null)
             {
 

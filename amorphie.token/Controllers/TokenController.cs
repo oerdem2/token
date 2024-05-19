@@ -21,6 +21,7 @@ using System.Security.Cryptography;
 using System.Net.Mime;
 using amorphie.token.Modules.Login;
 using Amazon.Internal;
+using System.Configuration;
 
 
 namespace amorphie.token.core.Controllers;
@@ -64,8 +65,8 @@ public class TokenController : Controller
     {
         return Ok(new 
         {
-            authorization_endpoint="http://localhost:4900/public/Authorize",
-            token_endpoint = "http://localhost:4900/public/Token"
+            authorization_endpoint= _configuration["Basepath"]+"/public/Authorize",
+            token_endpoint = _configuration["Basepath"]+"/public/Token"
         });
     }
 

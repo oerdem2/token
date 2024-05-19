@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
+using System.Threading.Tasks.Dataflow;
 using amorphie.core.Extension;
 using amorphie.token;
 using amorphie.token.data;
@@ -12,6 +14,7 @@ using amorphie.token.Services.Consent;
 using amorphie.token.Services.FlowHandler;
 using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.LegacySSO;
+using amorphie.token.Services.Login;
 using amorphie.token.Services.MessagingGateway;
 using amorphie.token.Services.Migration;
 using amorphie.token.Services.Profile;
@@ -28,6 +31,7 @@ internal class Program
 {
     private static async Task Main(string[] args)
     {
+        
         var builder = WebApplication.CreateBuilder(args);
         builder.Configuration.AddEnvironmentVariables();
         var client = new DaprClientBuilder().Build();
@@ -161,6 +165,7 @@ internal class Program
         builder.Services.AddTransient<IEkycProvider, EkycProvider>();
 
         builder.Services.AddScoped<IMigrationService, MigrationService>();
+        builder.Services.AddScoped<ILoginService, LoginService>();
         builder.Services.AddScoped<ILegacySSOService, LegacySSOService>();
 
 
