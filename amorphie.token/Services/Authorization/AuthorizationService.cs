@@ -122,7 +122,14 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
 
             var code = await GenerateAuthorizationCode(authCode);
 
-            authorizationResponse.RedirectUri = $"{client.returnuri}?response_type=code&code={code}&state={request.State}";
+            if(string.IsNullOrWhiteSpace(request.State))
+            {
+                authorizationResponse.RedirectUri = $"{client.returnuri}?response_type=code&code={code}";
+            }
+            else
+            {
+                authorizationResponse.RedirectUri = $"{client.returnuri}?response_type=code&code={code}&state={request.State}";
+            }
             authorizationResponse.Code = code;
             authorizationResponse.RequestedScopes = requestedScopes;
             authorizationResponse.State = request.State!;
