@@ -163,9 +163,11 @@ public class AuthorizeController : Controller
 
     [HttpPost("public/DodgeCreatePreLogin")]
     [ApiExplorerSettings(IgnoreApi = true)]
-    public async Task<IResult> DodgeCreatePreLogin([FromHeader(Name = "username")] string username,[FromBody] CreatePreLoginRequest createPreLoginRequest)
+    public async Task<IResult> DodgeCreatePreLogin([FromHeader(Name = "x-userinfo")] string userinfo, [FromBody] CreatePreLoginRequest createPreLoginRequest)
     {
-        
+        var userInfoModel = JsonSerializer.Deserialize<dynamic>(Convert.FromBase64String(userinfo));
+        var username = userInfoModel!.GetProperty("username").ToString();
+
         ServiceResponse<ClientResponse> targetClientResponse;
         if (Guid.TryParse(createPreLoginRequest.clientCode, out Guid _))
         {
