@@ -282,6 +282,14 @@ public class AuthorizeController : Controller
 
     }
 
+    [HttpGet("public/CollectionUsers")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> CollectionUsers()
+    {
+        return Ok(core.Constants.CollectionUsers.Users);
+
+    }
+
     [HttpGet("public/AuthorizeCollection")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> AuthorizeCollection(AuthorizationRequest authorizationRequest)
