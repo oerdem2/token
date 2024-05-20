@@ -43,19 +43,12 @@ async function callUrl()
 async function preLogin()
 {
     var req = {
-        clientCode: "X",
-        scopeUser : "X",
-        state:"123",
-        nonce:"213",
-        codeChallange:"pmWkWSBCL51Bfkhn79xPuKBKHz__H6B-mY6G9_eieuM"
+        clientCode: "odeme"
     };
-    const response = await fetch('http://localhost:4900/public/CreatePreLogin', {
+    const response = await fetch('https://test-pubagw6.burgan.com.tr/ebanking/generate-url', {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "clientIdReal":"X",
-            "user_reference":"X",
-            "scope":"retail-customer"
         },
         body:JSON.stringify(req)
     });
