@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection.Metadata;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
@@ -29,6 +30,7 @@ using Serilog.Formatting.Compact;
 
 internal class Program
 {
+    
     private static async Task Main(string[] args)
     {
         

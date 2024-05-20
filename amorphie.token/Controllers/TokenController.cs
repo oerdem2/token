@@ -323,6 +323,13 @@ public class TokenController : Controller
         return View("callback");
     }
 
+    [HttpPost("public/SaveEkycResult")]
+    public async Task<IActionResult> SaveEkyResult([FromBody] dynamic body)
+    {
+        Console.WriteLine("Save ekyc result Model"+JsonSerializer.Serialize(body));
+        return Ok();
+    }
+
     [ApiExplorerSettings(IgnoreApi = true)]
     [Consumes("application/x-www-form-urlencoded")]
     [HttpPost("public/Token")]

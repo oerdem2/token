@@ -8,6 +8,7 @@ using amorphie.token.Services.FlowHandler;
 using amorphie.token.Services.Consent;
 using amorphie.token.Services.TransactionHandler;
 using amorphie.token.Services.Login;
+using System.Threading.Tasks.Dataflow;
 
 
 namespace amorphie.token.core.Controllers;
@@ -282,12 +283,12 @@ public class AuthorizeController : Controller
 
     }
 
+
     [HttpGet("public/CollectionUsers")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> CollectionUsers()
     {
         return Ok(core.Constants.CollectionUsers.Users);
-
     }
 
     [HttpGet("public/AuthorizeCollection")]
