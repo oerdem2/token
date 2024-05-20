@@ -16,98 +16,98 @@ namespace amorphie.token.core.Constants
                 Surname = "KARAKABAK",
                 CitizenshipNo = "32867085234",
                 LoginUser = "U04263",
-                Role = Role.Yonetici
+                Role = Role.Manager
             }},
             {new User{
                 Name = "AYSUN",
                 Surname = "DUMAN İLASLAN",
                 CitizenshipNo = "36122202930",
                 LoginUser = "U04935",
-                Role = Role.Yetkili_Yardimcisi
+                Role = Role.TeamLeader
             }},
             {new User{
                 Name = "BELMA",
                 Surname = "GÖREN",
                 CitizenshipNo = "18419774078",
                 LoginUser = "U04806",
-                Role = Role.Yetkili_Yardimcisi
+                Role = Role.Admin
             }},
             {new User{
                 Name = "BURCU",
                 Surname = "ETİ",
                 CitizenshipNo = "30583790128",
                 LoginUser = "U06231",
-                Role = Role.Tahsilat_Sorumlusu
+                Role = Role.Agent
             }},
             {new User{
                 Name = "EDA",
                 Surname = "GÖVLER",
                 CitizenshipNo = "28996918338",
                 LoginUser = "U05062",
-                Role = Role.Tahsilat_Sorumlusu
+                Role = Role.Agent
             }},
             {new User{
                 Name = "GÜL",
                 Surname = "ALPAY",
                 CitizenshipNo = "23356670642",
                 LoginUser = "U05444",
-                Role = Role.Birim_Yonetici
+                Role = Role.Admin
             }},
             {new User{
                 Name = "GÜLÇİN",
                 Surname = "GÜL",
                 CitizenshipNo = "68692219452",
                 LoginUser = "U05203",
-                Role = Role.Tahsilat_Sorumlusu
+                Role = Role.Agent
             }},
             {new User{
                 Name = "İDRİS",
                 Surname = "SANCAK",
                 CitizenshipNo = "52309628454",
                 LoginUser = "U05600",
-                Role = Role.Veri_Analitik_Modelleme_Yoneticisi
+                Role = Role.Admin
             }},
             {new User{
                 Name = "MERT",
                 Surname = "DEMİRARSLAN",
                 CitizenshipNo = "14095028054",
                 LoginUser = "U05489",
-                Role = Role.Veri_Analitik_Modelleme_Yoneticisi
+                Role = Role.Admin
             }},
             {new User{
                 Name = "ÖZGÜR",
                 Surname = "TEKİNER",
                 CitizenshipNo = "47101408106",
                 LoginUser = "U04777",
-                Role = Role.Veri_Analitik_Modelleme_Yetkilisi
+                Role = Role.Manager
             }},
             {new User{
                 Name = "SELDA",
                 Surname = "IŞIK",
                 CitizenshipNo = "39886225092",
                 LoginUser = "U05036",
-                Role = Role.Tahsilat_Sorumlusu
+                Role = Role.Agent
             }},
             {new User{
                 Name = "SELİM",
                 Surname = "KABA",
                 CitizenshipNo = "36652755920",
                 LoginUser = "U04972",
-                Role = Role.Tahsilat_Sorumlusu
+                Role = Role.Agent
             }},
             {new User{
                 Name = "SEVGİ",
                 Surname = "KAVAK ÖZNERSES",
                 CitizenshipNo = "50941025310",
                 LoginUser = "U04811",
-                Role = Role.Kıdemli_Destek_Hizmet_Gorevlisi
+                Role = Role.TeamLeader
             }},
             {new User{
                 Name = "TUBA",
                 Surname = "ŞENTÜRK",
                 CitizenshipNo = "68071040882",
                 LoginUser = "U04645",
-                Role = Role.Yonetici
+                Role = Role.Manager
             }
             },
             {new User{
@@ -115,7 +115,7 @@ namespace amorphie.token.core.Constants
                 Surname = "IŞIK",
                 CitizenshipNo = "13045514586",
                 LoginUser = "U04273",
-                Role = Role.Yetkili
+                Role = Role.TeamLeader
             }
             },
             {new User{
@@ -123,7 +123,7 @@ namespace amorphie.token.core.Constants
                 Surname = "İŞ",
                 CitizenshipNo = "42190908766",
                 LoginUser = "U06007",
-                Role = Role.Tahsilat_Sorumlusu
+                Role = Role.Agent
             }
             },
             {new User{
@@ -131,7 +131,7 @@ namespace amorphie.token.core.Constants
                 Surname = "YÜKSEL",
                 CitizenshipNo = "50494498036",
                 LoginUser = "U05179",
-                Role = Role.Tahsilat_Sorumlusu
+                Role = Role.Agent
             }
             },
             {new User{
@@ -139,7 +139,7 @@ namespace amorphie.token.core.Constants
                 Surname = "SÜSLÜ",
                 CitizenshipNo = "11216422302",
                 LoginUser = "U05013",
-                Role = Role.Tahsilat_Sorumlusu
+                Role = Role.Agent
             }
             }
         };
