@@ -11,5 +11,6 @@ namespace amorphie.token.Services.InternetBanking
         public PasswordVerificationResult VerifyPassword(string username, string password, string salt);
         public Task<ServiceResponse<IBUser>> GetUser(string username);
         public Task<ServiceResponse<IBPassword>> GetPassword(Guid Id);
+        public Task<ServiceResponse<UserInfo>> GetAmorphieUserFromDodge(string username);
     }
 }

@@ -114,7 +114,7 @@ namespace amorphie.token.Services.Consent
             }
             else
             {
-                return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode };
+                return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode,Detail = await httpResponseMessage.Content.ReadAsStringAsync()};
             }
         }
 

@@ -23,6 +23,18 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         _daprClient = daprClient;
     }
 
+    public async Task<AuthorizationCode> AssignCollectionUserToAuthorizationCode(LoginResponse user, string authorizationCode,core.Models.Collection.User collectionUser)
+    {
+        var authorizationCodeInfo = await _daprClient.GetStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"], authorizationCode);
+
+        var newAuthorizationCodeInfo = authorizationCodeInfo.MapTo<AuthorizationCode>();
+        newAuthorizationCodeInfo.Subject = user;
+        newAuthorizationCodeInfo.CollectionUser = collectionUser;
+
+        await _daprClient.SaveStateAsync(Configuration["DAPR_STATE_STORE_NAME"], authorizationCode, newAuthorizationCodeInfo);
+        return await _daprClient.GetStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"], authorizationCode);
+    }
+
     public async Task<AuthorizationCode> AssignUserToAuthorizationCode(LoginResponse user, string authorizationCode,SimpleProfileResponse profile)
     {
         var authorizationCodeInfo = await _daprClient.GetStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"], authorizationCode);
@@ -41,15 +53,32 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
         AuthorizationResponse authorizationResponse = new();
         try
         {
-            var clientResponse = await _clientService.CheckClient(request.ClientId!);
-            if (clientResponse.StatusCode != 200)
+            ServiceResponse<ClientResponse>? clientResponse;
+            if(Guid.TryParse(request.ClientId!,out Guid _))
             {
-                return new ServiceResponse<AuthorizationResponse>()
+                clientResponse = await _clientService.CheckClient(request.ClientId!);
+                if (clientResponse.StatusCode != 200)
                 {
-                    StatusCode = clientResponse.StatusCode,
-                    Detail = clientResponse.Detail
-                };
+                    return new ServiceResponse<AuthorizationResponse>()
+                    {
+                        StatusCode = clientResponse.StatusCode,
+                        Detail = clientResponse.Detail
+                    };
+                }
             }
+            else
+            {
+                clientResponse = await _clientService.CheckClientByCode(request.ClientId!);
+                if (clientResponse.StatusCode != 200)
+                {
+                    return new ServiceResponse<AuthorizationResponse>()
+                    {
+                        StatusCode = clientResponse.StatusCode,
+                        Detail = clientResponse.Detail
+                    };
+                }
+            }
+            
             var client = clientResponse.Response;
 
             if (string.IsNullOrEmpty(request.ResponseType) || request.ResponseType != "code")
@@ -93,7 +122,14 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
 
             var code = await GenerateAuthorizationCode(authCode);
 
-            authorizationResponse.RedirectUri = $"{client.returnuri}?response_type=code&code={code}&state={request.State}";
+            if(string.IsNullOrWhiteSpace(request.State))
+            {
+                authorizationResponse.RedirectUri = $"{client.returnuri}?response_type=code&code={code}";
+            }
+            else
+            {
+                authorizationResponse.RedirectUri = $"{client.returnuri}?response_type=code&code={code}&state={request.State}";
+            }
             authorizationResponse.Code = code;
             authorizationResponse.RequestedScopes = requestedScopes;
             authorizationResponse.State = request.State!;

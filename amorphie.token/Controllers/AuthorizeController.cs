@@ -7,9 +7,8 @@ using amorphie.token.Services.Profile;
 using amorphie.token.Services.FlowHandler;
 using amorphie.token.Services.Consent;
 using amorphie.token.Services.TransactionHandler;
-using amorphie.token.core.Models.Workflow;
-using amorphie.token.core.Constants;
-using Microsoft.Identity.Client;
+using amorphie.token.Services.Login;
+
 
 namespace amorphie.token.core.Controllers;
 
@@ -27,9 +26,10 @@ public class AuthorizeController : Controller
     private readonly ITransactionService _transactionService;
     private readonly IConsentService _consentService;
     private readonly IProfileService _profileService;
+    private readonly ILoginService _loginService;
     public AuthorizeController(ILogger<AuthorizeController> logger, IAuthorizationService authorizationService, IUserService userService, DatabaseContext databaseContext
     , IConfiguration configuration, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService, ITransactionService transactionService,
-    IFlowHandler flowHandler, IConsentService consentService, IProfileService profileService)
+    IFlowHandler flowHandler, IConsentService consentService, IProfileService profileService, ILoginService loginService)
     {
         _logger = logger;
         _authorizationService = authorizationService;
@@ -43,7 +43,7 @@ public class AuthorizeController : Controller
         _daprClient = daprClient;
         _consentService = consentService;
         _profileService = profileService;
-
+        _loginService = loginService;
     }
 
     [HttpGet("/public/OpenBankingAuthCode")]
@@ -161,6 +161,62 @@ public class AuthorizeController : Controller
         return Redirect(authResponse.Response.RedirectUri);
     }
 
+    [HttpPost("public/DodgeCreatePreLogin")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IResult> DodgeCreatePreLogin([FromHeader(Name = "x-userinfo")] string userinfo, [FromBody] CreatePreLoginRequest createPreLoginRequest)
+    {
+        var userInfoModel = JsonSerializer.Deserialize<dynamic>(Convert.FromBase64String(userinfo));
+        var username = userInfoModel!.GetProperty("username").ToString();
+
+        ServiceResponse<ClientResponse> targetClientResponse;
+        if (Guid.TryParse(createPreLoginRequest.clientCode, out Guid _))
+        {
+            targetClientResponse = await _clientService.CheckClient(createPreLoginRequest.clientCode);
+        }
+        else
+        {
+            targetClientResponse = await _clientService.CheckClientByCode(createPreLoginRequest.clientCode);
+        }
+
+        if(targetClientResponse.StatusCode != 200)
+        {
+            return Results.Problem(detail:targetClientResponse.Detail,statusCode:targetClientResponse.StatusCode);
+        }
+        var targetClient = targetClientResponse.Response;
+
+        var migrateResult = await _loginService.MigrateDodgeUserToAmorphie(username);
+        if(migrateResult.StatusCode != 200)
+        {
+            return Results.Problem(detail:migrateResult.Detail, statusCode:migrateResult.StatusCode);
+        }
+
+        var amorphieUserResult = await _loginService.GetAmorphieUser(username);
+        if(amorphieUserResult.StatusCode != 200)
+        {
+            return Results.Problem(detail:amorphieUserResult.Detail, statusCode:amorphieUserResult.StatusCode);
+        }
+        var amorphieUser = amorphieUserResult.Response;
+
+        var authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest{
+            ClientId = targetClient.id,
+            RedirectUri = targetClient.returnuri,
+            CodeChallange = createPreLoginRequest.CodeChallange,
+            CodeChallangeMethod = "SHA256",
+            Nonce = createPreLoginRequest.Nonce,
+            ResponseType = "code",
+            State = createPreLoginRequest.State,
+            Scope = ["openid","profile"],
+            User = amorphieUser
+        });
+
+        if(authResponse.StatusCode != 200)
+        {
+            return Results.Problem(detail:authResponse.Detail,statusCode:authResponse.StatusCode);
+        }
+
+        return Results.Redirect(authResponse!.Response!.RedirectUri);
+    }
+
     [HttpGet("public/OpenBankingAuthorize")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> OpenBankingAuthorize(OpenBankingAuthorizationRequest authorizationRequest)
@@ -223,6 +279,32 @@ public class AuthorizeController : Controller
 
 
         return View("LoginPage", new Models.Account.Login(){Code = authorize.Response.Code});
+
+    }
+
+    [HttpGet("public/CollectionUsers")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> CollectionUsers()
+    {
+        return Ok(core.Constants.CollectionUsers.Users);
+
+    }
+
+    [HttpGet("public/AuthorizeCollection")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> AuthorizeCollection(AuthorizationRequest authorizationRequest)
+    {
+        var authorize = await _authorizationService.Authorize(new AuthorizationServiceRequest
+        {
+            ClientId = authorizationRequest.ClientId,
+            RedirectUri = authorizationRequest.RedirectUri,
+            ResponseType = authorizationRequest.ResponseType,
+            Scope = authorizationRequest.Scope,
+            State = authorizationRequest.State
+        });
+
+
+        return View("CollectionLoginPage", new Models.Account.Login(){Code = authorize.Response.Code});
 
     }
 

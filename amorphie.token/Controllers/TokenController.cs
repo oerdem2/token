@@ -19,6 +19,9 @@ using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using System.Security.Cryptography;
 using System.Net.Mime;
+using amorphie.token.Modules.Login;
+using Amazon.Internal;
+using System.Configuration;
 
 
 namespace amorphie.token.core.Controllers;
@@ -62,8 +65,8 @@ public class TokenController : Controller
     {
         return Ok(new 
         {
-            authorization_endpoint="http://localhost:4900/public/Authorize",
-            token_endpoint = "http://localhost:4900/public/Token"
+            authorization_endpoint= _configuration["Basepath"]+"/public/Authorize",
+            token_endpoint = _configuration["Basepath"]+"/public/Token"
         });
     }
 
@@ -330,6 +333,14 @@ public class TokenController : Controller
         _transactionService.IpAddress = ipAddress;
 
         var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
+        if(generateTokenRequest.Scopes?.Count() == 0)
+        {
+            if(!string.IsNullOrEmpty(tokenRequest.scope))
+            {
+                generateTokenRequest.Scopes = tokenRequest.scope.Split(" ");
+            }
+        }
+
         if (tokenRequest.GrantType == "device")
         {
             var token = await _tokenService.GenerateTokenWithDevice(generateTokenRequest);
@@ -409,6 +420,14 @@ public class TokenController : Controller
         _transactionService.IpAddress = ipAddress;
 
         var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
+        if(generateTokenRequest.Scopes?.Count() == 0)
+        {
+            if(!string.IsNullOrEmpty(tokenRequest.scope))
+            {
+                generateTokenRequest.Scopes = tokenRequest.scope.Split(" ");
+            }
+        }
+
         if (tokenRequest.GrantType == "device")
         {
             var token = await _tokenService.GenerateTokenWithDevice(generateTokenRequest);
