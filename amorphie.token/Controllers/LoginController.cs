@@ -12,9 +12,21 @@ using amorphie.core.Enums;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 namespace amorphie.token.core.Controllers;
 
+public class PhoneTest2
+{
+    public PhoneTest phone{get;set;}
+}
+public class PhoneTest
+{
+    [JsonPropertyName("phone1")]
+    public int phone1{get;set;}
+    [JsonPropertyName("phone2")]
+    public int phone2{get;set;}
+}
 public class LoginController : Controller
 {
     private readonly ILogger<TokenController> _logger;
@@ -51,7 +63,14 @@ public class LoginController : Controller
         _internetBankingUserService = internetBankingUserService;
     }
 
-
+    [HttpPost("public/testtest")]
+    [Consumes("application/json")]
+    public async Task<IActionResult> testttt([FromBody]PhoneTest phone)
+    {
+        var k = "123123";
+        throw new Exception();
+    }
+        
 
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("public/Login")]

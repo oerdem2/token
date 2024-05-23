@@ -107,7 +107,7 @@ public class AuthorizeController : Controller
             return Problem(detail:"Client not found",statusCode:404);
         }
         var client = clientResponse.Response;
-        if(!client.CanCreateLoginUrl)
+        if(!client!.CanCreateLoginUrl)
         {
             return Problem(detail:"Client is not authorized to use this flow",statusCode:403);
         }
@@ -128,38 +128,16 @@ public class AuthorizeController : Controller
         }
         var targetClient = targetClientResponse.Response;
 
-        if(!client.CreateLoginUrlClients.Any(c => c.Equals(targetClient.id)))
+        if(!client.CreateLoginUrlClients!.Any(c => c.Equals(targetClient!.id)))
         {
             return Problem(detail:"Target client is not authorized to creating login url from given source client",statusCode:403);
         }
 
         var user = await _userService.GetUserByReference(createPreLoginRequest.scopeUser);
-        //TODO Consent Check
-        var consentResponse = await _consentService.CheckAuthorizationConsent(targetClient.id,currentUser,createPreLoginRequest.scopeUser);
-        if(consentResponse.StatusCode != 200)
-        {
-            return Problem(detail:"User has no consent for this operation, provide a valid consent first",statusCode:403);
-        }
-
-        var authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest{
-            ClientId = targetClient.id,
-            RedirectUri = targetClient.returnuri,
-            CodeChallange = createPreLoginRequest.CodeChallange,
-            CodeChallangeMethod = "SHA256",
-            Nonce = createPreLoginRequest.Nonce,
-            ResponseType = "code",
-            State = createPreLoginRequest.State,
-            Scope = scope,
-            User = user.Response
-        });
-
-        if(authResponse.StatusCode != 200)
-        {
-            return Problem(detail:authResponse.Detail,statusCode:authResponse.StatusCode);
-        }
-
-        //return Ok(authResponse.Response);
-        return Redirect(authResponse.Response.RedirectUri);
+        HttpContext.Session.SetString("LoggedUser", JsonSerializer.Serialize(user.Response));
+        // var session = Request.Cookies[".amorphie.token"];
+        // HttpContext.Response.Cookies.Append(".amorphie.token",session!);
+        return Redirect(targetClient!.loginurl!);
     }
 
     [HttpPost("public/DodgeCreatePreLogin")]
@@ -278,8 +256,18 @@ public class AuthorizeController : Controller
             State = authorizationRequest.State
         });
 
-
-        return View("LoginPage", new Models.Account.Login(){Code = authorize.Response.Code});
+        var loggedUserSerialized = HttpContext.Session.GetString("LoggedUser");
+        if(string.IsNullOrWhiteSpace(loggedUserSerialized))
+        {
+            return View("LoginPage", new Login(){Code = authorize.Response!.Code});
+        }
+        else
+        {
+            var user = JsonSerializer.Deserialize<LoginResponse>(loggedUserSerialized);
+            var profileResponse = await _profileService.GetCustomerSimpleProfile(user!.Reference);
+            await _authorizationService.AssignUserToAuthorizationCode(user, authorize.Response!.Code!,profileResponse.Response!);
+            return Redirect(authorize.Response!.RedirectUri);
+        }
 
     }
 
