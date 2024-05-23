@@ -21,6 +21,7 @@ using amorphie.token.Services.Migration;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.Role;
 using amorphie.token.Services.TransactionHandler;
+using DnsClient.Protocol;
 using Elastic.Apm.NetCoreAll;
 using Elastic.Transport;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +35,7 @@ internal class Program
     private static async Task Main(string[] args)
     {
         
+    
         var builder = WebApplication.CreateBuilder(args);
         builder.Configuration.AddEnvironmentVariables();
         var client = new DaprClientBuilder().Build();

@@ -37,6 +37,7 @@ public class TokenService : ServiceBase, ITokenService
     private SimpleProfileResponse? _profile;
     private IInternetBankingUserService? _internetBankingUserService;
     private IbDatabaseContext _ibContext;
+    private IbDatabaseContextMordor _ibContextMordor;
     private IbSecurityDatabaseContext _ibSecurityContext;
     private IProfileService? _profileService;
     private IRoleService? _roleService;
@@ -45,7 +46,7 @@ public class TokenService : ServiceBase, ITokenService
     private core.Models.Collection.User? _collectionUser;
     private string _deviceId;
     public TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, IClaimHandlerService claimService,
-    ITransactionService transactionService,IRoleService roleService, IConsentService consentService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext,IbSecurityDatabaseContext securityContext
+    ITransactionService transactionService,IRoleService roleService,IbDatabaseContextMordor ibContextMordor, IConsentService consentService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext,IbSecurityDatabaseContext securityContext
     , IInternetBankingUserService internetBankingUserService, IProfileService profileService, IbDatabaseContext ibContext) : base(logger, configuration)
     {
         _clientService = clientService;
@@ -60,6 +61,7 @@ public class TokenService : ServiceBase, ITokenService
         _consentService = consentService;
         _roleService = roleService;
         _ibContext = ibContext;
+        _ibContextMordor = ibContextMordor;
         _tokenInfoDetail = new();
     }
 
@@ -807,6 +809,31 @@ public class TokenService : ServiceBase, ITokenService
                 Detail = "Password Doesn't Match"
             };
         }
+
+        var mordorUserResponse = await _internetBankingUserService.MordorGetUser(_tokenRequest.Username!);
+        if (mordorUserResponse.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 404,
+                Detail = "User Not Found"
+            };
+        }
+        var mordorUser = mordorUserResponse.Response;
+
+        var role = await _ibContextMordor.Role.Where(r => r.UserId.Equals(mordorUser!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
+            if(role is {} && (role.ExpireDate ?? DateTime.MinValue) > DateTime.Now)
+            {
+                var roleDefinition = await _ibContextMordor.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive && d.Key.Equals(0));
+                if(roleDefinition is {})
+                {
+                    return new ServiceResponse<TokenResponse>()
+                    {
+                        StatusCode = 471,
+                        Detail = "User is Not Active"
+                    };
+                }
+            }
 
         var userInfoResult = await _profileService.GetCustomerSimpleProfile(_tokenRequest.Username!);
         if (userInfoResult.StatusCode != 200)

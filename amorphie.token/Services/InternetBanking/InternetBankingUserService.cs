@@ -75,6 +75,32 @@ namespace amorphie.token.Services.InternetBanking
 
             return response;
         }
+        public async Task<ServiceResponse<IBUser>> MordorGetUser(string username)
+        {
+            ServiceResponse<IBUser> response = new();
+            try
+            {
+                var user = await _ibMordorDatabaseContext.User.AsNoTracking().FirstOrDefaultAsync(u => u.UserName == username);
+                if (user == null)
+                {
+                    response.StatusCode = 404;
+                    response.Detail = "User Not Found";
+                }
+                else
+                {
+                    response.StatusCode = 200;
+                    response.Detail = "";
+                    response.Response = user;
+                }
+            }
+            catch (Exception ex)
+            {
+                response.StatusCode = 500;
+                response.Detail = ex.ToString();
+            }
+
+            return response;
+        }
 
         public async Task<ServiceResponse<UserInfo>> GetAmorphieUserFromDodge(string username)
         {
