@@ -95,27 +95,24 @@ namespace amorphie.token.Modules.Login
             }
 
             var mordorUserResponse = await internetBankingUserService.MordorGetUser(request.Username!);
-            if (mordorUserResponse.StatusCode != 200)
+            if (mordorUserResponse.StatusCode == 200)
             {
-                variables.status = false;
-                variables.message = ErrorHelper.GetErrorMessage(LoginErrors.NotAuthorized, langCode);
-                variables.wrongCredentials = true;
-                return Results.Ok(variables);
-            }
-            var mordorUser = mordorUserResponse.Response;
+                var mordorUser = mordorUserResponse.Response;
 
-            var role = await ibContextMordor.Role.Where(r => r.UserId.Equals(mordorUser!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
-            if(role is {} && (role.ExpireDate ?? DateTime.MinValue) > DateTime.Now)
-            {
-                var roleDefinition = await ibContextMordor.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive && d.Key.Equals(0));
-                if(roleDefinition is {})
+                var role = await ibContextMordor.Role.Where(r => r.UserId.Equals(mordorUser!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
+                if(role is {} && (role.ExpireDate ?? DateTime.MinValue) > DateTime.Now)
                 {
-                    variables.status = false;
-                    variables.message = ErrorHelper.GetErrorMessage(LoginErrors.NotAuthorized, langCode);
-                    variables.wrongCredentials = true;
-                    return Results.Ok(variables);
+                    var roleDefinition = await ibContextMordor.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive && d.Key.Equals(0));
+                    if(roleDefinition is {})
+                    {
+                        variables.status = false;
+                        variables.message = ErrorHelper.GetErrorMessage(LoginErrors.NotAuthorized, langCode);
+                        variables.wrongCredentials = true;
+                        return Results.Ok(variables);
+                    }
                 }
             }
+            
 
             var userInfoResult = await profileService.GetCustomerSimpleProfile(request.Username!);
             if (userInfoResult.StatusCode != 200)
