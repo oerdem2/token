@@ -6,6 +6,7 @@ using System.Text.Unicode;
 using System.Threading.Tasks.Dataflow;
 using amorphie.core.Extension;
 using amorphie.token;
+using amorphie.token.core;
 using amorphie.token.data;
 using amorphie.token.Middlewares;
 using amorphie.token.Modules.Login;
@@ -47,7 +48,7 @@ internal class Program
             }
             catch (System.Exception ex)
             {
-                Console.WriteLine("Dapr Sidecar Doesn't Respond "+ex.ToString());
+                Console.WriteLine("Dapr Sidecar Doesn't Respond " + ex.ToString());
                 return;
             }
 
@@ -167,10 +168,15 @@ internal class Program
 
         builder.Services.AddTransient<IPasswordRememberService, PasswordRememberService>();
         builder.Services.AddTransient<IEkycProvider, EkycProvider>();
+        builder.Services.AddTransient<IEkycService, EkycService>();
+        builder.Services.AddTransient<ServiceCaller>();
 
         builder.Services.AddScoped<IMigrationService, MigrationService>();
         builder.Services.AddScoped<ILoginService, LoginService>();
         builder.Services.AddScoped<ILegacySSOService, LegacySSOService>();
+
+
+
 
 
         builder.Services.AddRefitClient<IProfile>()
@@ -193,6 +199,12 @@ internal class Program
         builder.Services.AddHttpClient("Enqura", httpClient =>
         {
             httpClient.BaseAddress = new Uri(builder.Configuration["EnquraBaseAddress"]!);
+        });
+
+
+        builder.Services.AddHttpClient("MevduatStatusCheck", httpClient =>
+        {
+            httpClient.BaseAddress = new Uri(builder.Configuration["EkycMevduatStatusCheckAddress"]!);
         });
 
         // Bind options from configuration :)

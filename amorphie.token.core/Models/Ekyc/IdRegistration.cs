@@ -1,6 +1,8 @@
-﻿namespace amorphie.token.core;
+﻿using amorphie.token.core.Models.Profile;
 
- public class IdRegistration
+namespace amorphie.token.core;
+
+public class IdRegistration
 {
     public string FatherName { get; set; }
     public string MotherName { get; set; }
@@ -43,6 +45,8 @@
                 return "Bilinmiyor";
         }
     }
+
+
 
     public IdRegistration(KpsIdentity kpsIdentity)
     {
