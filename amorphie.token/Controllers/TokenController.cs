@@ -16,6 +16,12 @@ using System.Security.Claims;
 using Newtonsoft.Json.Linq;
 using MongoDB.Bson.IO;
 using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
+using System.Security.Cryptography;
+using System.Net.Mime;
+using amorphie.token.Modules.Login;
+using Amazon.Internal;
+using System.Configuration;
 
 
 namespace amorphie.token.core.Controllers;
@@ -52,6 +58,26 @@ public class TokenController : Controller
         _profileService = profileService;
 
 
+    }
+
+    [HttpGet(".well-known/openid-configuration")]
+    public  IActionResult tt(string code_verifier)
+    {
+        return Ok(new 
+        {
+            authorization_endpoint= _configuration["Basepath"]+"/public/Authorize",
+            token_endpoint = _configuration["Basepath"]+"/public/Token"
+        });
+    }
+
+    [HttpGet("public/CodeChallange/{code_verifier}")]
+    public  IActionResult CodeChallange(string code_verifier)
+    {
+        var codeVerifierAsByte = System.Text.Encoding.ASCII.GetBytes(code_verifier);
+
+        using var sha256 = SHA256.Create();
+        var hashedCodeVerifier = Base64UrlEncoder.Encode(sha256.ComputeHash(codeVerifierAsByte));
+        return Content(hashedCodeVerifier);
     }
 
     [HttpPut("public/Forget/{clientId}")]
@@ -241,6 +267,28 @@ public class TokenController : Controller
 
         }
 
+        var privateClaims = await _daprClient.GetStateAsync<Dictionary<string,string>>(_configuration["DAPR_STATE_STORE_NAME"], $"{accessTokenInfo.Id.ToString()}_privateClaims");
+        if(privateClaims is not null && privateClaims.Count() > 0)
+        {
+            foreach (var claim in privateClaims)
+            {
+                if (!claimValues.ContainsKey(claim.Key))
+                {
+                    if (validatedToken!.Claims.Count(c => c.Type == claim.Key) > 1)
+                    {
+                        claimValues.Add(claim.Key.Replace(".", "_"), validatedToken!.Claims.Where(c => c.Type == claim.Key).Select(c => c.Value));
+                    }
+                    else
+                    {
+                        if (!claim.Key.Equals("exp") && !claim.Key.Equals("nbf") && !claim.Key.Equals("iat"))
+                            claimValues.Add(claim.Key.Replace(".", "_"), claim.Value);
+                        else
+                            claimValues.Add(claim.Key.Replace(".", "_"), long.Parse(claim.Value));
+                    }
+                }
+            }
+        }
+
         if (!claimValues.ContainsKey("client_id"))
             claimValues.Add("client_id", client.code ?? client.id!);
         if (!claimValues.ContainsKey("clientId"))
@@ -253,14 +301,53 @@ public class TokenController : Controller
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
+    [HttpGet("public/callback")]
+    public async Task<IActionResult> Token([FromQuery(Name = "code")] string code)
+    {
+        var tokenReq = new TokenRequest();
+        tokenReq.ClientId = "4fa85f64-5711-4562-b3fc-2c963f66afa6";
+        tokenReq.ClientSecret = "sercan";
+        tokenReq.CodeVerifier = "123";
+        tokenReq.Code = code;
+        tokenReq.GrantType = "authorization_code";
+        tokenReq.Scopes = ["retail-customer"];
+
+        using var httpClient = new HttpClient();
+        StringContent request = new(JsonSerializer.Serialize(tokenReq), Encoding.UTF8, "application/json");
+        var httpResponse = await httpClient.PostAsync(_configuration["localAddress"] + "public/Token", request);
+        var resp = await httpResponse.Content.ReadFromJsonAsync<TokenResponse>();
+
+        ViewBag.accessToken = resp.AccessToken;
+        ViewBag.refreshToken = resp.RefreshToken;
+
+        return View("callback");
+    }
+
+    [HttpPost("public/SaveEkycResult")]
+    public async Task<IActionResult> SaveEkyResult([FromBody] dynamic body)
+    {
+        Console.WriteLine("Save ekyc result Model"+JsonSerializer.Serialize(body));
+        return Ok();
+    }
+
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [Consumes("application/x-www-form-urlencoded")]
     [HttpPost("public/Token")]
-    public async Task<IActionResult> Token([FromBody] TokenRequest tokenRequest)
+    public async Task<IActionResult> TokenForm([FromForm] TokenRequestForm tokenRequest)
     {
         string? xforwardedfor = HttpContext.Request.Headers.ContainsKey("X-Forwarded-For") ? HttpContext.Request.Headers.FirstOrDefault(h => h.Key.ToLower().Equals("x-forwarded-for")).Value.ToString() : HttpContext.Connection.RemoteIpAddress?.ToString();
         var ipAddress = xforwardedfor?.Split(",")[0].Trim() ?? xforwardedfor;
         _transactionService.IpAddress = ipAddress;
 
         var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
+        if(generateTokenRequest.Scopes?.Count() == 0)
+        {
+            if(!string.IsNullOrEmpty(tokenRequest.scope))
+            {
+                generateTokenRequest.Scopes = tokenRequest.scope.Split(" ");
+            }
+        }
+
         if (tokenRequest.GrantType == "device")
         {
             var token = await _tokenService.GenerateTokenWithDevice(generateTokenRequest);
@@ -328,6 +415,93 @@ public class TokenController : Controller
         }
 
         return Problem(detail: "Invalid Grant Type", statusCode: 480);
+    }
+
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [Consumes("application/json")]
+    [HttpPost("public/Token")]
+    public async Task<IResult> Token([FromBody] TokenRequest tokenRequest)
+    {
+        string? xforwardedfor = HttpContext.Request.Headers.ContainsKey("X-Forwarded-For") ? HttpContext.Request.Headers.FirstOrDefault(h => h.Key.ToLower().Equals("x-forwarded-for")).Value.ToString() : HttpContext.Connection.RemoteIpAddress?.ToString();
+        var ipAddress = xforwardedfor?.Split(",")[0].Trim() ?? xforwardedfor;
+        _transactionService.IpAddress = ipAddress;
+
+        var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
+        if(generateTokenRequest.Scopes?.Count() == 0)
+        {
+            if(!string.IsNullOrEmpty(tokenRequest.scope))
+            {
+                generateTokenRequest.Scopes = tokenRequest.scope.Split(" ");
+            }
+        }
+
+        if (tokenRequest.GrantType == "device")
+        {
+            var token = await _tokenService.GenerateTokenWithDevice(generateTokenRequest);
+            if (token.StatusCode == 200)
+            {
+                return Results.Json(token.Response);
+            }
+            else
+            {
+                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object>{{"errorCode",token.StatusCode}});
+            }
+        }
+        if (tokenRequest.GrantType == "authorization_code")
+        {
+            var token = await _tokenService.GenerateToken(generateTokenRequest);
+            if (token.StatusCode == 200)
+            {
+                return Results.Json(token.Response);
+            }
+            else
+            {
+                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object>{{"errorCode",token.StatusCode}});
+            }
+        }
+        if (tokenRequest.GrantType == "password")
+        {
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")!.Equals("Prod"))
+                return Results.StatusCode(403);
+
+            var token = await _tokenService.GenerateTokenWithPassword(generateTokenRequest);
+            if (token.StatusCode == 200)
+            {
+                return Results.Json(token.Response);
+            }
+            else
+            {
+                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object>{{"errorCode",token.StatusCode}});
+            }
+        }
+
+        if (tokenRequest.GrantType == "refresh_token")
+        {
+            var token = await _tokenService.GenerateTokenWithRefreshToken(generateTokenRequest);
+            if (token.StatusCode == 200)
+            {
+                return Results.Json(token.Response);
+            }
+            else
+            {
+                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object>{{"errorCode",token.StatusCode}});
+            }
+        }
+
+        if (tokenRequest.GrantType == "client_credentials")
+        {
+            var token = await _tokenService.GenerateTokenWithClientCredentials(generateTokenRequest);
+            if (token.StatusCode == 200)
+            {
+                return Results.Json(token.Response);
+            }
+            else
+            {
+                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object>{{"errorCode",token.StatusCode}});
+            }
+        }
+
+        return Results.Problem(detail: "Invalid Grant Type", statusCode: 480);
     }
 
     [HttpGet("private/CheckScope/{reference}/{scope}")]

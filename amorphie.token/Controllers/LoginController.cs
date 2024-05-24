@@ -12,9 +12,21 @@ using amorphie.core.Enums;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 namespace amorphie.token.core.Controllers;
 
+public class PhoneTest2
+{
+    public PhoneTest phone{get;set;}
+}
+public class PhoneTest
+{
+    [JsonPropertyName("phone1")]
+    public int phone1{get;set;}
+    [JsonPropertyName("phone2")]
+    public int phone2{get;set;}
+}
 public class LoginController : Controller
 {
     private readonly ILogger<TokenController> _logger;
@@ -30,8 +42,9 @@ public class LoginController : Controller
     private readonly IConsentService _consentService;
     private readonly IProfileService _profileService;
     private readonly IbDatabaseContext _ibContext;
+    private readonly IInternetBankingUserService _internetBankingUserService;
     public LoginController(ILogger<TokenController> logger, IAuthorizationService authorizationService, IUserService userService, DatabaseContext databaseContext
-    , IConfiguration configuration, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService, ITransactionService transactionService,
+    , IConfiguration configuration,IInternetBankingUserService internetBankingUserService, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService, ITransactionService transactionService,
     IFlowHandler flowHandler, IConsentService consentService, IProfileService profileService, IbDatabaseContext ibContext)
     {
         _logger = logger;
@@ -47,18 +60,17 @@ public class LoginController : Controller
         _consentService = consentService;
         _profileService = profileService;
         _ibContext = ibContext;
+        _internetBankingUserService = internetBankingUserService;
     }
 
-    [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpGet("public/Authorize")]
-    public async Task<IActionResult> OpenBankingAuthorize(Guid riza_no)
+    [HttpPost("public/testtest")]
+    [Consumes("application/json")]
+    public async Task<IActionResult> testttt([FromBody]PhoneTest phone)
     {
-        var consent = await _consentService.GetConsent(riza_no);
-
-        return View();
+        var k = "123123";
+        throw new Exception();
     }
-
-
+        
 
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("public/Login")]
@@ -89,9 +101,10 @@ public class LoginController : Controller
             if (user?.State.ToLower() == "active" || user?.State.ToLower() == "new")
             {
                 HttpContext.Session.SetString("LoggedUser", JsonSerializer.Serialize(user));
-                await _authorizationService.AssignUserToAuthorizationCode(user, loginRequest.Code!);
-
-                return Redirect($"{loginRequest.RedirectUri}&code={loginRequest.Code}");
+                var profileResponse = await _profileService.GetCustomerSimpleProfile(user.Reference);
+                var authCodeInfo = await _authorizationService.AssignUserToAuthorizationCode(user, loginRequest.Code!,profileResponse.Response);
+                
+                return Redirect($"{authCodeInfo.RedirectUri}?code={loginRequest.Code}&response_type=code&state={authCodeInfo.State}");
             }
             else
             {
@@ -105,6 +118,88 @@ public class LoginController : Controller
                 };
                 return View("Login", loginModel);
             }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.ToString());
+            return StatusCode(500);
+        }
+    }
+
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [HttpPost("public/CollectionLogin")]
+    public async Task<IActionResult> CollectionLogin(Login loginRequest)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(loginRequest.UserName) || string.IsNullOrWhiteSpace(loginRequest.Password))
+            {
+                ViewBag.HasError = true;
+                ViewBag.ErrorDetail = "Reference and Password Can Not Be Empty";
+                var loginModel = new Login()
+                {
+                    Code = loginRequest.Code,
+                    RedirectUri = loginRequest.RedirectUri,
+                    RequestedScopes = loginRequest.RequestedScopes
+                };
+                return View("CollectionLoginPage", loginModel);
+            }
+
+            var user = CollectionUsers.Users.FirstOrDefault(u => u.CitizenshipNo.Equals(loginRequest.UserName));
+            if(user is not {})
+            {
+                ViewBag.HasError = true;
+                ViewBag.ErrorDetail = "User Not Found";
+                var loginModel = new Login()
+                {
+                    Code = loginRequest.Code,
+                    RedirectUri = loginRequest.RedirectUri,
+                    RequestedScopes = loginRequest.RequestedScopes
+                };
+                return View("CollectionLoginPage", loginModel);
+            }
+            else
+            {
+                if(!loginRequest.Password.Equals("123456"))
+                {
+                    ViewBag.HasError = true;
+                    ViewBag.ErrorDetail = "Şifre Hatalı";
+                    var loginModel = new Login()
+                    {
+                        Code = loginRequest.Code,
+                        RedirectUri = loginRequest.RedirectUri,
+                        RequestedScopes = loginRequest.RequestedScopes
+                    };
+                    return View("CollectionLoginPage", loginModel);
+                }
+
+                var userRequest = new UserInfo
+                {
+                    firstName = user.Name,
+                    lastName = user.Surname,
+                    phone = null,
+                    state = "Active",
+                    salt = "Collection",
+                    password = "123456",
+                    explanation = "Migrated From Collection",
+                    reason = "Amorphie Collection Login",
+                    isArgonHash = true,
+                    eMail = string.Empty,
+                    reference = user.CitizenshipNo
+                };
+
+                var migrateResult = await _userService.SaveUser(userRequest);
+                var amorphieUserResult = await _userService.Login(new LoginRequest() { Reference = loginRequest.UserName!, Password = loginRequest.Password! });
+                var amorphieUser = amorphieUserResult.Response;
+                HttpContext.Session.SetString("LoggedUser", JsonSerializer.Serialize(user));
+
+                var authCodeInfo = await _authorizationService.AssignCollectionUserToAuthorizationCode(amorphieUser, loginRequest.Code!,user);
+                
+                return Redirect($"{authCodeInfo.RedirectUri}?code={loginRequest.Code}&response_type=code&state={authCodeInfo.State}");
+           
+            }
+
+            
         }
         catch (Exception ex)
         {
@@ -172,8 +267,6 @@ public class LoginController : Controller
                 await _ibContext.SaveChangesAsync();
             }
 
-
-
             var userInfoResult = await _profileService.GetCustomerSimpleProfile(openBankingLoginRequest.username!);
             if (userInfoResult.StatusCode != 200)
             {
@@ -182,7 +275,7 @@ public class LoginController : Controller
             }
 
             var userInfo = userInfoResult.Response;
-
+            
             if (userInfo!.data!.profile!.Equals("customer") || !userInfo!.data!.profile!.status!.Equals("active"))
             {
                 //TODO

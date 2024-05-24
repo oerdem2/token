@@ -1,6 +1,9 @@
+using System.Diagnostics;
+using System.Reflection.Metadata;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
+using System.Threading.Tasks.Dataflow;
 using amorphie.core.Extension;
 using amorphie.token;
 using amorphie.token.core;
@@ -12,10 +15,14 @@ using amorphie.token.Services.ClaimHandler;
 using amorphie.token.Services.Consent;
 using amorphie.token.Services.FlowHandler;
 using amorphie.token.Services.InternetBanking;
+using amorphie.token.Services.LegacySSO;
+using amorphie.token.Services.Login;
 using amorphie.token.Services.MessagingGateway;
 using amorphie.token.Services.Migration;
 using amorphie.token.Services.Profile;
+using amorphie.token.Services.Role;
 using amorphie.token.Services.TransactionHandler;
+using DnsClient.Protocol;
 using Elastic.Apm.NetCoreAll;
 using Elastic.Transport;
 using Microsoft.EntityFrameworkCore;
@@ -25,8 +32,11 @@ using Serilog.Formatting.Compact;
 
 internal class Program
 {
+    
     private static async Task Main(string[] args)
     {
+        
+    
         var builder = WebApplication.CreateBuilder(args);
         builder.Configuration.AddEnvironmentVariables();
         var client = new DaprClientBuilder().Build();
@@ -85,6 +95,8 @@ internal class Program
         builder.Services.AddDbContext<DatabaseContext>
             (options => options.UseNpgsql(builder.Configuration["DatabaseConnection"], b => b.MigrationsAssembly("amorphie.token.data")));
         builder.Services.AddDbContext<IbDatabaseContext>(options => options.UseSqlServer(builder.Configuration["IbDatabaseConnection"]));
+        builder.Services.AddDbContext<IbSecurityDatabaseContext>(options => options.UseSqlServer(builder.Configuration["IbSecurityDatabaseConnection"]));
+        builder.Services.AddDbContext<IbDatabaseContextMordor>(options => options.UseSqlServer(builder.Configuration["IbDatabaseMordorConnection"]));
         builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
         if (builder.Environment.IsDevelopment())
@@ -93,6 +105,7 @@ internal class Program
             builder.Services.AddScoped<IUserService, UserServiceLocal>();
             builder.Services.AddScoped<ITagService, TagServiceLocal>();
             builder.Services.AddScoped<IConsentService, ConsentServiceLocal>();
+            builder.Services.AddScoped<IRoleService, RoleServiceLocal>();
 
 
             builder.Services.AddHttpClient("Client", httpClient =>
@@ -112,13 +125,18 @@ internal class Program
                 httpClient.BaseAddress = new Uri(builder.Configuration["ConsentBaseAddress"]!);
             });
 
-
+            builder.Services.AddHttpClient("Role", httpClient =>
+            {
+                httpClient.BaseAddress = new Uri(builder.Configuration["RoleBaseAddress"]!);
+            });
+ 
         }
         else
         {
             builder.Services.AddScoped<IClientService, ClientService>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ITagService, TagService>();
+            builder.Services.AddScoped<IRoleService, RoleService>();
             //builder.Services.AddScoped<IConsentService, ConsentService>();
             builder.Services.AddScoped<IConsentService, ConsentServiceLocal>();
             builder.Services.AddHttpClient("Consent", httpClient =>
@@ -126,6 +144,19 @@ internal class Program
                 httpClient.BaseAddress = new Uri(builder.Configuration["ConsentBaseAddress"]!);
             });
         }
+
+        builder.Services.AddHttpClient("SSO", httpClient =>
+        {
+            httpClient.BaseAddress = new Uri(builder.Configuration["LegacySSOServiceBaseAddress"]!);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            ClientCertificateOptions = ClientCertificateOption.Manual,
+            ServerCertificateCustomValidationCallback =
+            (httpRequestMessage, cert, cetChain, policyErrors) =>
+            {
+                return true;
+            }
+        });
 
         builder.Services.AddScoped<IInternetBankingUserService, InternetBankingUserService>();
         builder.Services.AddScoped<IProfileService, ProfileService>();
@@ -141,6 +172,8 @@ internal class Program
         builder.Services.AddTransient<ServiceCaller>();
 
         builder.Services.AddScoped<IMigrationService, MigrationService>();
+        builder.Services.AddScoped<ILoginService, LoginService>();
+        builder.Services.AddScoped<ILegacySSOService, LegacySSOService>();
 
 
 
@@ -168,10 +201,12 @@ internal class Program
             httpClient.BaseAddress = new Uri(builder.Configuration["EnquraBaseAddress"]!);
         });
 
+
         builder.Services.AddHttpClient("MevduatStatusCheck", httpClient =>
         {
             httpClient.BaseAddress = new Uri(builder.Configuration["EkycMevduatStatusCheckAddress"]!);
         });
+
         // Bind options from configuration :)
         builder.Services.AddOptions<CardValidationOptions>()
         .Bind(builder.Configuration.GetSection("CardValidation"));
@@ -185,7 +220,7 @@ internal class Program
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
         db.Database.Migrate();
-
+      
         var migrateService = scope.ServiceProvider.GetRequiredService<IMigrationService>();
         await migrateService.MigrateStaticData();
 

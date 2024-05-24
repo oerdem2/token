@@ -15,6 +15,12 @@ refreshTokenButton.addEventListener('click',function(e){
     fetchRefreshToken();
 });
 
+var preLoginTokenButton = document.getElementById("preLogin");
+preLoginTokenButton.addEventListener('click',function(e){
+    e.preventDefault();
+    preLogin();
+});
+
 var callUrlButton = document.getElementById("callUrl");
 callUrlButton.addEventListener('click',function(e){
     e.preventDefault();
@@ -34,6 +40,33 @@ async function callUrl()
     document.getElementById("statusCode").value = response.status;
 }
 
+async function preLogin()
+{
+    var req = {
+        clientCode: "",
+        scopeUser : "",
+        state:"123",
+        nonce:"213",
+        codeChallange:"pmWkWSBCL51Bfkhn79xPuKBKHz__H6B-mY6G9_eieuM"
+    };
+    const response = await fetch('http://localhost:4900/public/CreatePreLogin', {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "clientIdReal":"3fa85f64-5717-4562-b3fc-2c963f66afa6",
+            "user_reference":"",
+            "scope":"retail-customer"
+        },
+        body:JSON.stringify(req)
+    });
+    console.log(response);
+    if(response.redirected)
+        window.location = response.url;
+
+    
+    
+}
+
 async function fetchToken()
 {
     var req = {
@@ -45,7 +78,11 @@ async function fetchToken()
         grant_type:"password"
     };
     const response = await fetch(tokenUrl, {
-        method: "GET"
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body:JSON.stringify(req)
     });
 
     var t = await response.json();
