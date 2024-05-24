@@ -47,6 +47,39 @@ public class AuthorizeController : Controller
         _loginService = loginService;
     }
 
+    [HttpGet("/public/open-banking-generate-auth-code")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> OpenBankingGenerateAuthCode([FromQuery(Name = "rizaNo")] Guid consentId, [FromQuery(Name = "rizaTip")] string consentType)
+    {
+        var consentResponse = await _consentService.GetConsent(consentId);
+        var user = await _daprClient.GetStateAsync<LoginResponse>(_configuration["DAPR_STATE_STORE_NAME"], $"{consentId}_User");
+
+        if (consentResponse.StatusCode == 200)
+        {
+            var consent = consentResponse!.Response!;
+            var deserializedData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent.additionalData!);
+            var redirectUri = deserializedData.gkd.yonAdr;
+
+            var authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest()
+            {
+                ResponseType = "code",
+                ClientId = _configuration["OpenBankingClientId"],
+                Scope = ["open-banking"],
+                ConsentId = consentId,
+                User = user
+            });
+            var authCode = authResponse.Response.Code;
+            return StatusCode(201,new{
+                yetkilendirmeKodu = new{
+                    yetKod = authCode,
+                    rizaNo = consentId,
+                    rizaDrm =  "Y"
+                }
+            });
+        }
+        return Forbid();
+    }
+
     [HttpGet("/public/OpenBankingAuthCode")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> OpenBankingAuthCode(Guid consentId)
