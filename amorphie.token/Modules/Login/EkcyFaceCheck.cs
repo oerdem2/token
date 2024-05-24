@@ -19,50 +19,97 @@ public static class EkcyFaceCheck
         var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
 
         dynamic dataChanged = Newtonsoft.Json.JsonConvert.DeserializeObject<ExpandoObject>(dataBody.ToString());
-
+        dynamic targetObject = new System.Dynamic.ExpandoObject();
+        targetObject.Data = dataChanged;
 
         var faceIsSuccess = dataChanged.entityData.IsSuccess;
         dynamic variables = new Dictionary<string, dynamic>();
         dataChanged.additionalData = new ExpandoObject();
-
-
-
+        var isSkip = dataChanged.entityData.IsSkip;
+        variables.Add("IsSkip", isSkip);
         bool faceStatus = false;
-        bool showHomePageButton = true;
-        bool showTyrAgainButton = true;
-        var sessionId = body.GetProperty("SessionId").ToString();
-        if (faceIsSuccess && !String.IsNullOrEmpty(sessionId))
+        if (!isSkip)
         {
+
+            var callType = body.GetProperty("CallType").ToString();
+            var instance = body.GetProperty("Instance").ToString();
+            var name = body.GetProperty("Name").ToString();
+            var surname = body.GetProperty("Surname").ToString();
+            dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
+            dataChanged.additionalData.callType = callType;
+            dataChanged.additionalData.customerName = name; // bu kısımları doldur.
+            dataChanged.additionalData.customerSurname = surname;
+            dataChanged.additionalData.instanceId = instance;
+
             
-            var session = await ekycService.GetSessionInfoAsync(Guid.Parse(sessionId));
-            if (session.Data is not null && session.Data.Face is not null && session.Data.Face.ValidityLevel > 0)
+            var sessionId = body.GetProperty("SessionId").ToString();
+            if (faceIsSuccess && !String.IsNullOrEmpty(sessionId))
             {
-                dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
-                dataChanged.additionalData.FaceReadSuccess = true;
-                
-                faceStatus = true;
+
+                var session = await ekycService.GetSessionInfoAsync(Guid.Parse(sessionId));
+                if (session.Data is not null && session.Data.Face is not null && session.Data.Face.ValidityLevel > 0)
+                {
+                    dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
+                    dataChanged.additionalData.FaceReadSuccess = true;
+                    faceStatus = true;
+                }
+
             }
 
-        }
-
-        var faceCurrentFailedCount = Convert.ToInt32(body.GetProperty("CurrentFaceFailedCount").ToString());
-        if(!faceStatus){
-            if (faceCurrentFailedCount >= EkycConstants.FaceFailedMaxTryCount)
+            var faceCurrentFailedCount = Convert.ToInt32(body.GetProperty("CurrentFaceFailedCount").ToString());
+            if (!faceStatus)
             {
-                showTyrAgainButton = false;
+
+
+                 //Max-Min try count 
+                if (faceCurrentFailedCount >= EkycConstants.FaceFailedTryCount)
+                {
+                    dataChanged.additionalData.pages = new List<EkycPageModel>
+                    {
+                        EkycAdditionalDataContstants.StandartItem,
+                        EkycAdditionalDataContstants.FaceFailedBiggerThanMinForRetry
+                    };
+
+                }
+                if(faceCurrentFailedCount>=EkycConstants.FaceFailedMaxTryCount)
+                {
+                    //Min try additional data
+                    dataChanged.additionalData.pages = new List<EkycPageModel>
+                    {
+                        EkycAdditionalDataContstants.StandartItem,
+                        EkycAdditionalDataContstants.FaceFailedMinForRetry
+                    };
+                }
+
+
+                faceCurrentFailedCount++;
             }
-            faceCurrentFailedCount++;
+
+            if (faceStatus && faceIsSuccess)
+            {
+                dataChanged.additionalData.pages = new List<EkycPageModel>
+                {
+                    EkycAdditionalDataContstants.StandartItem,
+                    EkycAdditionalDataContstants.FaceSuccessConfirm
+                };
+            }
+
+
+
+            variables.Add("Init", true);
+            
+            // variables.Add("IsSelfServiceAvaliable", true); // bu client dan alınacak sanırım
+            variables.Add("CurrentFaceFailedCount", faceCurrentFailedCount);
         }
 
-        dataChanged.additionalData.ShowHomePageButton = showHomePageButton;
-        dataChanged.additionalData.ShowTryAgainButton = showTyrAgainButton;
+        variables.Add("FaceReadStatus", faceStatus);
+        // variables.Add("FaceReadStatus", true);
 
-        variables.Add("Init", true);
-        variables.Add("IsSelfServiceAvaliable", true);
-        variables.Add("CurrentFaceFailedCount", faceCurrentFailedCount);
-        
+        targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
+        targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
+        variables.Add($"TRX{transitionName.ToString().Replace("-", "")}", targetObject);
+
         return Results.Ok(variables);
 
-        // return Task.FromResult(Results.Ok("data"));
     }
 }

@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Unicode;
 using amorphie.core.Extension;
 using amorphie.token;
+using amorphie.token.core;
 using amorphie.token.data;
 using amorphie.token.Middlewares;
 using amorphie.token.Modules.Login;
@@ -37,12 +38,11 @@ internal class Program
             }
             catch (System.Exception ex)
             {
-                Console.WriteLine("Dapr Sidecar Doesn't Respond "+ex.ToString());
+                Console.WriteLine("Dapr Sidecar Doesn't Respond " + ex.ToString());
                 return;
             }
 
         }
-
 
 
         await builder.Configuration.AddVaultSecrets(builder.Configuration["DAPR_SECRET_STORE_NAME"], new string[] { "ServiceConnections" });
@@ -138,8 +138,12 @@ internal class Program
         builder.Services.AddTransient<IPasswordRememberService, PasswordRememberService>();
         builder.Services.AddTransient<IEkycProvider, EkycProvider>();
         builder.Services.AddTransient<IEkycService, EkycService>();
+        builder.Services.AddTransient<ServiceCaller>();
 
         builder.Services.AddScoped<IMigrationService, MigrationService>();
+
+
+
 
 
         builder.Services.AddRefitClient<IProfile>()
@@ -164,7 +168,10 @@ internal class Program
             httpClient.BaseAddress = new Uri(builder.Configuration["EnquraBaseAddress"]!);
         });
 
-
+        builder.Services.AddHttpClient("MevduatStatusCheck", httpClient =>
+        {
+            httpClient.BaseAddress = new Uri(builder.Configuration["EkycMevduatStatusCheckAddress"]!);
+        });
         // Bind options from configuration :)
         builder.Services.AddOptions<CardValidationOptions>()
         .Bind(builder.Configuration.GetSection("CardValidation"));

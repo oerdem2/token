@@ -19,22 +19,37 @@ public static class EkycNfcCheck
         var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
 
         dynamic dataChanged = Newtonsoft.Json.JsonConvert.DeserializeObject<ExpandoObject>(dataBody.ToString());
+        dynamic targetObject = new System.Dynamic.ExpandoObject();
+        targetObject.Data = dataChanged;
 
-
-        var nfcIsSuccess = dataChanged.entityData.IsSuccess;
+        var isSkip = dataChanged.entityData.IsSkip;
         dynamic variables = new Dictionary<string, dynamic>();
+
+        variables.Add("IsSkip", isSkip);
+        bool nfcStatus = false;
+        if(!isSkip){
+        var nfcIsSuccess = dataChanged.entityData.IsSuccess;
+        
         dataChanged.additionalData = new ExpandoObject();
+        var callType = body.GetProperty("CallType").ToString();
+        var instance = body.GetProperty("Instance").ToString();
+        var name = body.GetProperty("Name").ToString();
+        var surname = body.GetProperty("Surname").ToString();
+        dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
+        dataChanged.additionalData.callType = callType;
+        dataChanged.additionalData.customerName = name; // bu kısımları doldur.
+        dataChanged.additionalData.customerSurname = surname;
+        dataChanged.additionalData.instanceId = instance;
 
 
         bool identityNoCompatible = false;
-        bool nfcStatus = false;
-        bool showHomePageButton = true;
-        bool showTyrAgainButton = true;
+        
+       
 
         var sessionId = body.GetProperty("SessionId").ToString();
         if (nfcIsSuccess && !String.IsNullOrEmpty(sessionId))
         {
-            
+
             var session = await ekycService.GetSessionInfoAsync(Guid.Parse(sessionId));
             if (session is not null && session.Data is not null && session.Data?.IDChip is not null)
             {
@@ -58,20 +73,55 @@ public static class EkycNfcCheck
         if (!nfcStatus)
         {
 
-            if (nfcCurrentFailedCount >= EkycConstants.NfcFailedMaxTryCount)
+            //Max-Min try count 
+            if (nfcCurrentFailedCount >= EkycConstants.NfcFailedTryCount)
             {
-                showTyrAgainButton = false;
+                dataChanged.additionalData.pages = new List<EkycPageModel>
+                {
+                    EkycAdditionalDataContstants.StandartItem,
+                    EkycAdditionalDataContstants.NfcFailedBiggerThanMinForRetry
+                };
+
             }
+            if(nfcCurrentFailedCount >= EkycConstants.NfcFailedMaxTryCount)
+            {
+                //Min try additional data
+                dataChanged.additionalData.pages = new List<EkycPageModel>
+                {
+                    EkycAdditionalDataContstants.StandartItem,
+                    EkycAdditionalDataContstants.NfcFailedMinForRetry
+                };
+            }
+
+
+
+            variables.Add("FailedStepName","nfc");
             nfcCurrentFailedCount++;
         }
 
-        dataChanged.additionalData.ShowHomePageButton = showHomePageButton;
-        dataChanged.additionalData.ShowTryAgainButton = showTyrAgainButton;
+        if (nfcIsSuccess && nfcStatus)
+        {
+            dataChanged.additionalData.pages = new List<EkycPageModel>{
+                EkycAdditionalDataContstants.StandartItem
+            };
+        }
+
+
 
 
         variables.Add("Init", true);
-        variables.Add("NfcStatus", true);
+        
         variables.Add("CurrentNfcFailedCount", nfcCurrentFailedCount);
+        }
+
+        variables.Add("NfcStatus", nfcStatus); 
+        // variables.Add("NfcStatus", true);
+      
+
+        targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
+        targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
+        variables.Add($"TRX{transitionName.ToString().Replace("-", "")}", targetObject);
+
         return Results.Ok(variables);
 
         // return Task.FromResult(Results.Ok("data"));

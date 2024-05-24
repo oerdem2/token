@@ -16,35 +16,55 @@ public static class EkycOcrCheck
     {
 
         var transitionName = body.GetProperty("LastTransition").ToString();
-        // var transactionId = body.GetProperty("InstanceId").ToString();
+        var transactionId = body.GetProperty("InstanceId").ToString();
+
         var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
 
         dynamic dataChanged = Newtonsoft.Json.JsonConvert.DeserializeObject<ExpandoObject>(dataBody.ToString());
-
+        dynamic targetObject = new System.Dynamic.ExpandoObject();
+        targetObject.Data = dataChanged;
 
         var ocrIsSuccess = dataChanged.entityData.IsSuccess;
+        
 
         bool identityNoCompatible = false;
         bool ocrStatus = false;
-        bool hasNfc = false;
+        bool hasNfc = dataChanged.entityData.HasNfc;
         dynamic variables = new Dictionary<string, dynamic>();
         dataChanged.additionalData = new ExpandoObject();
-        bool showHomePageButton = true;
-        bool showTyrAgainButton = true;
+
+        var callType = body.GetProperty("CallType").ToString();
+        var instance = body.GetProperty("Instance").ToString();
+        var name = body.GetProperty("Name").ToString();
+        var surname = body.GetProperty("Surname").ToString();
+        dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
+        dataChanged.additionalData.callType = callType;
+        dataChanged.additionalData.customerName = name; // bu kısımları doldur.
+        dataChanged.additionalData.customerSurname = surname;
+        dataChanged.additionalData.instanceId = instance;
+
+        var sessionId = "";
+
 
         #region GetSession after connection state
-        var referenceId = body.GetProperty("ReferenceId")?.ToString();
-        var sessionIntegrationInfo = await ekycService.GetSessionByIntegrationReferenceAsync(Guid.Parse(referenceId));
-        var sessionId = "";
-        if (sessionIntegrationInfo.IsSuccessful && sessionIntegrationInfo.Data is not null && sessionIntegrationInfo.Data.Count > 0)
+        try
         {
-            // Get SessionId 
-            sessionId = sessionIntegrationInfo.Data.FirstOrDefault().SessionUId.ToString();
+            GetIntegrationInfoModels.Data sessionIntegrationInfo = await ekycService.GetSessionByIntegrationReferenceAsync(Guid.Parse(transactionId));
 
-
+            if (sessionIntegrationInfo is not null && sessionIntegrationInfo.SessionUId is not null)
+            {
+                // Get SessionId 
+                sessionId = sessionIntegrationInfo.SessionUId?.ToString();
+            }
         }
+        catch (Exception ex)
+        {
+            ocrStatus = false;
+        }
+
         variables.Add("SessionId", sessionId);
         #endregion
+
 
         if (ocrIsSuccess && !string.IsNullOrEmpty(sessionId))
         {
@@ -72,25 +92,57 @@ public static class EkycOcrCheck
         }
 
         var ocrCurrentFailedCount = Convert.ToInt32(body.GetProperty("CurrentOcrFailedCount").ToString());
-        if (!ocrStatus)
+        if (!ocrStatus || !ocrIsSuccess)
         {
 
-            if (ocrCurrentFailedCount >= EkycConstants.OcrFailedMaxTryCount)
-            {
-                showTyrAgainButton = false;
-            }
+            // if (ocrCurrentFailedCount >= EkycConstants.OcrFailedMaxTryCount)
+            // {
+            //     showTyrAgainButton = false;
+            // }
             ocrCurrentFailedCount++;
+            variables.Add("FailedStepName","ocr");
+            // ocr failed
+            if (!ocrIsSuccess)
+            {
+                dataChanged.additionalData.pages = new List<EkycPageModel>
+                {
+                    EkycAdditionalDataContstants.StandartItem,
+                    EkycAdditionalDataContstants.OcrFailedItemForRetry
+                    
+                };
+
+                
+
+            }
+
+            if(!ocrStatus){
+                dataChanged.additionalData.pages = new List<EkycPageModel>
+                {
+                    EkycAdditionalDataContstants.StandartItem,
+                    EkycAdditionalDataContstants.OcrFailedItemForIdentityMatch
+                }; 
+            }
+
         }
 
-        dataChanged.additionalData.ShowHomePageButton = showHomePageButton;
-        dataChanged.additionalData.ShowTryAgainButton = showTyrAgainButton;
-
+        if(ocrStatus && ocrIsSuccess){
+             dataChanged.additionalData.pages = new List<EkycPageModel>
+                {
+                    EkycAdditionalDataContstants.StandartItem,
+                    EkycAdditionalDataContstants.OcrSuccessForNfcItem
+                }; 
+        }
 
         // dynamic variables = new ExpandoObject();
         variables.Add("Init", true);
-        variables.Add("OcrStatus", true);
+        variables.Add("OcrStatus", ocrStatus);
+        
         variables.Add("CurrentOcrFailedCount", ocrCurrentFailedCount);
-        variables.Add("HasNfc",hasNfc);
+        variables.Add("HasNfc", hasNfc);
+
+        targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
+        targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
+        variables.Add($"TRX{transitionName.ToString().Replace("-", "")}", targetObject);
 
         return Results.Ok(variables);
 

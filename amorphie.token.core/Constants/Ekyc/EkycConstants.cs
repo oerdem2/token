@@ -35,11 +35,11 @@ public static class EkycConstants
     // }
 
     //TODO: they'll move to Vault 
-    public static int OcrFailedTryCount = 5;
-    public static int OcrFailedMaxTryCount = 10;
-    public static int NfcFailedTryCount = 5;
-    public static int NfcFailedMaxTryCount = 10;
-    public static int FaceFailedTryCount = 5;
-    public static int FaceFailedMaxTryCount = 10;
+    public static int OcrFailedTryCount = 1;
+    public static int OcrFailedMaxTryCount = 3;
+    public static int NfcFailedTryCount = 1;
+    public static int NfcFailedMaxTryCount = 3;
+    public static int FaceFailedTryCount = 1;
+    public static int FaceFailedMaxTryCount = 3;
 }
 
