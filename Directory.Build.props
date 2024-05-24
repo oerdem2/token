@@ -1,0 +1,5 @@
+<Project>
+ <PropertyGroup>
+   <EfCoreVersion>8.0.4</EfCoreVersion>
+ </PropertyGroup>
+</Project>

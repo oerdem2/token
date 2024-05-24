@@ -9,5 +9,6 @@ namespace amorphie.token.core.Enums;
     BlockedUser = 40,
     BlockUser = 50,
     SamePassword = 60,
+    NotAuthorized = 70,
     General = 100
 }
