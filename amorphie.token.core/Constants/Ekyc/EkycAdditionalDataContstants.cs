@@ -1,0 +1,568 @@
+﻿namespace amorphie.token.core;
+
+public static class EkycAdditionalDataContstants
+{
+    public static readonly EkycPageModel StandartItem = new EkycPageModel
+    {
+        type = "waiting",
+        image = "wait",
+        title = "Kimlik Okuma Adımları Yükleniyor",
+        navText = "Müşterimiz Ol",
+        popUp = new EkycPopUpModel
+        {
+            image = "alert",
+            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
+            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
+            buttons = new List<EkycButtonModel>{
+                        new EkycButtonModel{
+                            type="primary",
+                            itemNo=1,
+                            text = "Onayla",
+                            action="exit",
+                            transition = "amorphie-ekyc-exit"
+                        },
+                        new EkycButtonModel{
+                            type="secondary",
+                            itemNo=2,
+                            text="Görüntülü Görüşmeye Devam Et",
+                            action="cancel"
+                        }
+                    }
+        },
+        buttons = new List<EkycButtonModel>()
+    };
+
+    public static readonly EkycPageModel ConnectionFailedItem = new EkycPageModel
+    {
+        type = "error",
+        image = "generic",
+        title = "Bağlantı Hatası",
+        navText = "Müşterimiz Ol",
+        subTexts = new List<string> { "Teknik sebeplerden dolayı sayfa yüklenemedi. Yeniden dene diyerek işleme kaldığınız yerden devam edebilirsiniz." },
+        popUp = new EkycPopUpModel
+        {
+            image = "alert",
+            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
+            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
+            buttons = new List<EkycButtonModel>{
+                        new EkycButtonModel{
+                            type="primary",
+                            itemNo=1,
+                            text = "Onayla",
+                            action="exit",
+                            transition = "amorphie-ekyc-exit"
+                        },
+                        new EkycButtonModel{
+                            type="secondary",
+                            itemNo=2,
+                            text="Görüntülü Görüşmeye Devam Et",
+                            action="cancel"
+                        }
+                    }
+        },
+        buttons = new List<EkycButtonModel>{
+                  new EkycButtonModel
+                  {
+                     type="primary",
+                     itemNo=1,
+                     text = "Yeniden Dene",
+                     action="retry",
+                  },
+                  new EkycButtonModel
+                  {
+                     type="secondary",
+                     itemNo=2,
+                     text="Giriş Ekranına Dön",
+                     action="exit",
+                     transition = "amorphie-ekyc-exit"
+                  }
+                }
+    };
+
+    public static readonly EkycPageModel OcrFailedItemForRetry = new EkycPageModel
+    {
+        type = "error",
+        image = "error",
+        title = "Kimlik Doğrulama Yapılamadı",
+        navText = "Müşterimiz Ol",
+        subTexts = new List<string> { "Lütfen kimlik kartınızı hareket ettirmeden, yeterli ışık alan bir ortamda yeniden deneyin." },
+        popUp = new EkycPopUpModel
+        {
+            image = "alert",
+            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
+            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
+            buttons = new List<EkycButtonModel>{
+                        new EkycButtonModel{
+                            type="primary",
+                            itemNo=1,
+                            text = "Onayla",
+                            action="exit",
+                            transition = "amorphie-ekyc-exit"
+                        },
+                        new EkycButtonModel{
+                            type="secondary",
+                            itemNo=2,
+                            text="Görüntülü Görüşmeye Devam Et",
+                            action="cancel"
+                        }
+                    }
+        },
+        buttons = new List<EkycButtonModel>{
+                  new EkycButtonModel
+                  {
+                     type="primary",
+                     itemNo=1,
+                     text = "Yeniden Dene",
+                     action="retry",
+                  }
+                }
+    };
+
+
+    public static readonly EkycPageModel OcrFailedItemForIdentityMatch = new EkycPageModel
+    {
+        type = "error",
+        image = "error",
+        title = "Kimlik Doğrulama Yapılamadı",
+        navText = "Müşterimiz Ol",
+        subTexts = new List<string> { "Lütfen bilgilerini girdiğiniz kimliği okutun." },
+        popUp = new EkycPopUpModel
+        {
+            image = "alert",
+            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
+            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
+            buttons = new List<EkycButtonModel>{
+                        new EkycButtonModel{
+                            type="primary",
+                            itemNo=1,
+                            text = "Onayla",
+                            action="exit",
+                            transition = "amorphie-ekyc-exit"
+                        },
+                        new EkycButtonModel{
+                            type="secondary",
+                            itemNo=2,
+                            text="Görüntülü Görüşmeye Devam Et",
+                            action="cancel"
+                        }
+                    }
+        },
+        buttons = new List<EkycButtonModel>{
+                  new EkycButtonModel
+                  {
+                     type="primary",
+                     itemNo=1,
+                     text = "Yeniden Dene",
+                     action="retry",
+                  }
+                }
+    };
+
+    public static readonly EkycPageModel OcrSuccessForNfcItem = new EkycPageModel
+    {
+        type = "nfc",
+        image = "nfc",
+        title = "NFC Kimlik Tarama",
+        navText = "Müşterimiz Ol",
+        subTexts = new List<string> { "Kimliğinizi NFC ile doğrulatmak için lütfen kimlik kartınızı cihazınızın NFC alanına doğru yaklaştırın." },
+        popUp = new EkycPopUpModel
+        {
+            image = "alert",
+            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
+            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
+            buttons = new List<EkycButtonModel>{
+                        new EkycButtonModel{
+                            type="primary",
+                            itemNo=1,
+                            text = "Onayla",
+                            action="exit",
+                            transition = "amorphie-ekyc-exit"
+                        },
+                        new EkycButtonModel{
+                            type="secondary",
+                            itemNo=2,
+                            text="Görüntülü Görüşmeye Devam Et",
+                            action="cancel"
+                        }
+                    }
+        },
+        buttons = new List<EkycButtonModel>()
+    };
+
+
+    public static readonly EkycPageModel NfcFailedMinForRetry = new EkycPageModel
+    {
+
+        type = "error",
+        image = "error",
+        title = "Kimlik Doğrulama Yapılamadı",
+        navText = "Müşterimiz Ol",
+        subTexts = new List<string> { "NFC doğruluma yapmak için lütfen kimlik kartınızı cep telefonunuzun ön kamerasına yaklaştırın." },
+        popUp = new EkycPopUpModel
+        {
+            image = "alert",
+            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
+            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
+            buttons = new List<EkycButtonModel>{
+                        new EkycButtonModel{
+                            type="primary",
+                            itemNo=1,
+                            text = "Onayla",
+                            action="exit",
+                            transition = "amorphie-ekyc-exit"
+                        },
+                        new EkycButtonModel{
+                            type="secondary",
+                            itemNo=2,
+                            text="Görüntülü Görüşmeye Devam Et",
+                            action="cancel"
+                        }
+                    }
+        },
+        buttons = new List<EkycButtonModel>{
+                  new EkycButtonModel
+                  {
+                     type="primary",
+                     itemNo=1,
+                     text = "Yeniden Dene",
+                     action="retry",
+                  }
+                }
+
+    };
+
+    public static readonly EkycPageModel NfcFailedBiggerThanMinForRetry = new EkycPageModel
+    {
+
+        type = "error",
+        image = "error",
+        title = "Kimlik Doğrulama Yapılamadı",
+        navText = "Müşterimiz Ol",
+        subTexts = new List<string> { "Doğrulama yapılamadı. NFC doğrulama işlemini tekrar deneyebilir veya müşteri temsilcisinden destek almak için Görüntülü Görüşme adımına ilerleyebilirsiniz." },
+        popUp = new EkycPopUpModel
+        {
+            image = "alert",
+            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
+            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
+            buttons = new List<EkycButtonModel>{
+                        new EkycButtonModel{
+                            type="primary",
+                            itemNo=1,
+                            text = "Onayla",
+                            action="exit",
+                            transition = "amorphie-ekyc-exit"
+                        },
+                        new EkycButtonModel{
+                            type="secondary",
+                            itemNo=2,
+                            text="Görüntülü Görüşmeye Devam Et",
+                            action="cancel"
+                        }
+                    }
+        },
+        buttons = new List<EkycButtonModel>{
+                  new EkycButtonModel
+                  {
+                     type="primary",
+                     itemNo=1,
+                     text = "Yeniden Dene",
+                     action="retry",
+                  },
+                  new EkycButtonModel
+                  {
+                     type="secondary",
+                     itemNo=2,
+                     text="Görüntülü Görüşmeye Bağlan",
+                     action="skip"
+
+                  }
+                }
+
+    };
+
+    public static readonly EkycPageModel FaceSuccessConfirm = new EkycPageModel
+    {
+        type = "comfirm",
+        image = "comfirm",
+        title = "Görüntülü Görüşmeye Aktarılacaksınız",
+        navText = "Müşterimiz Ol",
+        subTexts = new List<string>
+        {
+            "Görüntülü görüşme kayıt altına alınacaktır.",
+            "Görüntülü olarak gerçekleşecek görüşmenizin kayıt altına alınmasını onaylıyor musunuz?"
+        },
+        popUp = new EkycPopUpModel
+        {
+
+            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
+            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
+            buttons = new List<EkycButtonModel>{
+                        new EkycButtonModel{
+                            type="primary",
+                            itemNo=1,
+                            text = "Onayla",
+                            action="exit",
+                            transition = "amorphie-ekyc-finish"
+                        },
+                        new EkycButtonModel{
+                            type="secondary",
+                            itemNo=2,
+                            text="Görüntülü Görüşmeye Devam Et",
+                            action="cancel"
+                        }
+                    }
+        },
+        popUpVideoCall = new EkycPopUpModel
+        {
+            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
+            subTexts = new List<string>{
+                "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?",
+                "Yardıma ihtiyaç duymanız durumunda <b>0850 222 29 10</b> numaralı telefondan bizi 7/24 arayabilirsiniz."
+            },
+            buttons = new List<EkycButtonModel>{
+                new EkycButtonModel
+                {
+                    type="primary",
+                    itemNo=1,
+                    text="Onayla",
+                    action="Exit",
+                    transition="amorphie-ekyc-finish"
+                },
+                 new EkycButtonModel
+                {
+                    type="secondary",
+                    itemNo=2,
+                    text="Görüşmeye Devam Et",
+                    action="Cancel"
+
+                },
+            }
+        },
+        buttons = new List<EkycButtonModel>
+        {
+            new EkycButtonModel
+                {
+                    type="primary",
+                    itemNo=1,
+                    text="Onayla ve Bağlan",
+                    action="ConfirmConnect"
+
+                },
+                new EkycButtonModel
+                {
+                    type="secondary",
+                    itemNo=2,
+                    text="Giriş Ekranına Dön",
+                    action="Exit",
+                    transition="amorphie-ekyc-exit"
+                },
+        }
+    };
+
+    public static readonly EkycPageModel FaceFailedMinForRetry = new EkycPageModel
+    {
+        type = "error",
+        image = "error",
+        title = "Kimlik Doğrulama Yapılamadı",
+        navText = "Müşterimiz Ol",
+        subTexts = new List<string> { "Lütfen yüz tanıma işlemini yeniden deneyin." },
+        popUp = new EkycPopUpModel
+        {
+            image = "alert",
+            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
+            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
+            buttons = new List<EkycButtonModel>{
+                        new EkycButtonModel{
+                            type="primary",
+                            itemNo=1,
+                            text = "Onayla",
+                            action="exit",
+                            transition = "amorphie-ekyc-exit"
+                        },
+                        new EkycButtonModel{
+                            type="secondary",
+                            itemNo=2,
+                            text="Görüntülü Görüşmeye Devam Et",
+                            action="cancel"
+                        }
+                    }
+        },
+        buttons = new List<EkycButtonModel>{
+                  new EkycButtonModel
+                  {
+                     type="primary",
+                     itemNo=1,
+                     text = "Yeniden Dene",
+                     action="retry",
+                  }
+                }
+
+    };
+
+    public static readonly EkycPageModel FaceFailedBiggerThanMinForRetry = new EkycPageModel
+    {
+        type = "error",
+        image = "error",
+        title = "Kimlik Doğrulama Yapılamadı",
+        navText = "Müşterimiz Ol",
+        subTexts = new List<string> { "Yüz tanıma işlemini tekrar deneyebilir veya müşteri temsilcisinden destek almak için Görüntülü Görüşme adımına ilerleyebilirsiniz" },
+        popUp = new EkycPopUpModel
+        {
+            image = "alert",
+            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
+            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
+            buttons = new List<EkycButtonModel>{
+                        new EkycButtonModel{
+                            type="primary",
+                            itemNo=1,
+                            text = "Onayla",
+                            action="exit",
+                            transition = "amorphie-ekyc-exit"
+                        },
+                        new EkycButtonModel{
+                            type="secondary",
+                            itemNo=2,
+                            text="Görüntülü Görüşmeye Devam Et",
+                            action="cancel"
+                        }
+                    }
+        },
+        buttons = new List<EkycButtonModel>{
+                  new EkycButtonModel
+                  {
+                     type="primary",
+                     itemNo=1,
+                     text = "Yeniden Dene",
+                     action="retry",
+                  },
+                  new EkycButtonModel
+                  {
+                     type="secondary",
+                     itemNo=2,
+                     text="Görüntülü Görüşmeye Bağlan",
+                     action="skip"
+
+                  }
+                }
+    };
+
+    public static readonly EkycPageModel VideoCallReadySuccessWait = new EkycPageModel
+    {
+        type = "videoCallWait",
+        navText = "Müşterimiz Ol",
+        image = "confirm",
+        title = "Görüntülü Görüşme İçin Sıradasınız",
+        isInVideoCall = true,
+        subTexts = new List<string> { "İletişim Merkezi’ne en kısa sürede otomatik olarak bağlanacaksınız. " },
+        popUp = new EkycPopUpModel
+        {
+            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
+            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
+            buttons = new List<EkycButtonModel>{
+                  new EkycButtonModel{
+                            type="primary",
+                            itemNo=1,
+                            text = "Onayla",
+                            action="exit",
+                            transition = "amorphie-ekyc-exit"
+                        },
+                        new EkycButtonModel{
+                            type="secondary",
+                            itemNo=2,
+                            text="Görüntülü Görüşmeye Devam Et",
+                            action="cancel"
+                        }
+            },
+
+        },
+        popUpVideoCall = new EkycPopUpModel
+        {
+            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
+            subTexts = new List<string>{
+                "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?",
+                "Yardıma ihtiyaç duymanız durumunda <b>0850 222 29 10</b> numaralı telefondan bizi 7/24 arayabilirsiniz."
+            },
+            buttons = new List<EkycButtonModel>{
+                new EkycButtonModel
+                {
+                    type="primary",
+                    itemNo=1,
+                    text="Onayla",
+                    action="Exit",
+                    transition="amorphie-ekyc-finish"
+                },
+                 new EkycButtonModel
+                {
+                    type="secondary",
+                    itemNo=2,
+                    text="Görüşmeye Devam Et",
+                    action="Cancel"
+
+                },
+            }
+        },
+
+        buttons = new List<EkycButtonModel>
+        {
+             new EkycButtonModel
+             {
+                type="primary",
+                itemNo=1,
+                text="Giriş Ekranına Dön",
+                action="Exit",
+                transition="amorphie-ekyc-finish"
+             }
+        }
+    };
+
+
+    public static readonly EkycPageModel VideoCallReadyFail = new EkycPageModel 
+    {
+        type = "error",
+        navText = "Müşterimiz Ol",
+        image = "generic",
+        title = "Bağlantı Hatası",
+        isInVideoCall = true,
+        subTexts = new List<string> { "Teknik sebeplerden dolayı sayfa yüklenemedi. Yeniden dene diyerek işleme kaldığınız yerden devam edebilirsiniz." },
+        popUp = new EkycPopUpModel
+        {
+            image="alert",
+            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
+            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
+            buttons = new List<EkycButtonModel>{
+                  new EkycButtonModel{
+                            type="primary",
+                            itemNo=1,
+                            text = "Onayla",
+                            action="exit",
+                            transition = "amorphie-ekyc-exit"
+                        },
+                        new EkycButtonModel{
+                            type="secondary",
+                            itemNo=2,
+                            text="Görüntülü Görüşmeye Devam Et",
+                            action="cancel"
+                        }
+            },
+
+        },
+         buttons = new List<EkycButtonModel>{
+                  new EkycButtonModel
+                  {
+                     type="primary",
+                     itemNo=1,
+                     text = "Yeniden Dene",
+                     action="retry",
+                  },
+                  new EkycButtonModel
+                  {
+                     type="secondary",
+                     itemNo=2,
+                     text="Giriş Ekranına Dön",
+                     action="exit",
+                     transition ="amorphie-ekyc-exit"
+
+                  }
+                }
+    };
+}

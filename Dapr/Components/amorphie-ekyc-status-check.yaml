@@ -1,13 +1,13 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: amorphie-ekyc-nfc-check
+  name: amorphie-ekyc-status-check
 spec:
   type: bindings.zeebe.jobworker
   version: v1
   metadata:
   - name: jobType
-    value: amorphie-ekyc-nfc-check
+    value: amorphie-ekyc-status-check
   - name: gatewayAddr
     value: localhost:26500
   - name: gatewayKeepAlive
