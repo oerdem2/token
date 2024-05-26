@@ -46,7 +46,7 @@ public class EkycStatusCheck
             var request = new EkycMevduatStatusCheckModels.Request()
             {
                 CallType = callType,
-                CitizenshipNumber = citizenShipNumber,
+                CitizenshipNumber = Convert.ToInt64(citizenShipNumber),
                 Counter = 1
             };
             var statusCheck = await ekycService.CheckCallStatusForMevduat(request);
