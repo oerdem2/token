@@ -1,5 +1,6 @@
 
 using System.Dynamic;
+using amorphie.token.core;
 
 namespace amorphie.token.Modules.Login
 {
@@ -148,6 +149,10 @@ namespace amorphie.token.Modules.Login
                 .Produces(StatusCodes.Status200OK);
 
             app.MapPost("/amorphie-ekyc-videocall-ready-check", EkycVideoCallReadyCheck.Check)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+            
+            app.MapPost("/amorphie-ekyc-set-additional-data", EkycSetAdditionalData.Add)
                 .ExcludeFromDescription()
                 .Produces(StatusCodes.Status200OK);
 
