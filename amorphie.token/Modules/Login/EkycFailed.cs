@@ -54,6 +54,7 @@ public static class EkycFailed
     [FromServices] IEkycService ekycService)
   {
 
+    Console.WriteLine(body.ToString());
     var transitionName = body.GetProperty("LastTransition").ToString();
     var failStepName = body.GetProperty("FailedStepName").ToString();
     var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
