@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using amorphie.token.core.Dtos;
 using amorphie.token.core.Models.Consent;
 using amorphie.token.core.Models.Profile;
 using amorphie.token.core.Models.Role;
@@ -19,51 +20,35 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace amorphie.token.Services.Token;
 
-public class TokenService : ServiceBase, ITokenService
+public class TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, IClaimHandlerService claimService,
+ITransactionService transactionService, IRoleService roleService, IbDatabaseContextMordor ibContextMordor, IConsentService consentService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext, IbSecurityDatabaseContext securityContext
+    , IInternetBankingUserService internetBankingUserService, IProfileService profileService, IbDatabaseContext ibContext) : ServiceBase(logger, configuration), ITokenService
 {
-    private readonly IClientService _clientService;
-    private readonly IUserService _userService;
-    private readonly DaprClient _daprClient;
-    private readonly DatabaseContext _databaseContext;
-    private readonly ITransactionService _transactionService;
-    private readonly IClaimHandlerService _claimService;
-    private readonly IConsentService _consentService;
+    private readonly IClientService _clientService = clientService;
+    private readonly IUserService _userService = userService;
+    private readonly DaprClient _daprClient = daprClient;
+    private readonly DatabaseContext _databaseContext = databaseContext;
+    private readonly ITransactionService _transactionService = transactionService;
+    private readonly IClaimHandlerService _claimService = claimService;
+    private readonly IConsentService _consentService = consentService;
+    private IInternetBankingUserService? _internetBankingUserService = internetBankingUserService;
+    private IbDatabaseContext _ibContext = ibContext;
+    private IbDatabaseContextMordor _ibContextMordor = ibContextMordor;
+    private IbSecurityDatabaseContext _ibSecurityContext = securityContext;
+    private IProfileService? _profileService = profileService;
+    private IRoleService? _roleService = roleService;
 
-    private TokenInfoDetail _tokenInfoDetail;
+    private TokenInfoDetail _tokenInfoDetail = new();
     private GenerateTokenRequest? _tokenRequest;
     private ClientResponse? _client;
     private ConsentResponse? _consent;
     private LoginResponse? _user;
     private SimpleProfileResponse? _profile;
-    private IInternetBankingUserService? _internetBankingUserService;
-    private IbDatabaseContext _ibContext;
-    private IbDatabaseContextMordor _ibContextMordor;
-    private IbSecurityDatabaseContext _ibSecurityContext;
-    private IProfileService? _profileService;
-    private IRoleService? _roleService;
-    private ConsentDto _selectedConsent;
-    private RoleDefinitionDto _role;
+    private ConsentDto? _selectedConsent;
+    private RoleDefinitionDto? _role;
     private core.Models.Collection.User? _collectionUser;
-    private string _deviceId;
-    public TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, IClaimHandlerService claimService,
-    ITransactionService transactionService,IRoleService roleService,IbDatabaseContextMordor ibContextMordor, IConsentService consentService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext,IbSecurityDatabaseContext securityContext
-    , IInternetBankingUserService internetBankingUserService, IProfileService profileService, IbDatabaseContext ibContext) : base(logger, configuration)
-    {
-        _clientService = clientService;
-        _userService = userService;
-        _daprClient = daprClient;
-        _databaseContext = databaseContext;
-        _ibSecurityContext = securityContext;
-        _transactionService = transactionService;
-        _claimService = claimService;
-        _internetBankingUserService = internetBankingUserService;
-        _profileService = profileService;
-        _consentService = consentService;
-        _roleService = roleService;
-        _ibContext = ibContext;
-        _ibContextMordor = ibContextMordor;
-        _tokenInfoDetail = new();
-    }
+    private IEnumerable<UserClaimDto>? _userClaims;
+    private string? _deviceId;
 
     private async Task PersistTokenInfo()
     {
@@ -184,7 +169,7 @@ public class TokenService : ServiceBase, ITokenService
             accessDuration = TimeHelper.ConvertStrDurationToSeconds(accessInfo.duration!);
             if(_consent is not null)
             {
-                if(_consent.consentType.Equals("OB_Account"))
+                if(_consent.consentType!.Equals("OB_Account"))
                 {
                     accessDuration = 24 * 60 * 60; // 1 day
                 }
@@ -244,8 +229,8 @@ public class TokenService : ServiceBase, ITokenService
                 tokenClaims.Add(new Claim("credentials", "IsInternetCustomer###1"));
                 tokenClaims.Add(new Claim("credentials", "IsAnonymous###1"));
                 tokenClaims.Add(new Claim("azp", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
-                tokenClaims.Add(new Claim("uppercase_name", _profile?.data?.profile?.uppercase_name ?? string.Empty));
-                tokenClaims.Add(new Claim("uppercase_surname", _profile?.data?.profile?.uppercase_surname ?? string.Empty));
+                tokenClaims.Add(new Claim("uppercase_name", (_profile?.data?.profile?.uppercase_name ?? string.Empty) + (string.IsNullOrWhiteSpace(_profile?.data?.profile?.middleName) ? string.Empty : _profile?.data?.profile?.middleName)));
+                tokenClaims.Add(new Claim("uppercase_surname", (_profile?.data?.profile?.uppercase_surname ?? string.Empty)));
                 tokenClaims.Add(new Claim("logon_ip", _transactionService.IpAddress ?? "undefined"));
             }
 
@@ -262,8 +247,8 @@ public class TokenService : ServiceBase, ITokenService
 
         if (accessInfo.privateClaims != null && accessInfo.privateClaims.Count() > 0)
         {
-            var populatedPrivateClaims = await _claimService.PopulateClaims(accessInfo.privateClaims, _user, _profile, _consent, collectionUser : _collectionUser);
-            var dictFromPrivateClaims = populatedPrivateClaims.ToDictionary(c => c.Type, c => c.Value);
+            var populatedPrivateClaims = await _claimService.PopulatePrivateClaims(accessInfo.privateClaims, _user, _profile, _consent, collectionUser : _collectionUser);
+            var dictFromPrivateClaims = populatedPrivateClaims.Where(c => c is not null).ToDictionary(c => c!.Value.Key, c => c!.Value.Value);
             await _daprClient.SaveStateAsync(Configuration["DAPR_STATE_STORE_NAME"], $"{_tokenInfoDetail!.AccessTokenId.ToString()}_privateClaims", dictFromPrivateClaims, metadata: new Dictionary<string, string> { { "ttlInSeconds", (_tokenInfoDetail.AccessTokenDuration+60).ToString() } });
         }
 
@@ -463,7 +448,7 @@ public class TokenService : ServiceBase, ITokenService
 
             _user = userResponse.Response;
 
-            var profile = await _profileService.GetCustomerSimpleProfile(refreshTokenInfo.Reference);
+            var profile = await _profileService!.GetCustomerSimpleProfile(refreshTokenInfo.Reference!);
             if (profile.StatusCode != 200)
             {
                 return new ServiceResponse<TokenResponse>()
@@ -1041,7 +1026,6 @@ public class TokenService : ServiceBase, ITokenService
             };
         }
 
-        
         var tokenResponse = await GenerateTokenResponse();
 
         if (tokenResponse.IdToken == string.Empty && tokenResponse.AccessToken == string.Empty)
@@ -1277,6 +1261,7 @@ public class TokenService : ServiceBase, ITokenService
         }
 
         var tokenResponse = await GenerateTokenResponse();
+        tokenResponse.scope = string.Join(" ",authorizationCodeInfo!.RequestedScopes!);
 
         if (tokenResponse.IdToken == string.Empty && tokenResponse.AccessToken == string.Empty)
         {
