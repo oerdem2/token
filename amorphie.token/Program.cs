@@ -1,9 +1,3 @@
-using System.Diagnostics;
-using System.Reflection.Metadata;
-using System.Text.Encodings.Web;
-using System.Text.Json;
-using System.Text.Unicode;
-using System.Threading.Tasks.Dataflow;
 using amorphie.core.Extension;
 using amorphie.token;
 using amorphie.token.data;
@@ -21,9 +15,7 @@ using amorphie.token.Services.Migration;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.Role;
 using amorphie.token.Services.TransactionHandler;
-using DnsClient.Protocol;
 using Elastic.Apm.NetCoreAll;
-using Elastic.Transport;
 using Microsoft.EntityFrameworkCore;
 using Refit;
 using Serilog;
@@ -31,11 +23,10 @@ using Serilog.Formatting.Compact;
 
 internal class Program
 {
-    
+   
     private static async Task Main(string[] args)
     {
         
-    
         var builder = WebApplication.CreateBuilder(args);
         builder.Configuration.AddEnvironmentVariables();
         var client = new DaprClientBuilder().Build();
