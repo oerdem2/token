@@ -1,6 +1,7 @@
 
 using System.Text;
 using System.Text.Json;
+using amorphie.token.core.Dtos;
 using MongoDB.Bson;
 
 namespace amorphie.token.Services.User;
@@ -303,6 +304,27 @@ public class UserServiceLocal : IUserService
                 return new ServiceResponse<UserSecurityImageDto>() { StatusCode = 404, Response = lastImage };
             }
             return new ServiceResponse<UserSecurityImageDto>() { StatusCode = 200, Response = lastImage };
+        }
+        else
+        {
+            throw new ServiceException(500, "User Endpoint Did Not Response Successfully");
+        }
+    }
+
+    public async Task<ServiceResponse<IEnumerable<UserClaimDto>>> GetUserClaims(Guid userId)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var httpResponseMessage = await httpClient.GetAsync(
+            "userClaim/getByUserId/"+userId);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            var userClaims = await httpResponseMessage.Content.ReadFromJsonAsync<IEnumerable<UserClaimDto>>();
+            if (userClaims == null)
+            {
+                return new ServiceResponse<IEnumerable<UserClaimDto>>() { StatusCode = 404, Response = null };
+            }
+            return new ServiceResponse<IEnumerable<UserClaimDto>>() { StatusCode = 200, Response = userClaims };
         }
         else
         {
