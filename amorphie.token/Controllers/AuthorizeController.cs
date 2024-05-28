@@ -75,9 +75,9 @@ public class AuthorizeController : Controller
         Console.WriteLine("Headers Come....");
         HttpContext.Request.Headers.ToList().ForEach(h => Console.WriteLine(h.Key +"-"+h.Value));
         return Ok(new{
-                    tckn = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "User_reference").Value,
-                    businessLine = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Business_line").Value,
-                    customerNumber = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Customer_no").Value,
+                    tckn = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "User_reference").Value.ToString(),
+                    businessLine = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Business_line").Value.ToString(),
+                    customerNumber = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Customer_no").Value.ToString(),
                     customerName = $"{HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Given_name").Value} {HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Family_name").Value}"
         });
     }
