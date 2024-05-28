@@ -4,7 +4,7 @@ moveProgressBar();
 // SIGNATURE PROGRESS
 function moveProgressBar() {
   let currentSec = 0;
-  let targetSecs = 60;
+  let targetSecs = 180;
 
   let interval = setInterval(() => {
     currentSec += 1;

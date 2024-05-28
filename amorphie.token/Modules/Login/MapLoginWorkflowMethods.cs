@@ -1,5 +1,6 @@
 
 using System.Dynamic;
+using amorphie.token.core;
 
 namespace amorphie.token.Modules.Login
 {
@@ -121,6 +122,39 @@ namespace amorphie.token.Modules.Login
                 .ExcludeFromDescription()
                 .Produces(StatusCodes.Status200OK);
 
+           
+
+            app.MapPost("/amorphie-ekyc-connection-exit", EkycFailed.ConnectionExit)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+            
+            app.MapPost("/amorphie-ekyc-global-failed", EkycFailed.GlobalFailed)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+                
+            app.MapPost("/amorphie-ekyc-selfservice-check", EkycSelfServiceCheck.Check)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+                
+            app.MapPost("/amorphie-ekyc-status-check", EkycStatusCheck.Check)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+
+             app.MapPost("/amorphie-ekyc-exit", EkycExit.Exit)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+
+             app.MapPost("/amorphie-ekyc-end", EkycEnded.End)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+
+            app.MapPost("/amorphie-ekyc-videocall-ready-check", EkycVideoCallReadyCheck.Check)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+            
+            app.MapPost("/amorphie-ekyc-set-additional-data", EkycSetAdditionalData.Add)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
 
             app.MapGet("/amorphie-login-test", () =>
             {
