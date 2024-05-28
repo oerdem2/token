@@ -10,6 +10,7 @@ using amorphie.token.Services.TransactionHandler;
 using amorphie.token.Services.Login;
 using System.Threading.Tasks.Dataflow;
 using Elastic.Apm.Api;
+using System.Net.Http.Headers;
 
 
 namespace amorphie.token.core.Controllers;
@@ -54,6 +55,7 @@ public class AuthorizeController : Controller
     public async Task<IActionResult> GetUserInfo([FromForm] string access_token)
     {
         using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",access_token);
         var response = await httpClient.GetAsync(_configuration["GetUserInfoAddress"]);
         if(response.IsSuccessStatusCode)
         {
