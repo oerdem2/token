@@ -52,13 +52,28 @@ public class AuthorizeController : Controller
     public async Task<IActionResult> OpenBankingGenerateAuthCode([FromQuery(Name = "rizaNo")] Guid consentId, [FromQuery(Name = "rizaTip")] string consentType)
     {
         var consentResponse = await _consentService.GetConsent(consentId);
-        var user = await _daprClient.GetStateAsync<LoginResponse>(_configuration["DAPR_STATE_STORE_NAME"], $"{consentId}_User");
-
+        
         if (consentResponse.StatusCode == 200)
         {
             var consent = consentResponse!.Response!;
-            var deserializedData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent.additionalData!);
-            var redirectUri = deserializedData.gkd.yonAdr;
+            var consentData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent!.additionalData!);
+            string kmlkNo = string.Empty;
+            if (consent.consentType!.Equals("OB_Account"))
+            {
+                kmlkNo = consentData!.kmlk.kmlkVrs.ToString();
+            }
+            if (consent.consentType!.Equals("OB_Payment"))
+            {
+                kmlkNo = consentData!.odmBsltm.kmlk.kmlkVrs.ToString();
+            }
+            var userResponse = await _userService.GetUserByReference(kmlkNo);
+            if(userResponse.StatusCode != 200)
+            {
+                //TODO 
+                //Error Handle
+            }
+            var user = userResponse.Response;
+            var redirectUri = consentData!.gkd.yonAdr;
 
             var authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest()
             {
@@ -68,7 +83,7 @@ public class AuthorizeController : Controller
                 ConsentId = consentId,
                 User = user
             });
-            var authCode = authResponse.Response.Code;
+            var authCode = authResponse.Response!.Code;
             return StatusCode(201,new{
                 yetkilendirmeKodu = new{
                     yetKod = authCode,
