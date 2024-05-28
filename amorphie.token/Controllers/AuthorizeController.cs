@@ -72,6 +72,8 @@ public class AuthorizeController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> GetAuthorizedUserInfo()
     {
+        Console.WriteLine("Headers Come....");
+        HttpContext.Request.Headers.ToList().ForEach(h => Console.WriteLine(h.Key +"-"+h.Value));
         return Ok(new{
                     tckn = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "user_reference").Value,
                     businessLine = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "business_line").Value,
