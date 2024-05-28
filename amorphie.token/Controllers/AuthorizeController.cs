@@ -9,6 +9,7 @@ using amorphie.token.Services.Consent;
 using amorphie.token.Services.TransactionHandler;
 using amorphie.token.Services.Login;
 using System.Threading.Tasks.Dataflow;
+using Elastic.Apm.Api;
 
 
 namespace amorphie.token.core.Controllers;
@@ -45,6 +46,36 @@ public class AuthorizeController : Controller
         _consentService = consentService;
         _profileService = profileService;
         _loginService = loginService;
+    }
+
+
+    [HttpPost("/public/get-user-info")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> GetUserInfo([FromForm] string access_token)
+    {
+        using var httpClient = new HttpClient();
+        var response = await httpClient.GetAsync(_configuration["GetUserInfoAddress"]);
+        if(response.IsSuccessStatusCode)
+        {
+            var responseContent = await response.Content.ReadAsStringAsync();
+            return Ok(responseContent);
+        }
+        else
+        {
+            return StatusCode((int)response.StatusCode);
+        }
+    }
+
+    [HttpGet("/private/get-authorized-user-info")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> GetAuthorizedUserInfo()
+    {
+        return Ok(new{
+                    tckn = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "user_reference").Value,
+                    businessLine = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "business_line").Value,
+                    customerNumber = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "customer_no").Value,
+                    customerName = $"{HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "given_name").Value} {HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "family_name").Value}"
+        });
     }
 
     [HttpGet("/public/open-banking-generate-auth-code")]
