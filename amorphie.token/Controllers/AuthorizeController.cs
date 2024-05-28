@@ -75,10 +75,10 @@ public class AuthorizeController : Controller
         Console.WriteLine("Headers Come....");
         HttpContext.Request.Headers.ToList().ForEach(h => Console.WriteLine(h.Key +"-"+h.Value));
         return Ok(new{
-                    tckn = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "user_reference").Value,
-                    businessLine = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "business_line").Value,
-                    customerNumber = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "customer_no").Value,
-                    customerName = $"{HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "given_name").Value} {HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "family_name").Value}"
+                    tckn = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "User_reference").Value,
+                    businessLine = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Business_line").Value,
+                    customerNumber = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Customer_no").Value,
+                    customerName = $"{HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Given_name").Value} {HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Family_name").Value}"
         });
     }
 
