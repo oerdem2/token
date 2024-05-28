@@ -102,8 +102,8 @@ public class LoginController : Controller
             {
                 HttpContext.Session.SetString("LoggedUser", JsonSerializer.Serialize(user));
                 var profileResponse = await _profileService.GetCustomerSimpleProfile(user.Reference);
-                var authCodeInfo = await _authorizationService.AssignUserToAuthorizationCode(user, loginRequest.Code!,profileResponse.Response);
-                
+                var authCodeInfo = await _authorizationService.AssignUserToAuthorizationCode(user, loginRequest.Code!, profileResponse.Response);
+
                 return Redirect($"{authCodeInfo.RedirectUri}?code={loginRequest.Code}&response_type=code&state={authCodeInfo.State}");
             }
             else
@@ -212,7 +212,7 @@ public class LoginController : Controller
     [HttpGet("public/CheckDevice/{reference}")]
     public async Task<IActionResult> CheckDevice(string reference)
     {
-     
+
         var userResponse = await _ibUserService.GetUser(reference);
         if (userResponse.StatusCode != 200)
         {
@@ -223,7 +223,7 @@ public class LoginController : Controller
 
         if (device != null)
         {
-            return Ok(new{os=device.Platform.ToLower().Equals("android") ? 1 : 2});
+            return Ok(new { os = device.Platform.ToLower().Equals("android") ? 1 : 2 });
         }
         else
         {
@@ -366,7 +366,7 @@ public class LoginController : Controller
 
 
 
-            return View("Otp", new Otp
+            return View("newOtp", new Otp
             {
                 Phone = "0" + amorphieUser.MobilePhone.Prefix.ToString().Substring(0, 2) + "******" + amorphieUser.MobilePhone.Number.ToString().Substring(amorphieUser.MobilePhone.Number.Length - 2, 2),
                 transactionId = transactionId,

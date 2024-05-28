@@ -9,7 +9,8 @@
   <title>Document</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Asap:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Asap:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="~/css/style.css">
   <link rel="stylesheet" href="css/progress-bar.css">
   <link rel="stylesheet/less" type="text/css" href="styles.less" />
@@ -36,25 +37,25 @@
 
           <div class="progress-wrap">
             <div class="flex items-center justify-center progress-content">
-              <img src="~/assets/hourglass.svg" /> 
+              <img src="~/assets/hourglass.svg" />
               <span class="progress-text">60</span>
               saniye
             </div>
             <div class="progress-bar"></div>
           </div>
-        
+
 
           <div class="login-form mb-4">
             <label class="input mb-2">
-                <form id="otp-form" asp-action="ValidateOtp" asp-controller="Login" method="post">
-                    <input asp-for="OtpValue" type="password" placeholder="SMS Doğrulama Kodu"/>
-                    <input asp-for="transactionId" type="hidden" />
-                    <input asp-for="consentId" type="hidden" />
-                </form>
+              <form id="otp-form" asp-action="ValidateOtp" asp-controller="Login" method="post">
+                <input asp-for="OtpValue" type="password" placeholder="SMS Doğrulama Kodu" />
+                <input asp-for="transactionId" type="hidden" />
+                <input asp-for="consentId" type="hidden" />
+              </form>
             </label>
-              <div id="otp-submit" class="button login-button flex-1 flex items-center justify-center show-cursor">
-                GİRİŞ YAP
-              </div>
+            <div id="otp-submit" class="button login-button flex-1 flex items-center justify-center show-cursor">
+              GİRİŞ YAP
+            </div>
           </div>
         </div>
 
@@ -63,13 +64,16 @@
             <img src="~/assets/security.svg" /> İnternet Bankacılığı Güvenlik
           </div>
 
-          <p>Burgan Bank İnternet Bankacılığı ortamında donanım, yazılım, network ve erişim platformları günümüz teknolojisine uygun olarak kurulmuş olup güncel tutulmaktadır.</p>
+          <p>Burgan Bank İnternet Bankacılığı ortamında donanım, yazılım, network ve erişim platformları günümüz
+            teknolojisine uygun olarak kurulmuş olup güncel tutulmaktadır.</p>
 
           <p>İnternet Bankacılığı giriş sayfasında cep telefon numarası, marka ve model bilgisi istenmemektedir</p>
 
-          <p>Cep telefonunuza dijital/mobil sertifika için gönderilen linkleri açmayınız, bu linklerden yükleme yapmayınız.</p>
+          <p>Cep telefonunuza dijital/mobil sertifika için gönderilen linkleri açmayınız, bu linklerden yükleme
+            yapmayınız.</p>
 
-          <p>Adres çubuğunda görselinin bulunduğu ve tıklandığında açılan sertifikada Burgan Bank yazdığını kontrol ediniz.</p>
+          <p>Adres çubuğunda görselinin bulunduğu ve tıklandığında açılan sertifikada Burgan Bank yazdığını kontrol
+            ediniz.</p>
 
           <a href="#">Daha detaylı bilgi almak için tıklayın...</a>
         </div>

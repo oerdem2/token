@@ -129,7 +129,7 @@ internal class Program
             {
                 httpClient.BaseAddress = new Uri(builder.Configuration["RoleBaseAddress"]!);
             });
- 
+
         }
         else
         {
