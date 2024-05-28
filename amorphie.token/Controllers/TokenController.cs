@@ -19,6 +19,9 @@ using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using System.Security.Cryptography;
 using System.Net.Mime;
+using amorphie.token.Modules.Login;
+using Amazon.Internal;
+using System.Configuration;
 
 
 namespace amorphie.token.core.Controllers;
@@ -62,8 +65,8 @@ public class TokenController : Controller
     {
         return Ok(new 
         {
-            authorization_endpoint="http://localhost:4900/public/Authorize",
-            token_endpoint = "http://localhost:4900/public/Token"
+            authorization_endpoint= _configuration["Basepath"]+"/public/Authorize",
+            token_endpoint = _configuration["Basepath"]+"/public/Token"
         });
     }
 
@@ -264,7 +267,7 @@ public class TokenController : Controller
 
         }
 
-        var privateClaims = await _daprClient.GetStateAsync<Dictionary<string,string>>(_configuration["DAPR_STATE_STORE_NAME"], $"{accessTokenInfo.Id.ToString()}_privateClaims");
+        var privateClaims = await _daprClient.GetStateAsync<Dictionary<string,object>>(_configuration["DAPR_STATE_STORE_NAME"], $"{accessTokenInfo.Id.ToString()}_privateClaims");
         if(privateClaims is not null && privateClaims.Count() > 0)
         {
             foreach (var claim in privateClaims)
@@ -280,7 +283,7 @@ public class TokenController : Controller
                         if (!claim.Key.Equals("exp") && !claim.Key.Equals("nbf") && !claim.Key.Equals("iat"))
                             claimValues.Add(claim.Key.Replace(".", "_"), claim.Value);
                         else
-                            claimValues.Add(claim.Key.Replace(".", "_"), long.Parse(claim.Value));
+                            claimValues.Add(claim.Key.Replace(".", "_"), Convert.ToInt64(claim.Value));
                     }
                 }
             }
@@ -320,6 +323,13 @@ public class TokenController : Controller
         return View("callback");
     }
 
+    [HttpPost("public/SaveEkycResult")]
+    public async Task<IActionResult> SaveEkyResult([FromBody] dynamic body)
+    {
+        Console.WriteLine("Save ekyc result Model"+JsonSerializer.Serialize(body));
+        return Ok();
+    }
+
     [ApiExplorerSettings(IgnoreApi = true)]
     [Consumes("application/x-www-form-urlencoded")]
     [HttpPost("public/Token")]
@@ -330,6 +340,14 @@ public class TokenController : Controller
         _transactionService.IpAddress = ipAddress;
 
         var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
+        if(generateTokenRequest.Scopes?.Count() == 0)
+        {
+            if(!string.IsNullOrEmpty(tokenRequest.scope))
+            {
+                generateTokenRequest.Scopes = tokenRequest.scope.Split(" ");
+            }
+        }
+
         if (tokenRequest.GrantType == "device")
         {
             var token = await _tokenService.GenerateTokenWithDevice(generateTokenRequest);
@@ -409,6 +427,14 @@ public class TokenController : Controller
         _transactionService.IpAddress = ipAddress;
 
         var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
+        if(generateTokenRequest.Scopes?.Count() == 0)
+        {
+            if(!string.IsNullOrEmpty(tokenRequest.scope))
+            {
+                generateTokenRequest.Scopes = tokenRequest.scope.Split(" ");
+            }
+        }
+
         if (tokenRequest.GrantType == "device")
         {
             var token = await _tokenService.GenerateTokenWithDevice(generateTokenRequest);

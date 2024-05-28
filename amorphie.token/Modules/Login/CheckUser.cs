@@ -94,18 +94,25 @@ namespace amorphie.token.Modules.Login
                 await ibContext.SaveChangesAsync();
             }
 
-            // var role = await ibContextMordor.Role.Where(r => r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
-            // if(role is {})
-            // {
-            //     var roleDefinition = await ibContextMordor.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive && d.Key.Equals(0));
-            //     if(roleDefinition is {})
-            //     {
-            //         variables.status = false;
-            //         variables.message = ErrorHelper.GetErrorMessage(LoginErrors.NotAuthorized, langCode);
-            //         variables.wrongCredentials = true;
-            //         return Results.Ok(variables);
-            //     }
-            // }
+            var mordorUserResponse = await internetBankingUserService.MordorGetUser(request.Username!);
+            if (mordorUserResponse.StatusCode == 200)
+            {
+                var mordorUser = mordorUserResponse.Response;
+
+                var role = await ibContextMordor.Role.Where(r => r.UserId.Equals(mordorUser!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
+                if(role is {} && (role.ExpireDate ?? DateTime.MinValue) > DateTime.Now)
+                {
+                    var roleDefinition = await ibContextMordor.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive && d.Key.Equals(0));
+                    if(roleDefinition is {})
+                    {
+                        variables.status = false;
+                        variables.message = ErrorHelper.GetErrorMessage(LoginErrors.NotAuthorized, langCode);
+                        variables.wrongCredentials = true;
+                        return Results.Ok(variables);
+                    }
+                }
+            }
+            
 
             var userInfoResult = await profileService.GetCustomerSimpleProfile(request.Username!);
             if (userInfoResult.StatusCode != 200)
@@ -184,4 +191,5 @@ namespace amorphie.token.Modules.Login
             return Results.Ok(variables);
         }
     }
+    
 }

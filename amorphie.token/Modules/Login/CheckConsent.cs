@@ -55,11 +55,11 @@ namespace amorphie.token.Modules.Login
             if (checkConsent.StatusCode == 200)
             {
 
-                variables.Add("hasConsent", false);
+                variables.Add("hasConsent", true);
             }
             else
             {
-                variables.Add("hasConsent", true);
+                variables.Add("hasConsent", false);
             }
         
 
