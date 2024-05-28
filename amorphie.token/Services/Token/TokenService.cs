@@ -4,7 +4,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using amorphie.token.core.Dtos;
 using amorphie.token.core.Models.Consent;
 using amorphie.token.core.Models.Profile;
 using amorphie.token.core.Models.Role;
@@ -47,7 +46,6 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
     private ConsentDto? _selectedConsent;
     private RoleDefinitionDto? _role;
     private core.Models.Collection.User? _collectionUser;
-    private IEnumerable<UserClaimDto>? _userClaims;
     private string? _deviceId;
 
     private async Task PersistTokenInfo()
