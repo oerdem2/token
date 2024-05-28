@@ -32,10 +32,10 @@ public class GetSessionInfoModels
         public bool NFCExists { get; set; }
         public bool NFCVerified { get; set; }
         public string Status { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime LiveDate { get; set; }
-        public DateTime FinishDate { get; set; }
-        public DateTime CloseDate { get; set; }
+        // public DateTime StartDate { get; set; }
+        // public DateTime LiveDate { get; set; }
+        // public DateTime FinishDate { get; set; }
+        // public DateTime CloseDate { get; set; }
         public Guid FaceUId { get; set; }
         public Face Face { get; set; }
         public Guid IDDocUId { get; set; }
