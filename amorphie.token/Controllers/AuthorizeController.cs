@@ -11,6 +11,7 @@ using amorphie.token.Services.Login;
 using System.Threading.Tasks.Dataflow;
 using Elastic.Apm.Api;
 using System.Net.Http.Headers;
+using Newtonsoft.Json.Linq;
 
 
 namespace amorphie.token.core.Controllers;
@@ -60,7 +61,7 @@ public class AuthorizeController : Controller
         if(response.IsSuccessStatusCode)
         {
             var responseContent = await response.Content.ReadAsStringAsync();
-            return Ok(responseContent);
+            return Ok(Newtonsoft.Json.JsonConvert.DeserializeObject<JObject>(responseContent));
         }
         else
         {
