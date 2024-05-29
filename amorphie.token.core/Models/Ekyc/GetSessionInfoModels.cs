@@ -47,10 +47,10 @@ public class GetSessionInfoModels
 
     public class Face : BaseDocDataClass
     {
-        public string Distance { get; set; }
-        public string Confidence { get; set; }
-        public string ChipDistance { get; set; }
-        public string ChipConfidence { get; set; }
+        // public string Distance { get; set; }
+        // public string Confidence { get; set; }
+        // public string ChipDistance { get; set; }
+        // public string ChipConfidence { get; set; }
         public int ValidityLevel { get; set; }
         public string FaceDocumentUId { get; set; }
         public DocumentBase FaceDocument { get; set; }
