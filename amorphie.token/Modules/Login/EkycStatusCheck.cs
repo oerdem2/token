@@ -74,8 +74,8 @@ public class EkycStatusCheck
              
         }
 
-
-        variables.Add("Button",callTransactionType);
+        
+        variables.Add("EkycButton",callTransactionType);
         variables.Add("Init", true);
         variables.Add("VideoCallCheck", videoCallCheck);
 

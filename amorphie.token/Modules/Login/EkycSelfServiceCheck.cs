@@ -41,6 +41,7 @@ public static class EkycSelfServiceCheck
 
         variables.Add("Init", true);
         variables.Add("IsSelfServiceCheck", selfServiceCheck);
+        variables.Add("EkycButton","None"); // self service ile işlem sonlandığında üst flow için
         
         
         return Results.Ok(variables);

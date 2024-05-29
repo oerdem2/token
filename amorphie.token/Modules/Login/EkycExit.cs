@@ -13,6 +13,7 @@ public static class EkycExit
     var transitionName = body.GetProperty("LastTransition").ToString();
     var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
     dynamic dataChanged = Newtonsoft.Json.JsonConvert.DeserializeObject<ExpandoObject>(dataBody.ToString());
+    var callType = body.GetProperty("CallType").ToString();
 
 
     dynamic targetObject = new System.Dynamic.ExpandoObject();
@@ -29,8 +30,8 @@ public static class EkycExit
 
     dynamic variables = new Dictionary<string, dynamic>();
     // variables here !
-    variables.Add("Result", EkycResultConstants.SelfServiceExit);
-    variables.Add("Button","None");
+    variables.Add("EkycResult", EkycResultConstants.SelfServiceExit);
+    variables.Add("EkycButton","None");
 
     targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
     targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
