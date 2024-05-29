@@ -15,7 +15,41 @@ using Newtonsoft.Json.Linq;
 
 
 namespace amorphie.token.core.Controllers;
-
+ public class CustomerEntity
+    {
+        #region VariableDeclarations
+        private string _customerName { get; set; }
+        private string _customerNumber { get; set; }
+        private string _businessLine { get; set; }
+        private string _TCKN { get; set; }
+ 
+        #endregion
+        #region Properties
+        public string CustomerName
+        {
+            get { return _customerName; }
+            set { _customerName = value; }
+        }
+        
+        public string CustomerNumber
+        {
+            get { return _customerNumber; }
+            set { _customerNumber = value; }
+        }
+        public string BusinessLine
+        {
+            get { return _businessLine; }
+            set { _businessLine = value; }
+        }
+        public string TCKN
+        {
+            get { return _TCKN; }
+            set { _TCKN = value; }
+        }
+       
+        
+        #endregion
+    }
 public class AuthorizeController : Controller
 {
     private readonly ILogger<AuthorizeController> _logger;
@@ -60,8 +94,10 @@ public class AuthorizeController : Controller
         var response = await httpClient.GetAsync(_configuration["GetUserInfoAddress"]);
         if(response.IsSuccessStatusCode)
         {
-            var responseContent = await response.Content.ReadAsStringAsync();
-            return Ok(Newtonsoft.Json.JsonConvert.DeserializeObject<JObject>(responseContent));
+            var t = await response.Content.ReadAsStringAsync();
+            var r = Newtonsoft.Json.JsonConvert.DeserializeObject<CustomerEntity>(await response.Content.ReadAsStringAsync());
+
+            return new OkObjectResult(r);
         }
         else
         {
@@ -73,14 +109,14 @@ public class AuthorizeController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> GetAuthorizedUserInfo()
     {
-        Console.WriteLine("Headers Come....");
-        HttpContext.Request.Headers.ToList().ForEach(h => Console.WriteLine(h.Key +"-"+h.Value));
-        return Json(new{
+        await Task.CompletedTask;
+        var obj = new{
                     TCKN = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "User_reference").Value.ToString(),
                     BusinessLine = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Business_line").Value.ToString(),
                     CustomerNumber = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Customer_no").Value.ToString(),
                     CustomerName = $"{HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Given_name").Value} {HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Family_name").Value}"
-        },new JsonSerializerOptions() { PropertyNamingPolicy = null});
+        };
+        return Ok(obj);
     }
 
     [HttpGet("/public/open-banking-generate-auth-code")]
