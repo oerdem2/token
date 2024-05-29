@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace amorphie.token.Services.InternetBanking
 {
+    
     public class InternetBankingUserService : ServiceBase, IInternetBankingUserService
     {
         private readonly IbDatabaseContext _ibDatabaseContext;
