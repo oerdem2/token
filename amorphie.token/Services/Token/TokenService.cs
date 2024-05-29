@@ -197,6 +197,8 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
 
             tokenClaims.Add(new Claim("client_id", _client.code ?? _client.id));
 
+            //TODO
+            //Set Claims Dynamically
             if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
             {
                 tokenClaims.Add(new Claim("email", _profile?.data?.emails?.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
@@ -793,21 +795,15 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             };
         }
 
-        var mordorUserResponse = await _internetBankingUserService.MordorGetUser(_tokenRequest.Username!);
-        if (mordorUserResponse.StatusCode != 200)
+        var mordorUserResponse = await internetBankingUserService.MordorGetUser(_tokenRequest.Username!);
+        if (mordorUserResponse.StatusCode == 200)
         {
-            return new ServiceResponse<TokenResponse>()
-            {
-                StatusCode = 404,
-                Detail = "User Not Found"
-            };
-        }
-        var mordorUser = mordorUserResponse.Response;
+            var mordorUser = mordorUserResponse.Response;
 
-        var role = await _ibContextMordor.Role.Where(r => r.UserId.Equals(mordorUser!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
+            var role = await ibContextMordor.Role.Where(r => r.UserId.Equals(mordorUser!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
             if(role is {} && (role.ExpireDate ?? DateTime.MinValue) > DateTime.Now)
             {
-                var roleDefinition = await _ibContextMordor.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive && d.Key.Equals(0));
+                var roleDefinition = await ibContextMordor.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive && d.Key.Equals(0));
                 if(roleDefinition is {})
                 {
                     return new ServiceResponse<TokenResponse>()
@@ -817,6 +813,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                     };
                 }
             }
+        }
 
         var userInfoResult = await _profileService.GetCustomerSimpleProfile(_tokenRequest.Username!);
         if (userInfoResult.StatusCode != 200)

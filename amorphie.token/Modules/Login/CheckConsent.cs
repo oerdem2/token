@@ -49,6 +49,8 @@ namespace amorphie.token.Modules.Login
                 return Results.Ok(variables);
             }
 
+            //TODO
+            //Remove Role Id
             var checkConsent = await consentService.CheckConsent(clientInfo.id!, "7b19daa2-8793-45d2-9d96-aa7540c9d1ab", userInfo.Reference);
 
             Console.WriteLine("checkConsent status code : " + checkConsent.StatusCode);
