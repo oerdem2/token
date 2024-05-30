@@ -102,7 +102,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             {
                 claims.Add(new Claim("client_id", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
                 claims.Add(new Claim("email", _profile?.data?.emails?.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
-                claims.Add(new Claim("phone_number", _profile?.data?.phones?.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString()));
+                claims.Add(new Claim("phone_number", _profile?.data?.phones?.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString() ?? ""));
                 claims.Add(new Claim("role", "FullAuthorized"));
                 claims.Add(new Claim("credentials", "IsInternetCustomer###1"));
                 claims.Add(new Claim("credentials", "IsAnonymous###1"));
