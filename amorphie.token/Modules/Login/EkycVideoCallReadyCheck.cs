@@ -49,7 +49,10 @@ public class EkycVideoCallReadyCheck
              dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
                     EkycAdditionalDataContstants.StandartItem,
-                    EkycAdditionalDataContstants.VideoCallReadySuccessWait
+                    EkycAdditionalDataContstants.VideoCallReadySuccessWait,
+                    EkycAdditionalDataContstants.VideoCallReadySuccessOcrRetryFail,
+                    EkycAdditionalDataContstants.VideoCallReadySuccessNfcRetryFail,
+                    EkycAdditionalDataContstants.VideoCallReadySuccessFaceRetryFail
                     
                 };
         }

@@ -516,7 +516,7 @@ public static class EkycAdditionalDataContstants
     };
 
 
-    public static readonly EkycPageModel VideoCallReadyFail = new EkycPageModel 
+    public static readonly EkycPageModel VideoCallReadyFail = new EkycPageModel
     {
         type = "error",
         navText = "Müşterimiz Ol",
@@ -526,7 +526,7 @@ public static class EkycAdditionalDataContstants
         subTexts = new List<string> { "Teknik sebeplerden dolayı sayfa yüklenemedi. Yeniden dene diyerek işleme kaldığınız yerden devam edebilirsiniz." },
         popUp = new EkycPopUpModel
         {
-            image="alert",
+            image = "alert",
             title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
             subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
             buttons = new List<EkycButtonModel>{
@@ -546,7 +546,7 @@ public static class EkycAdditionalDataContstants
             },
 
         },
-         buttons = new List<EkycButtonModel>{
+        buttons = new List<EkycButtonModel>{
                   new EkycButtonModel
                   {
                      type="primary",
@@ -564,5 +564,141 @@ public static class EkycAdditionalDataContstants
 
                   }
                 }
+    };
+
+    public static readonly EkycPageModel VideoCallReadySuccessFaceRetryFail = new EkycPageModel
+    {
+        type = "faceRetryFailed",
+        navText = "Müşterimiz Ol",
+        image = "error",
+        title = "Bağlantı Hatası",
+        isInVideoCall = true,
+        subTexts = new List<string> { "Lütfen yüz tanıma işlemini yeniden deneyin." },
+        popUpVideoCall = new EkycPopUpModel
+        {
+            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
+            subTexts = new List<string>{
+                "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?",
+                "Yardıma ihtiyaç duymanız durumunda <b>0850 222 29 10</b> numaralı telefondan bizi 7/24 arayabilirsiniz."
+            },
+            buttons = new List<EkycButtonModel>{
+                new EkycButtonModel
+                {
+                    type="primary",
+                    itemNo=1,
+                    text="Onayla",
+                    action="Exit",
+                    transition="amorphie-ekyc-exit"
+                },
+                 new EkycButtonModel
+                {
+                    type="secondary",
+                    itemNo=2,
+                    text="Görüşmeye Devam Et",
+                    action="Cancel"
+
+                }
+            }
+        },
+        buttons = new List<EkycButtonModel>{
+            new EkycButtonModel{
+                    type= "primary",
+                    itemNo = 1,
+                    text = "Tekrar Dene",
+                    action = "retry"
+            }
+        }
+
+    };
+
+
+    public static readonly EkycPageModel VideoCallReadySuccessNfcRetryFail = new EkycPageModel
+    {
+        type = "nfcRetryFailed",
+        navText = "Müşterimiz Ol",
+        image = "error",
+        title = "Bağlantı Hatası",
+        isInVideoCall = true,
+        subTexts = new List<string> { "NFC doğruluma yapmak için lütfen kimlik kartınızı cep telefonunuzun ön kamerasına yaklaştırın." },
+        popUpVideoCall = new EkycPopUpModel
+        {
+            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
+            subTexts = new List<string>{
+                "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?",
+                "Yardıma ihtiyaç duymanız durumunda <b>0850 222 29 10</b> numaralı telefondan bizi 7/24 arayabilirsiniz."
+            },
+            buttons = new List<EkycButtonModel>{
+                new EkycButtonModel
+                {
+                    type="primary",
+                    itemNo=1,
+                    text="Onayla",
+                    action="Exit",
+                    transition="amorphie-ekyc-exit"
+                },
+                 new EkycButtonModel
+                {
+                    type="secondary",
+                    itemNo=2,
+                    text="Görüşmeye Devam Et",
+                    action="Cancel"
+
+                }
+            }
+        },
+        buttons = new List<EkycButtonModel>{
+            new EkycButtonModel{
+                    type= "primary",
+                    itemNo = 1,
+                    text = "Tekrar Dene",
+                    action = "retry"
+            }
+        }
+
+    };
+
+      public static readonly EkycPageModel VideoCallReadySuccessOcrRetryFail = new EkycPageModel
+    {
+        type = "ocrRetryFailed",
+        navText = "Müşterimiz Ol",
+        image = "error",
+        title = "Bağlantı Hatası",
+        isInVideoCall = true,
+        subTexts = new List<string> { "Lütfen kimlik kartınızı hareket ettirmeden, yeterli ışık alan bir ortamda yeniden deneyin." },
+        popUpVideoCall = new EkycPopUpModel
+        {
+            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
+            subTexts = new List<string>{
+                "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?",
+                "Yardıma ihtiyaç duymanız durumunda <b>0850 222 29 10</b> numaralı telefondan bizi 7/24 arayabilirsiniz."
+            },
+            buttons = new List<EkycButtonModel>{
+                new EkycButtonModel
+                {
+                    type="primary",
+                    itemNo=1,
+                    text="Onayla",
+                    action="Exit",
+                    transition="amorphie-ekyc-exit"
+                },
+                 new EkycButtonModel
+                {
+                    type="secondary",
+                    itemNo=2,
+                    text="Görüşmeye Devam Et",
+                    action="Cancel"
+
+                }
+            }
+        },
+        buttons = new List<EkycButtonModel>{
+            new EkycButtonModel{
+                    type= "primary",
+                    itemNo = 1,
+                    text = "Tekrar Dene",
+                    action = "retry"
+            }
+        }
+
     };
 }
