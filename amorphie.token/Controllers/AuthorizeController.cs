@@ -8,48 +8,13 @@ using amorphie.token.Services.FlowHandler;
 using amorphie.token.Services.Consent;
 using amorphie.token.Services.TransactionHandler;
 using amorphie.token.Services.Login;
-using System.Threading.Tasks.Dataflow;
-using Elastic.Apm.Api;
 using System.Net.Http.Headers;
-using Newtonsoft.Json.Linq;
+using System.Security.Cryptography;
+using Microsoft.IdentityModel.Tokens;
 
 
 namespace amorphie.token.core.Controllers;
- public class CustomerEntity
-    {
-        #region VariableDeclarations
-        private string _customerName { get; set; }
-        private string _customerNumber { get; set; }
-        private string _businessLine { get; set; }
-        private string _TCKN { get; set; }
  
-        #endregion
-        #region Properties
-        public string CustomerName
-        {
-            get { return _customerName; }
-            set { _customerName = value; }
-        }
-        
-        public string CustomerNumber
-        {
-            get { return _customerNumber; }
-            set { _customerNumber = value; }
-        }
-        public string BusinessLine
-        {
-            get { return _businessLine; }
-            set { _businessLine = value; }
-        }
-        public string TCKN
-        {
-            get { return _TCKN; }
-            set { _TCKN = value; }
-        }
-       
-        
-        #endregion
-    }
 public class AuthorizeController : Controller
 {
     private readonly ILogger<AuthorizeController> _logger;
@@ -117,6 +82,40 @@ public class AuthorizeController : Controller
                     CustomerName = $"{HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Given_name").Value} {HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Family_name").Value}"
         };
         return Ok(obj);
+    }
+
+    [HttpGet("/public/GenerateAuthCode")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> GenerateAuthCodeForTestingPurpose([FromQuery(Name = "Reference")] string reference)
+    {
+        if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").Equals("Test") || 
+        Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").Equals("Development") ||
+        Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").Equals("Preprod"))
+        {
+            var migrateUser = await _loginService.MigrateDodgeUserToAmorphie(reference);
+            var user = await _userService.GetUserByReference(reference);
+
+            var codeVerifier = "sessionRedirect";
+            var codeVerifierAsByte = System.Text.Encoding.ASCII.GetBytes(codeVerifier);
+            using var sha256 = SHA256.Create();
+            var hashedCodeVerifier = Base64UrlEncoder.Encode(sha256.ComputeHash(codeVerifierAsByte));
+            var authCodeResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest{
+                ClientId = "IbAndroidApp",
+                CodeChallange = hashedCodeVerifier,
+                CodeChallangeMethod = "SHA256",
+                Nonce = "test",
+                State = "test",
+                User = user.Response,
+                ResponseType = "code",
+                Scope = ["retail-customer","openId"]
+            });
+
+            return Ok(new{
+                AuthCode = authCodeResponse.Response.Code,
+                CodeVerifier = codeVerifier
+            });
+        }
+        return StatusCode(401);
     }
 
     [HttpGet("/public/open-banking-generate-auth-code")]
