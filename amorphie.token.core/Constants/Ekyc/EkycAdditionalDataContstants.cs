@@ -282,8 +282,8 @@ public static class EkycAdditionalDataContstants
 
     public static readonly EkycPageModel FaceSuccessConfirm = new EkycPageModel
     {
-        type = "comfirm",
-        image = "comfirm",
+        type = "confirm",
+        image = "confirm",
         title = "Görüntülü Görüşmeye Aktarılacaksınız",
         navText = "Müşterimiz Ol",
         subTexts = new List<string>
