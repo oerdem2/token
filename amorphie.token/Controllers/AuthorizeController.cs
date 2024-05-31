@@ -315,7 +315,7 @@ public class AuthorizeController : Controller
             return Results.Problem(detail:authResponse.Detail,statusCode:authResponse.StatusCode);
         }
 
-        return Results.Redirect(authResponse!.Response!.RedirectUri);
+        return Results.Ok(new{AuthCode=authResponse.Response!.Code});
     }
 
     [HttpGet("public/OpenBankingAuthorize")]
