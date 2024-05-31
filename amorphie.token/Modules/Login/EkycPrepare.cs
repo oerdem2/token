@@ -33,6 +33,8 @@ public static class EkycPrepare
         string constCallType = ekycService.GetCallType(callType);
         var instance = Guid.NewGuid();
         var isSelfServiceAvaible = true;
+        string customerName = "";
+        string customerSurname = "";
         // customer profile processes 
         var customerProfile = new SimpleProfileResponse();
         if (!citizenShipNumber.IsNullOrEmpty())
@@ -41,6 +43,8 @@ public static class EkycPrepare
             if (serviceResponse.StatusCode == 200)
             {
                 customerProfile = serviceResponse.Response;
+                customerName = customerProfile?.data?.profile?.name??"";
+                customerSurname = customerProfile?.data?.profile?.surname??"";
             }
         }
 
@@ -77,8 +81,8 @@ public static class EkycPrepare
         variables.Add("CurrentNfcFailedCount", 0);
         variables.Add("CurrentFaceFailedCount", 0);
         variables.Add("CallType", constCallType);
-        variables.Add("Name", customerProfile.data.profile.name!);
-        variables.Add("Surname", customerProfile.data.profile.surname!);
+        variables.Add("Name", customerName);
+        variables.Add("Surname", customerSurname);
         variables.Add("IsSelfServiceAvaible", isSelfServiceAvaible);
         variables.Add("Instance", instance);
 
@@ -122,8 +126,8 @@ public static class EkycPrepare
         dataChanged.additionalData = new ExpandoObject();
         dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
         dataChanged.additionalData.callType = constCallType;
-        dataChanged.additionalData.customerName = customerProfile.data.profile.name ?? ""; // bu kısımları doldur.
-        dataChanged.additionalData.customerSurname = customerProfile.data.profile.surname ?? "";
+        dataChanged.additionalData.customerName = customerName; // bu kısımları doldur.
+        dataChanged.additionalData.customerSurname = customerSurname;
         dataChanged.additionalData.instanceId = instance;
         dataChanged.additionalData.pages = new List<EkycPageModel>{
             new EkycPageModel
