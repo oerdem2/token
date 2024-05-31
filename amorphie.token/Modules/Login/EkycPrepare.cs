@@ -1,5 +1,8 @@
 ﻿using amorphie.token.core;
+using amorphie.token.core.Models.Profile;
+using amorphie.token.Services.Profile;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using System.Dynamic;
 using System.Runtime.CompilerServices;
 namespace amorphie.token;
@@ -10,6 +13,7 @@ public static class EkycPrepare
     public static async Task<IResult> Prepare(
         [FromBody] dynamic body,
         [FromServices] IEkycService ekycService,
+        [FromServices] IProfileService profileService,
         IConfiguration configuration
 
     )
@@ -23,48 +27,58 @@ public static class EkycPrepare
 
         dynamic targetObject = new System.Dynamic.ExpandoObject();
         targetObject.Data = dataChanged;
-        var citizenShipNumber = dataChanged.entityData.UserName;
+        string citizenShipNumber = dataChanged.entityData.UserName;
         var callType = dataChanged.entityData.CallType;
-        var wfId = dataChanged.entityData.WfId;
-        var constCallType = ekycService.GetCallType(callType);
+        string wfId = dataChanged.entityData.WfId;
+        string constCallType = ekycService.GetCallType(callType);
         var instance = Guid.NewGuid();
         var isSelfServiceAvaible = true;
+        // customer profile processes 
+        var customerProfile = new SimpleProfileResponse();
+        if (!citizenShipNumber.IsNullOrEmpty())
+        {
+            var serviceResponse = await profileService.GetCustomerSimpleProfile(citizenShipNumber);
+            if (serviceResponse.StatusCode == 200)
+            {
+                customerProfile = serviceResponse.Response;
+            }
+        }
+
+
+
+        // WFID -- or zeebe instance id
+       
+
         if (constCallType == EkycCallTypeConstants.Mevduat_ON || callType == EkycCallTypeConstants.Mevduat_HEPSIBURADA)
         {
-            //var wfId = body.GetProperty("Wfi").ToString(); TODO: use this part test or prod.
-            wfId = transactionId;
-            Guid.TryParse(wfId, out instance);
+            if (wfId.IsNullOrEmpty())
+            {
+                wfId = transactionId;
+                Guid.TryParse(wfId, out instance); // sorma neden
+                await ekycService.CreateSession(instance, citizenShipNumber, callType, customerProfile);
+            }else{
+                Guid.TryParse(wfId, out instance); // test yapılabilmesi için bu salak kod tekrarı yapılmıştır.
+            }
             isSelfServiceAvaible = false;
 
         }
         else
         {
-
             Guid.TryParse(transactionId, out instance);
+            await ekycService.CreateSession(instance, citizenShipNumber, callType, customerProfile);
         }
-
-
-
-
-
-        var registerResult = await ekycService.CreateSession(instance, citizenShipNumber, callType);
-
-        //Register the enqura 
-
-
 
         dynamic variables = new Dictionary<string, dynamic>();
 
 
         // Set config variables :) 
         variables.Add("Init", true);
-        variables.Add("IsSessionCreated", registerResult);
         variables.Add("CurrentOcrFailedCount", 0);
         variables.Add("CurrentNfcFailedCount", 0);
         variables.Add("CurrentFaceFailedCount", 0);
         variables.Add("CallType", constCallType);
-        variables.Add("Name",registerResult.Name);
-        variables.Add("Surname",registerResult.Surname);
+        variables.Add("Name", customerProfile.data.profile.name!);
+        variables.Add("Surname", customerProfile.data.profile.surname!);
         variables.Add("IsSelfServiceAvaible", isSelfServiceAvaible);
         variables.Add("Instance", instance);
 
@@ -107,15 +121,15 @@ public static class EkycPrepare
 
         dataChanged.additionalData = new ExpandoObject();
         dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
-        dataChanged.additionalData.callType = registerResult.CallType;
-        dataChanged.additionalData.customerName = registerResult.Name; // bu kısımları doldur.
-        dataChanged.additionalData.customerSurname = registerResult.Surname;
+        dataChanged.additionalData.callType = constCallType;
+        dataChanged.additionalData.customerName = customerProfile.data.profile.name ?? ""; // bu kısımları doldur.
+        dataChanged.additionalData.customerSurname = customerProfile.data.profile.surname ?? "";
         dataChanged.additionalData.instanceId = instance;
         dataChanged.additionalData.pages = new List<EkycPageModel>{
-            new EkycPageModel 
-            { 
-                type="waiting", 
-                image="wait", 
+            new EkycPageModel
+            {
+                type="waiting",
+                image="wait",
                 title="Kimlik Okuma Adımları Yükleniyor",
                 navText = "Müşterimiz Ol",
                 popUp= new EkycPopUpModel{
@@ -138,7 +152,7 @@ public static class EkycPrepare
                         }
                     }
                 },
-                buttons = new List<EkycButtonModel>()  
+                buttons = new List<EkycButtonModel>()
             }
         };
 

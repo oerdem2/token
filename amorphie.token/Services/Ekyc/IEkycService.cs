@@ -1,4 +1,5 @@
 ﻿using amorphie.token.core;
+using amorphie.token.core.Models.Profile;
 using static amorphie.token.core.EkycMevduatStatusCheckModels;
 
 namespace amorphie.token;
@@ -6,10 +7,10 @@ namespace amorphie.token;
 public interface IEkycService
 {
     /// <summary>
-    /// Create enqura session 
+    /// 
     /// </summary>
     /// <returns></returns>
-    Task<EkycCreateSessionResultModel> CreateSession(Guid instanceId, string citizenshipNumber, string callType);
+    Task<EkycCreateSessionResultModel> CreateSession(Guid instanceId, string citizenshipNumber, string callType, SimpleProfileResponse? customerProfile);
 
     /// <summary>
     /// Get integration info using session Id 
