@@ -10,7 +10,7 @@ public interface IEkycService
     /// 
     /// </summary>
     /// <returns></returns>
-    Task<EkycCreateSessionResultModel> CreateSession(Guid instanceId, string citizenshipNumber, string callType, SimpleProfileResponse? customerProfile);
+    Task<EkycCreateSessionResultModel> CreateSession(Guid instanceId, string citizenshipNumber, string callType, bool hasWfId);
 
     /// <summary>
     /// Get integration info using session Id 
