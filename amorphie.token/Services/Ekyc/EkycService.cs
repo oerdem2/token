@@ -26,21 +26,14 @@ public class EkycService : ServiceBase, IEkycService
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<EkycCreateSessionResultModel> CreateSession(Guid instanceId, string citizenshipNumber, string callType)
+    public async Task<EkycCreateSessionResultModel> CreateSession(Guid instanceId, string citizenshipNumber, string callType, SimpleProfileResponse? customerProfile)
     {
 
-        var customerInfoResult = await _profileService.GetCustomerSimpleProfile(citizenshipNumber);
-        var optimizedCallType = GetCallType(callType);
+
+     
         bool isSuccess = false;
-        // bool isSuccess = optimizedCallType == EkycCallTypeConstants.Mevduat_ON;
+        var request = await SetRegisterRequest(instanceId, citizenshipNumber, customerProfile);
 
-        // dont need create session for mevduat_ON. 
-        //Because,The main workflow will send a instanceId that started a session, and we use it.
-        // if (optimizedCallType != EkycCallTypeConstants.Mevduat_ON)
-        // {
-        var request = await SetRegisterRequest(instanceId, citizenshipNumber, customerInfoResult.Response);
-
-        request.CallType = optimizedCallType;
         Dictionary<string, string> data = new Dictionary<string, string>();
         data["Tckn"] = citizenshipNumber;
         data["Başvuru nedeni"] = request.CallType;
@@ -49,9 +42,9 @@ public class EkycService : ServiceBase, IEkycService
         data["Baba adı"] = request.IDRegistration.FatherName;
         data["Nüfusa kayıtlı olduğu il"] = request.IDRegistration.RegistrationPlace;
 
-        if (customerInfoResult.StatusCode == 200)
+        if (customerProfile is not null)
         {
-            var phones = customerInfoResult?.Response?.data?.phones;
+            var phones = customerProfile?.data?.phones;
 
             for (int i = 0; i < phones?.Count; i++)
             {
@@ -64,8 +57,7 @@ public class EkycService : ServiceBase, IEkycService
                     data["Telefon numarası " + i] = $"{phones[i].prefix}{phones[i].number}";
                 }
             }
-            // }
-
+            
 
         }
 
@@ -76,9 +68,8 @@ public class EkycService : ServiceBase, IEkycService
 
         var result = new EkycCreateSessionResultModel
         {
-            Name = customerInfoResult?.Response?.data?.profile?.name!,
-            Surname = customerInfoResult?.Response?.data?.profile?.surname!,
-            CallType = optimizedCallType,
+           
+            
             IsSuccessful = isSuccess
         };
 
