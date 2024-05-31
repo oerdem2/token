@@ -26,50 +26,61 @@ public class EkycService : ServiceBase, IEkycService
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<EkycCreateSessionResultModel> CreateSession(Guid instanceId, string citizenshipNumber, string callType, SimpleProfileResponse? customerProfile)
+    public async Task<EkycCreateSessionResultModel> CreateSession(Guid instanceId, string citizenshipNumber, string callType, bool hasWfId)
     {
 
+        var customerInfoResult = await _profileService.GetCustomerSimpleProfile(citizenshipNumber);
+        var optimizedCallType = GetCallType(callType);
+        bool isSuccess = true;
+        
+        // bool isSuccess = optimizedCallType == EkycCallTypeConstants.Mevduat_ON;
 
-     
-        bool isSuccess = false;
-        var request = await SetRegisterRequest(instanceId, citizenshipNumber, customerProfile);
-
-        Dictionary<string, string> data = new Dictionary<string, string>();
-        data["Tckn"] = citizenshipNumber;
-        data["Başvuru nedeni"] = request.CallType;
-        data["Doğum tarihi"] = request.IDRegistration.BirthDate;
-        data["Anne adı"] = request.IDRegistration.MotherName;
-        data["Baba adı"] = request.IDRegistration.FatherName;
-        data["Nüfusa kayıtlı olduğu il"] = request.IDRegistration.RegistrationPlace;
-
-        if (customerProfile is not null)
+        // dont need create session for mevduat_ON. 
+        //Because,The main workflow will send a instanceId that started a session, and we use it.
+        // if (optimizedCallType != EkycCallTypeConstants.Mevduat_ON || optimizedCallType != EkycCallTypeConstants.Mevduat_HEPSIBURADA)
+        if(!hasWfId)
         {
-            var phones = customerProfile?.data?.phones;
+            var request = await SetRegisterRequest(instanceId, citizenshipNumber, customerInfoResult.Response);
 
-            for (int i = 0; i < phones?.Count; i++)
+            request.CallType = optimizedCallType;
+            Dictionary<string, string> data = new Dictionary<string, string>();
+            data["Tckn"] = citizenshipNumber;
+            data["Başvuru nedeni"] = request.CallType;
+            data["Doğum tarihi"] = request.IDRegistration.BirthDate;
+            data["Anne adı"] = request.IDRegistration.MotherName;
+            data["Baba adı"] = request.IDRegistration.FatherName;
+            data["Nüfusa kayıtlı olduğu il"] = request.IDRegistration.RegistrationPlace;
+
+            if (customerInfoResult.Response is not null)
             {
-                if (i == 0)
+               
+                var phones = customerInfoResult.Response?.data?.phones;
+
+                for (int i = 0; i < phones?.Count; i++)
                 {
-                    data["Telefon numarası"] = $"{phones[i].prefix}{phones[i].number}";
+                    if (i == 0)
+                    {
+                        data["Telefon numarası"] = $"{phones[i].prefix}{phones[i].number}";
+                    }
+                    else
+                    {
+                        data["Telefon numarası " + i] = $"{phones[i].prefix}{phones[i].number}";
+                    }
                 }
-                else
-                {
-                    data["Telefon numarası " + i] = $"{phones[i].prefix}{phones[i].number}";
-                }
+
+
+
             }
-            
 
+            request.Data = Newtonsoft.Json.JsonConvert.SerializeObject(data);
+            var response = await _ekycProvider.RegisterAsync(request);
+            isSuccess = response.IsSuccessful;
         }
-
-        request.Data = Newtonsoft.Json.JsonConvert.SerializeObject(data);
-        var response = await _ekycProvider.RegisterAsync(request);
-        isSuccess = response.IsSuccessful;
-
 
         var result = new EkycCreateSessionResultModel
         {
-           
-            
+            Name = customerInfoResult?.Response?.data?.profile?.name!,
+            Surname = customerInfoResult?.Response?.data?.profile?.surname!,
             IsSuccessful = isSuccess
         };
 
