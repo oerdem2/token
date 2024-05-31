@@ -33,44 +33,33 @@ public static class EkycPrepare
         string constCallType = ekycService.GetCallType(callType);
         var instance = Guid.NewGuid();
         var isSelfServiceAvaible = true;
-        string customerName = "";
-        string customerSurname = "";
-        // customer profile processes 
-        var customerProfile = new SimpleProfileResponse();
-        if (!citizenShipNumber.IsNullOrEmpty())
-        {
-            var serviceResponse = await profileService.GetCustomerSimpleProfile(citizenShipNumber);
-            if (serviceResponse.StatusCode == 200)
-            {
-                customerProfile = serviceResponse.Response;
-                customerName = customerProfile?.data?.profile?.name??"";
-                customerSurname = customerProfile?.data?.profile?.surname??"";
-            }
-        }
-
-
-
-        // WFID -- or zeebe instance id
-       
-
+        bool hasWfId = false;
+        // WFID -- or zeen
         if (constCallType == EkycCallTypeConstants.Mevduat_ON || callType == EkycCallTypeConstants.Mevduat_HEPSIBURADA)
         {
             if (wfId.IsNullOrEmpty())
             {
                 wfId = transactionId;
-                Guid.TryParse(wfId, out instance); // sorma neden
-                await ekycService.CreateSession(instance, citizenShipNumber, callType, customerProfile);
+                
             }else{
-                Guid.TryParse(wfId, out instance); // test yapılabilmesi için bu salak kod tekrarı yapılmıştır.
+                hasWfId = true;
             }
+
+            Guid.TryParse(wfId, out instance);
             isSelfServiceAvaible = false;
 
         }
         else
         {
             Guid.TryParse(transactionId, out instance);
-            await ekycService.CreateSession(instance, citizenShipNumber, callType, customerProfile);
         }
+
+
+        var registerResult = await ekycService.CreateSession(instance, citizenShipNumber, callType, hasWfId);
+
+        //Register the enqura 
+
+
 
         dynamic variables = new Dictionary<string, dynamic>();
 
@@ -81,8 +70,8 @@ public static class EkycPrepare
         variables.Add("CurrentNfcFailedCount", 0);
         variables.Add("CurrentFaceFailedCount", 0);
         variables.Add("CallType", constCallType);
-        variables.Add("Name", customerName);
-        variables.Add("Surname", customerSurname);
+        variables.Add("Name", registerResult.Name);
+        variables.Add("Surname", registerResult.Surname);
         variables.Add("IsSelfServiceAvaible", isSelfServiceAvaible);
         variables.Add("Instance", instance);
 
@@ -126,8 +115,8 @@ public static class EkycPrepare
         dataChanged.additionalData = new ExpandoObject();
         dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
         dataChanged.additionalData.callType = constCallType;
-        dataChanged.additionalData.customerName = customerName; // bu kısımları doldur.
-        dataChanged.additionalData.customerSurname = customerSurname;
+        dataChanged.additionalData.customerName = registerResult.Name; // bu kısımları doldur.
+        dataChanged.additionalData.customerSurname = registerResult.Surname;
         dataChanged.additionalData.instanceId = instance;
         dataChanged.additionalData.pages = new List<EkycPageModel>{
             new EkycPageModel
