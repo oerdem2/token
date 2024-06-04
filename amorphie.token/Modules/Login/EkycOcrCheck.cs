@@ -25,7 +25,7 @@ public static class EkycOcrCheck
         targetObject.Data = dataChanged;
 
         var ocrIsSuccess = dataChanged.entityData.IsSuccess;
-        
+
 
         bool identityNoCompatible = false;
         bool ocrStatus = false;
@@ -100,43 +100,47 @@ public static class EkycOcrCheck
             //     showTyrAgainButton = false;
             // }
             ocrCurrentFailedCount++;
-            variables.Add("FailedStepName","ocr");
+            variables.Add("FailedStepName", "ocr");
             // ocr failed
+
+
+            if (!ocrStatus && ocrIsSuccess)
+            {
+                dataChanged.additionalData.pages = new List<EkycPageModel>
+                {
+                    EkycAdditionalDataContstants.StandartItem,
+                    EkycAdditionalDataContstants.OcrFailedItemForIdentityMatch
+                };
+            }
+
             if (!ocrIsSuccess)
             {
                 dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
                     EkycAdditionalDataContstants.StandartItem,
                     EkycAdditionalDataContstants.OcrFailedItemForRetry
-                    
+
                 };
 
-                
 
-            }
 
-            if(!ocrStatus){
-                dataChanged.additionalData.pages = new List<EkycPageModel>
-                {
-                    EkycAdditionalDataContstants.StandartItem,
-                    EkycAdditionalDataContstants.OcrFailedItemForIdentityMatch
-                }; 
             }
 
         }
 
-        if(ocrStatus && ocrIsSuccess){
-             dataChanged.additionalData.pages = new List<EkycPageModel>
+        if (ocrStatus && ocrIsSuccess)
+        {
+            dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
                     EkycAdditionalDataContstants.StandartItem,
                     EkycAdditionalDataContstants.OcrSuccessForNfcItem
-                }; 
+                };
         }
 
         // dynamic variables = new ExpandoObject();
         variables.Add("Init", true);
         variables.Add("OcrStatus", ocrStatus);
-        
+
         variables.Add("CurrentOcrFailedCount", ocrCurrentFailedCount);
         variables.Add("HasNfc", hasNfc);
 
