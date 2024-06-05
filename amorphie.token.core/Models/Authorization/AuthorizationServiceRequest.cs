@@ -1,3 +1,4 @@
+using amorphie.token.core.Models.Profile;
 using amorphie.token.core.Models.User;
 using Newtonsoft.Json;
 
@@ -15,4 +16,5 @@ public class AuthorizationServiceRequest
     public string? CodeChallangeMethod { get; set; }
     public Guid? ConsentId { get; set; }
     public LoginResponse? User { get; set; } = null;
+    public SimpleProfileResponse? Profile { get; set; } = null;
 }

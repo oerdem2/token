@@ -194,28 +194,6 @@ public class AuthorizeController : Controller
         return Forbid();
     }
 
-    [HttpPost("public/CreatePreLoginDemo")]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    public async Task<IActionResult> PreLoginDemo([FromHeader(Name = "Authorization")] string token)
-    {
-        var access_token = token.Split(" ")[1];
-        var tokenJti = JwtHelper.GetClaim(access_token, "jti");
-        var tokenInfo = _databaseContext.Tokens.FirstOrDefault(t => t.Id.Equals(Guid.Parse(tokenJti)));
-        CreatePreLoginRequest req = new CreatePreLoginRequest();
-        req.clientCode = "4fa85f64-5711-4562-b3fc-2c963f66afa6";
-        req.CodeChallange = "123";
-        req.Nonce = "123";
-        req.State = "123";
-        req.scopeUser = "39719021136";
-
-        using var httpClient = new HttpClient();
-        StringContent request = new(JsonSerializer.Serialize(req), Encoding.UTF8, "application/json");
-        request.Headers.Add("clientIdReal", "3fa85f64-5717-4562-b3fc-2c963f66afa6");
-        request.Headers.Add("scope", "retail-customer");
-        var httpResponse = await httpClient.PostAsync(_configuration["localAddress"] + "public/CreatePreLogin", request);
-        return Ok(httpResponse.Content);
-    }
-
     [HttpPost("public/CreatePreLogin")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> CreatePreLogin([FromHeader(Name = "clientIdReal")] string sourceClient, [FromHeader(Name = "user_reference")] string currentUser, [FromHeader(Name = "scope")] string[] scope, [FromBody] CreatePreLoginRequest createPreLoginRequest)
@@ -267,7 +245,8 @@ public class AuthorizeController : Controller
     public async Task<IResult> DodgeCreatePreLogin([FromHeader(Name = "x-userinfo")] string userinfo, [FromBody] CreatePreLoginRequest createPreLoginRequest)
     {
         var userInfoModel = JsonSerializer.Deserialize<dynamic>(Convert.FromBase64String(userinfo));
-        var username = userInfoModel!.GetProperty("username").ToString();
+        var usernameProperty = userInfoModel!.GetProperty("username");
+        string username = usernameProperty.ToString();
 
         ServiceResponse<ClientResponse> targetClientResponse;
         if (Guid.TryParse(createPreLoginRequest.clientCode, out Guid _))
@@ -297,6 +276,13 @@ public class AuthorizeController : Controller
             return Results.Problem(detail:amorphieUserResult.Detail, statusCode:amorphieUserResult.StatusCode);
         }
         var amorphieUser = amorphieUserResult.Response;
+        
+        var profileResult = await _profileService.GetCustomerSimpleProfile(username);
+        if(profileResult.StatusCode != 200)
+        {
+            return Results.Problem(detail:profileResult.Detail, statusCode:profileResult.StatusCode);
+        }
+        var profile = profileResult.Response;
 
         var authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest{
             ClientId = targetClient.id,
@@ -307,7 +293,8 @@ public class AuthorizeController : Controller
             ResponseType = "code",
             State = createPreLoginRequest.State,
             Scope = ["openid","profile"],
-            User = amorphieUser
+            User = amorphieUser,
+            Profile = profile
         });
 
         if (authResponse.StatusCode != 200)
