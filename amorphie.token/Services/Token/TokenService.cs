@@ -1139,7 +1139,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 Detail = "Client Has No Authorize To Use Requested Grant Type"
             };
         }
-
+        
         var authorizationCodeInfo = await _daprClient.GetStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"], tokenRequest.Code);
 
         if (authorizationCodeInfo == null)
