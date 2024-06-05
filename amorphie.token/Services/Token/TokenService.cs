@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using amorphie.token.core.Models.Consent;
 using amorphie.token.core.Models.Profile;
 using amorphie.token.core.Models.Role;
@@ -1149,7 +1150,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 Detail = "Invalid Authorization Code"
             };
         }
-
+        Logger.LogError("Auth Code Info :" + JsonSerializer.Serialize(authorizationCodeInfo));
         _user = authorizationCodeInfo.Subject;
         _profile = authorizationCodeInfo.Profile;
         _collectionUser = authorizationCodeInfo.CollectionUser;
