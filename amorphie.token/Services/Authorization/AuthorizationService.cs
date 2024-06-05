@@ -117,7 +117,8 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
                 Subject = request.User ?? null,
                 ConsentId = request.ConsentId?.ToString(),
                 Nonce = request.Nonce,
-                State = request.State
+                State = request.State,
+                Profile = request.Profile
             };
 
             var code = await GenerateAuthorizationCode(authCode);
