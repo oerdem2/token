@@ -11,6 +11,6 @@ namespace amorphie.token.core.Models.Authorization
         public string scopeUser{get;set;}
         public string CodeChallange{get;set;}
         public string? Nonce{get;set;}
-        public string State{get;set;}
+        public string? State{get;set;}
     }
 }
