@@ -283,7 +283,7 @@ public class AuthorizeController : Controller
             return Results.Problem(detail:profileResult.Detail, statusCode:profileResult.StatusCode);
         }
         var profile = profileResult.Response;
-
+        _logger.LogError("Profile Response : "+JsonSerializer.Serialize(profileResult));
         var authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest{
             ClientId = targetClient.id,
             RedirectUri = targetClient.returnuri,
