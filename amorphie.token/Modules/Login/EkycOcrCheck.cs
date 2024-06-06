@@ -51,7 +51,7 @@ public static class EkycOcrCheck
         #region GetSession after connection state
         try
         {
-            GetIntegrationInfoModels.Data sessionIntegrationInfo = await ekycService.GetSessionByIntegrationReferenceAsync(Guid.Parse(transactionId));
+            GetIntegrationInfoModels.Data sessionIntegrationInfo = await ekycService.GetSessionByIntegrationReferenceAsync(Guid.Parse(instance));
 
             if (sessionIntegrationInfo is not null && sessionIntegrationInfo.SessionUId is not null)
             {
