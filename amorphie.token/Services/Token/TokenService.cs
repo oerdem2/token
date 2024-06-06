@@ -171,7 +171,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             {
                 if(_consent.consentType!.Equals("OB_Account"))
                 {
-                    accessDuration = 24 * 60 * 60; // 1 day
+                    accessDuration = 10 * 24 * 60 * 60; // 10 days
                 }
                 if(_consent.consentType.Equals("OB_Payment"))
                 {
@@ -1167,7 +1167,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         _collectionUser = authorizationCodeInfo.CollectionUser;
         _tokenRequest.Scopes = authorizationCodeInfo.RequestedScopes;
 
-        if (!authorizationCodeInfo.ClientId!.Equals(tokenRequest.ClientId, StringComparison.OrdinalIgnoreCase))
+        if (!authorizationCodeInfo.ClientId!.Equals(_client.id, StringComparison.OrdinalIgnoreCase))
         {
             return new ServiceResponse<TokenResponse>()
             {
