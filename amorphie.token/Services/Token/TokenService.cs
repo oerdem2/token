@@ -47,6 +47,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
     private ConsentDto? _selectedConsent;
     private RoleDefinitionDto? _role;
     private core.Models.Collection.User? _collectionUser;
+    private TokenInfo? _refreshTokenInfo;
     private string? _deviceId;
 
     private async Task PersistTokenInfo()
@@ -327,10 +328,19 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         {
             TokenType = "Bearer",
             AccessToken = await CreateAccessToken(),
-            ExpiresIn = _tokenInfoDetail.AccessTokenDuration,
-            RefreshToken = CreateRefreshToken(),
-            RefreshTokenExpiresIn = _tokenInfoDetail.RefreshTokenDuration
+            ExpiresIn = _tokenInfoDetail.AccessTokenDuration
         };
+
+        if(_tokenRequest.GrantType.Equals("refresh_token"))
+        {
+            tokenResponse.RefreshToken = _tokenRequest.RefreshToken;
+            tokenResponse.RefreshTokenExpiresIn = Convert.ToInt32((_refreshTokenInfo.ExpiredAt - DateTime.Now).TotalSeconds);
+        }
+        else
+        {
+            tokenResponse.RefreshToken = CreateRefreshToken();
+            tokenResponse.RefreshTokenExpiresIn = _tokenInfoDetail.RefreshTokenDuration;
+        }
 
         //openId Section
         if (!_tokenRequest.GrantType.Equals("client_credentials"))
@@ -360,7 +370,6 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         }
         var refreshTokenInfo = _databaseContext.Tokens.FirstOrDefault(t =>
         t.Id == Guid.Parse(refreshTokenJti!) && t.TokenType == TokenType.RefreshToken);
-
         if (refreshTokenInfo == null)
         {
             return new ServiceResponse<TokenResponse>()
@@ -380,6 +389,8 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 Response = null
             };
         }
+
+        _refreshTokenInfo = refreshTokenInfo;
 
         var relatedToken = _databaseContext.Tokens.FirstOrDefault(t =>
         t.Id == refreshTokenInfo.RelatedTokenId && t.TokenType == TokenType.AccessToken);
