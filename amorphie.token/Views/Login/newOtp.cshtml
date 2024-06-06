@@ -1,0 +1,137 @@
+@model amorphie.token.core.Models.Account.Otp
+@{
+    var bodyClass = ViewBag.isOn == "X" ? "XUser" : "_XUser";
+}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Burgan Bank</title>
+    <link rel="stylesheet" href="/ebanking/login/assets/css/css/bootstrap-4.1.3/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/ebanking/login/assets/css/_LoginLayout.css" />
+    <script src="/ebanking/login/assets/js/progress-bar.js"></script>
+</head>
+
+<body class="ibLoginBody XUser">
+
+    <div class="containerBody">
+        <div class="container justify-content-md-center">
+
+            <div class="lHeader">
+                <div class="Logo">
+                    <a id="HomePage" asp-controller="NewLogin">
+                        <img src="/ebanking/login/assets/img/ib_sp_Logo.png" />
+                    </a>
+                </div>
+                <button class="LanLink">English</button>
+
+            </div>
+
+            <div class="flashPan">
+                <span>
+                    İnternet Bankacılığına giriş yapmak için Burgan Mobil Uygulamanıza anlık bildirim ile iletilen
+                    doğrulama kodunuzu onaylamanız gerekmektedir.<br>
+                    Telefonunuzun “Ayarlar” menüsünden Burgan Mobil Uygulamamıza izin vererek bildirimlerinizi
+                    görüntüleyebilir, uygulama içindeki ‘Bekleyen Onaylarım’ menüsünden onaylayabilirsiniz.<br>
+                    Bildirim ile doğrulama yapmakta sorun yaşıyorsanız, kayıtlı telefonunuza gönderilecek SMS ile giriş
+                    yapmak için 180 saniye sonra SMS GÖNDER butonuna tıklayarak eşleşmiş cihazınızı otomatik olarak
+                    kaldırarak giriş yapabilirsiniz.
+                </span>
+            </div>
+            <div class="lContent">
+
+
+                <div class="row">
+                    <div class="col-lg-6 padding0">
+                        <div class="LCon LeftPan LformPan">
+                            <div class="OTPMPan">
+
+                                <p>
+                                    @Model.Phone numaralı cep telefonunuza gelen doğrulama kodunuzu yazarak işleminizi
+                                    gerçekleştirebilirsiniz.
+                                </p>
+
+
+                                <div class="OTPProPan">
+                                    <label><i style="font-weight: bold;"
+                                            class="icon Bgicon_saat progress-text"></i></label>
+                                    <div class="progress-bar" style="width: 77%"></div>
+                                </div>
+                                <section class="margin0">
+                                    <label class="input">
+                                        <form id="otp-form" asp-action="ValidateOtp" asp-controller="Login"
+                                            method="post">
+                                            <input asp-for="OtpValue" type="password"
+                                                placeholder="SMS Doğrulama Kodu" />
+                                            <input asp-for="transactionId" type="hidden" />
+                                            <input asp-for="consentId" type="hidden" />
+                                        </form>
+                                        <span class="ErrPan" style="display: none;">
+                                            asdfsd fsaf
+                                        </span>
+                                    </label>
+                                </section>
+                                <div class="BtnPan center">
+                                    <button id="otp-submit" type="submit" class="Lbutton">
+                                        GÖNDER
+                                    </button>
+                                </div>
+
+                            </div>
+
+
+                            <div class="OTPProPan" id="OTPProPanDiv" style="margin-top: 40px; display: none;">
+                                <label><i class="icon Bgicon_saat"></i> <span id="countdown">4</span> saniye</label>
+                                <div id="countdownDiv" style="width: 2%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 padding0">
+                        <div class="LCon RightPan both">
+                            <h2 style="display:none;">Burgan Mobil'e giriş yaparak işleminizi onaylayınız</h2>
+                            <div class="BekleyenOnayTr"></div>
+                        </div>
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+            <div class="lFooter onPan">
+                <div class="LPan">
+                    <label class="BurganIletisim">
+                        <label><a href="tel:08502222910">0 850 222 2910</a></label>
+                        <span>
+                            7/24 Contact Center
+                        </span>
+                    </label>
+                </div>
+                <div class="SecPan"> </div>
+
+            </div>
+
+            <div class="lFooter">
+                <div class="LPan">
+                    <label class="BurganIletisim">
+                        <label>0 850 222 8222</label>
+                        <span>
+                            "7/24 Contact Center
+                        </span>
+                    </label>
+                </div>
+                <div class="SecPan"> </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="/ebanking/login/assets/js/otp.js"></script>
+
+</body>
+
+</html>

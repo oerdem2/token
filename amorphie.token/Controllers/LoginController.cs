@@ -12,9 +12,21 @@ using amorphie.core.Enums;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 namespace amorphie.token.core.Controllers;
 
+public class PhoneTest2
+{
+    public PhoneTest phone{get;set;}
+}
+public class PhoneTest
+{
+    [JsonPropertyName("phone1")]
+    public int phone1{get;set;}
+    [JsonPropertyName("phone2")]
+    public int phone2{get;set;}
+}
 public class LoginController : Controller
 {
     private readonly ILogger<TokenController> _logger;
@@ -51,7 +63,14 @@ public class LoginController : Controller
         _internetBankingUserService = internetBankingUserService;
     }
 
-
+    [HttpPost("public/testtest")]
+    [Consumes("application/json")]
+    public async Task<IActionResult> testttt([FromBody]PhoneTest phone)
+    {
+        var k = "123123";
+        throw new Exception();
+    }
+        
 
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("public/Login")]
@@ -83,8 +102,8 @@ public class LoginController : Controller
             {
                 HttpContext.Session.SetString("LoggedUser", JsonSerializer.Serialize(user));
                 var profileResponse = await _profileService.GetCustomerSimpleProfile(user.Reference);
-                var authCodeInfo = await _authorizationService.AssignUserToAuthorizationCode(user, loginRequest.Code!,profileResponse.Response);
-                
+                var authCodeInfo = await _authorizationService.AssignUserToAuthorizationCode(user, loginRequest.Code!, profileResponse.Response);
+
                 return Redirect($"{authCodeInfo.RedirectUri}?code={loginRequest.Code}&response_type=code&state={authCodeInfo.State}");
             }
             else
@@ -193,7 +212,7 @@ public class LoginController : Controller
     [HttpGet("public/CheckDevice/{reference}")]
     public async Task<IActionResult> CheckDevice(string reference)
     {
-     
+
         var userResponse = await _ibUserService.GetUser(reference);
         if (userResponse.StatusCode != 200)
         {
@@ -204,7 +223,7 @@ public class LoginController : Controller
 
         if (device != null)
         {
-            return Ok(new{os=device.Platform.ToLower().Equals("android") ? 1 : 2});
+            return Ok(new { os = device.Platform.ToLower().Equals("android") ? 1 : 2 });
         }
         else
         {
@@ -347,7 +366,7 @@ public class LoginController : Controller
 
 
 
-            return View("Otp", new Otp
+            return View("newOtp", new Otp
             {
                 Phone = "0" + amorphieUser.MobilePhone.Prefix.ToString().Substring(0, 2) + "******" + amorphieUser.MobilePhone.Number.ToString().Substring(amorphieUser.MobilePhone.Number.Length - 2, 2),
                 transactionId = transactionId,

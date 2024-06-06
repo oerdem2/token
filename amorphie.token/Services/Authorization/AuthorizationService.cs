@@ -6,6 +6,7 @@ using amorphie.token.data;
 using amorphie.token.Services.Profile;
 using amorphie.token.Services.Consent;
 using amorphie.token.core.Models.Profile;
+using System.Text.Json;
 
 namespace amorphie.token.Services.Authorization;
 
@@ -117,11 +118,12 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
                 Subject = request.User ?? null,
                 ConsentId = request.ConsentId?.ToString(),
                 Nonce = request.Nonce,
-                State = request.State
+                State = request.State,
+                Profile = request.Profile
             };
-
+            Logger.LogError("generated AuthCode : "+JsonSerializer.Serialize(authCode));
             var code = await GenerateAuthorizationCode(authCode);
-
+            
             if(string.IsNullOrWhiteSpace(request.State))
             {
                 authorizationResponse.RedirectUri = $"{client.returnuri}?response_type=code&code={code}";

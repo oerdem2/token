@@ -267,7 +267,7 @@ public class TokenController : Controller
 
         }
 
-        var privateClaims = await _daprClient.GetStateAsync<Dictionary<string,string>>(_configuration["DAPR_STATE_STORE_NAME"], $"{accessTokenInfo.Id.ToString()}_privateClaims");
+        var privateClaims = await _daprClient.GetStateAsync<Dictionary<string,object>>(_configuration["DAPR_STATE_STORE_NAME"], $"{accessTokenInfo.Id.ToString()}_privateClaims");
         if(privateClaims is not null && privateClaims.Count() > 0)
         {
             foreach (var claim in privateClaims)
@@ -283,7 +283,7 @@ public class TokenController : Controller
                         if (!claim.Key.Equals("exp") && !claim.Key.Equals("nbf") && !claim.Key.Equals("iat"))
                             claimValues.Add(claim.Key.Replace(".", "_"), claim.Value);
                         else
-                            claimValues.Add(claim.Key.Replace(".", "_"), long.Parse(claim.Value));
+                            claimValues.Add(claim.Key.Replace(".", "_"), Convert.ToInt64(claim.Value));
                     }
                 }
             }
@@ -321,6 +321,13 @@ public class TokenController : Controller
         ViewBag.refreshToken = resp.RefreshToken;
 
         return View("callback");
+    }
+
+    [HttpPost("public/SaveEkycResult")]
+    public async Task<IActionResult> SaveEkyResult([FromBody] dynamic body)
+    {
+        Console.WriteLine("Save ekyc result Model"+JsonSerializer.Serialize(body));
+        return Ok();
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]

@@ -8,10 +8,13 @@ using amorphie.token.Services.FlowHandler;
 using amorphie.token.Services.Consent;
 using amorphie.token.Services.TransactionHandler;
 using amorphie.token.Services.Login;
+using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using Microsoft.IdentityModel.Tokens;
 
 
 namespace amorphie.token.core.Controllers;
-
+ 
 public class AuthorizeController : Controller
 {
     private readonly ILogger<AuthorizeController> _logger;
@@ -46,6 +49,123 @@ public class AuthorizeController : Controller
         _loginService = loginService;
     }
 
+
+    [HttpPost("/public/get-user-info")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> GetUserInfo([FromForm] string access_token)
+    {
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",access_token);
+        var response = await httpClient.GetAsync(_configuration["GetUserInfoAddress"]);
+        if(response.IsSuccessStatusCode)
+        {
+            var t = await response.Content.ReadAsStringAsync();
+            var r = Newtonsoft.Json.JsonConvert.DeserializeObject<CustomerEntity>(await response.Content.ReadAsStringAsync());
+
+            return new OkObjectResult(r);
+        }
+        else
+        {
+            return StatusCode((int)response.StatusCode);
+        }
+    }
+
+    [HttpGet("/private/get-authorized-user-info")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> GetAuthorizedUserInfo()
+    {
+        await Task.CompletedTask;
+        var obj = new{
+                    TCKN = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "User_reference").Value.ToString(),
+                    BusinessLine = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Business_line").Value.ToString(),
+                    CustomerNumber = HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Customer_no").Value.ToString(),
+                    CustomerName = $"{HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Given_name").Value} {HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "Family_name").Value}"
+        };
+        return Ok(obj);
+    }
+
+    [HttpGet("/public/GenerateAuthCode")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> GenerateAuthCodeForTestingPurpose([FromQuery(Name = "Reference")] string reference)
+    {
+        if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").Equals("Test") || 
+        Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").Equals("Development") ||
+        Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").Equals("Preprod"))
+        {
+            var migrateUser = await _loginService.MigrateDodgeUserToAmorphie(reference);
+            var user = await _userService.GetUserByReference(reference);
+
+            var codeVerifier = "sessionRedirect";
+            var codeVerifierAsByte = System.Text.Encoding.ASCII.GetBytes(codeVerifier);
+            using var sha256 = SHA256.Create();
+            var hashedCodeVerifier = Base64UrlEncoder.Encode(sha256.ComputeHash(codeVerifierAsByte));
+            var authCodeResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest{
+                ClientId = "IbAndroidApp",
+                CodeChallange = hashedCodeVerifier,
+                CodeChallangeMethod = "SHA256",
+                Nonce = "test",
+                State = "test",
+                User = user.Response,
+                ResponseType = "code",
+                Scope = ["retail-customer","openId"]
+            });
+
+            return Ok(new{
+                AuthCode = authCodeResponse.Response.Code,
+                CodeVerifier = codeVerifier
+            });
+        }
+        return StatusCode(401);
+    }
+
+    [HttpGet("/public/open-banking-generate-auth-code")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> OpenBankingGenerateAuthCode([FromQuery(Name = "rizaNo")] Guid consentId, [FromQuery(Name = "rizaTip")] string consentType)
+    {
+        var consentResponse = await _consentService.GetConsent(consentId);
+        
+        if (consentResponse.StatusCode == 200)
+        {
+            var consent = consentResponse!.Response!;
+            var consentData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent!.additionalData!);
+            string kmlkNo = string.Empty;
+            if (consent.consentType!.Equals("OB_Account"))
+            {
+                kmlkNo = consentData!.kmlk.kmlkVrs.ToString();
+            }
+            if (consent.consentType!.Equals("OB_Payment"))
+            {
+                kmlkNo = consentData!.odmBsltm.kmlk.kmlkVrs.ToString();
+            }
+            var userResponse = await _userService.GetUserByReference(kmlkNo);
+            if(userResponse.StatusCode != 200)
+            {
+                //TODO 
+                //Error Handle
+            }
+            var user = userResponse.Response;
+            var redirectUri = consentData!.gkd.yonAdr;
+
+            var authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest()
+            {
+                ResponseType = "code",
+                ClientId = _configuration["OpenBankingClientId"],
+                Scope = ["open-banking"],
+                ConsentId = consentId,
+                User = user
+            });
+            var authCode = authResponse.Response!.Code;
+            return StatusCode(201,new{
+                yetkilendirmeKodu = new{
+                    yetKod = authCode,
+                    rizaNo = consentId,
+                    rizaDrm =  "Y"
+                }
+            });
+        }
+        return Forbid();
+    }
+
     [HttpGet("/public/OpenBankingAuthCode")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> OpenBankingAuthCode(Guid consentId)
@@ -74,41 +194,20 @@ public class AuthorizeController : Controller
         return Forbid();
     }
 
-    [HttpPost("public/CreatePreLoginDemo")]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    public async Task<IActionResult> PreLoginDemo([FromHeader(Name = "Authorization")] string token)
-    {
-        var access_token = token.Split(" ")[1];
-        var tokenJti = JwtHelper.GetClaim(access_token,"jti");
-        var tokenInfo = _databaseContext.Tokens.FirstOrDefault(t => t.Id.Equals(Guid.Parse(tokenJti)));
-        CreatePreLoginRequest req = new CreatePreLoginRequest();
-        req.clientCode = "4fa85f64-5711-4562-b3fc-2c963f66afa6";
-        req.CodeChallange = "123";
-        req.Nonce = "123";
-        req.State = "123";
-        req.scopeUser = "39719021136";
-        
-        using var httpClient = new HttpClient();
-        StringContent request = new(JsonSerializer.Serialize(req), Encoding.UTF8, "application/json");
-        request.Headers.Add("clientIdReal","3fa85f64-5717-4562-b3fc-2c963f66afa6");
-        request.Headers.Add("scope","retail-customer");
-        var httpResponse = await httpClient.PostAsync(_configuration["localAddress"] + "public/CreatePreLogin", request);        
-        return Ok(httpResponse.Content);
-    }
-
     [HttpPost("public/CreatePreLogin")]
     [ApiExplorerSettings(IgnoreApi = true)]
-    public async Task<IActionResult> CreatePreLogin([FromHeader(Name = "clientIdReal")] string sourceClient, [FromHeader(Name = "user_reference")] string currentUser, [FromHeader(Name = "scope")] string[] scope,[FromBody] CreatePreLoginRequest createPreLoginRequest)
+    public async Task<IActionResult> CreatePreLogin([FromHeader(Name = "clientIdReal")] string sourceClient, [FromHeader(Name = "user_reference")] string currentUser, [FromHeader(Name = "scope")] string[] scope, [FromBody] CreatePreLoginRequest createPreLoginRequest)
     {
         var clientResponse = await _clientService.CheckClient(sourceClient);
-        if(clientResponse.StatusCode != 200)
+        if (clientResponse.StatusCode != 200)
         {
-            return Problem(detail:"Client not found",statusCode:404);
+            return Problem(detail: "Client not found", statusCode: 404);
         }
         var client = clientResponse.Response;
-        if(!client.CanCreateLoginUrl)
+
+        if(!client!.CanCreateLoginUrl)
         {
-            return Problem(detail:"Client is not authorized to use this flow",statusCode:403);
+            return Problem(detail: "Client is not authorized to use this flow", statusCode: 403);
         }
 
         ServiceResponse<ClientResponse> targetClientResponse;
@@ -121,44 +220,24 @@ public class AuthorizeController : Controller
             targetClientResponse = await _clientService.CheckClientByCode(createPreLoginRequest.clientCode);
         }
 
-        if(targetClientResponse.StatusCode != 200)
+        if (targetClientResponse.StatusCode != 200)
         {
-            return Problem(detail:"Target client not found",statusCode:404);
+            return Problem(detail: "Target client not found", statusCode: 404);
         }
         var targetClient = targetClientResponse.Response;
 
-        if(!client.CreateLoginUrlClients.Any(c => c.Equals(targetClient.id)))
+
+        if(!client.CreateLoginUrlClients!.Any(c => c.Equals(targetClient!.id)))
         {
-            return Problem(detail:"Target client is not authorized to creating login url from given source client",statusCode:403);
+            return Problem(detail: "Target client is not authorized to creating login url from given source client", statusCode: 403);
         }
 
         var user = await _userService.GetUserByReference(createPreLoginRequest.scopeUser);
-        //TODO Consent Check
-        var consentResponse = await _consentService.CheckAuthorizationConsent(targetClient.id,currentUser,createPreLoginRequest.scopeUser);
-        if(consentResponse.StatusCode != 200)
-        {
-            return Problem(detail:"User has no consent for this operation, provide a valid consent first",statusCode:403);
-        }
 
-        var authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest{
-            ClientId = targetClient.id,
-            RedirectUri = targetClient.returnuri,
-            CodeChallange = createPreLoginRequest.CodeChallange,
-            CodeChallangeMethod = "SHA256",
-            Nonce = createPreLoginRequest.Nonce,
-            ResponseType = "code",
-            State = createPreLoginRequest.State,
-            Scope = scope,
-            User = user.Response
-        });
-
-        if(authResponse.StatusCode != 200)
-        {
-            return Problem(detail:authResponse.Detail,statusCode:authResponse.StatusCode);
-        }
-
-        //return Ok(authResponse.Response);
-        return Redirect(authResponse.Response.RedirectUri);
+        HttpContext.Session.SetString("LoggedUser", JsonSerializer.Serialize(user.Response));
+        // var session = Request.Cookies[".amorphie.token"];
+        // HttpContext.Response.Cookies.Append(".amorphie.token",session!);
+        return Redirect(targetClient!.loginurl!);
     }
 
     [HttpPost("public/DodgeCreatePreLogin")]
@@ -166,7 +245,8 @@ public class AuthorizeController : Controller
     public async Task<IResult> DodgeCreatePreLogin([FromHeader(Name = "x-userinfo")] string userinfo, [FromBody] CreatePreLoginRequest createPreLoginRequest)
     {
         var userInfoModel = JsonSerializer.Deserialize<dynamic>(Convert.FromBase64String(userinfo));
-        var username = userInfoModel!.GetProperty("username").ToString();
+        var usernameProperty = userInfoModel!.GetProperty("username");
+        string username = usernameProperty.ToString();
 
         ServiceResponse<ClientResponse> targetClientResponse;
         if (Guid.TryParse(createPreLoginRequest.clientCode, out Guid _))
@@ -196,7 +276,14 @@ public class AuthorizeController : Controller
             return Results.Problem(detail:amorphieUserResult.Detail, statusCode:amorphieUserResult.StatusCode);
         }
         var amorphieUser = amorphieUserResult.Response;
-
+        
+        var profileResult = await _profileService.GetCustomerSimpleProfile(username);
+        if(profileResult.StatusCode != 200)
+        {
+            return Results.Problem(detail:profileResult.Detail, statusCode:profileResult.StatusCode);
+        }
+        var profile = profileResult.Response;
+        _logger.LogError("Profile Response : "+JsonSerializer.Serialize(profileResult));
         var authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest{
             ClientId = targetClient.id,
             RedirectUri = targetClient.returnuri,
@@ -206,15 +293,16 @@ public class AuthorizeController : Controller
             ResponseType = "code",
             State = createPreLoginRequest.State,
             Scope = ["openid","profile"],
-            User = amorphieUser
+            User = amorphieUser,
+            Profile = profile
         });
 
-        if(authResponse.StatusCode != 200)
+        if (authResponse.StatusCode != 200)
         {
             return Results.Problem(detail:authResponse.Detail,statusCode:authResponse.StatusCode);
         }
 
-        return Results.Redirect(authResponse!.Response!.RedirectUri);
+        return Results.Ok(new{AuthCode=authResponse.Response!.Code});
     }
 
     [HttpGet("public/OpenBankingAuthorize")]
@@ -252,15 +340,16 @@ public class AuthorizeController : Controller
         {
             consentId = authorizationRequest.riza_no
         };
-
-        if (customerInfo!.data!.profile!.businessLine == "X")
-        {
-            return View("OpenBankingLoginOn", loginModel);
-        }
-        else
-        {
-            return View("OpenBankingLoginBurgan", loginModel);
-        }
+        ViewBag.isOn = customerInfo!.data!.profile!.businessLine;
+        // if (customerInfo!.data!.profile!.businessLine == "X")
+        // {
+        //     return View("OpenBankingLoginOn", loginModel);
+        // }
+        // else
+        // {
+        //     return View("OpenBankingLoginBurgan", loginModel);
+        // }
+        return View("NewLogin", loginModel);
 
     }
 
@@ -277,17 +366,27 @@ public class AuthorizeController : Controller
             State = authorizationRequest.State
         });
 
-
-        return View("LoginPage", new Models.Account.Login(){Code = authorize.Response.Code});
+        var loggedUserSerialized = HttpContext.Session.GetString("LoggedUser");
+        if(string.IsNullOrWhiteSpace(loggedUserSerialized))
+        {
+            return View("LoginPage", new Login(){Code = authorize.Response!.Code});
+        }
+        else
+        {
+            var user = JsonSerializer.Deserialize<LoginResponse>(loggedUserSerialized);
+            var profileResponse = await _profileService.GetCustomerSimpleProfile(user!.Reference);
+            await _authorizationService.AssignUserToAuthorizationCode(user, authorize.Response!.Code!,profileResponse.Response!);
+            return Redirect(authorize.Response!.RedirectUri);
+        }
 
     }
+
 
     [HttpGet("public/CollectionUsers")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> CollectionUsers()
     {
         return Ok(core.Constants.CollectionUsers.Users);
-
     }
 
     [HttpGet("public/AuthorizeCollection")]
@@ -302,6 +401,7 @@ public class AuthorizeController : Controller
             Scope = authorizationRequest.Scope,
             State = authorizationRequest.State
         });
+
 
 
         return View("CollectionLoginPage", new Models.Account.Login(){Code = authorize.Response.Code});

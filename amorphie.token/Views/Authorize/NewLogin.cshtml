@@ -1,0 +1,182 @@
+@model amorphie.token.core.Models.Account.OpenBankingLogin
+
+@{
+    var bodyClass = ViewBag.isOn == "X" ? "XUser" : "_XUser";
+}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Burgan Bank</title>
+    <link rel="stylesheet" href="/ebanking/login/assets/css/css/bootstrap-4.1.3/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/ebanking/login/assets/css/_LoginLayout.css" />
+
+</head>
+
+<body class="ibLoginBody @bodyClass">
+
+    <div class=" containerBody">
+        <div class="container justify-content-md-center">
+
+            <div class="lHeader">
+                <div class="Logo">
+                    <a id="HomePage">
+                        <img src="/ebanking/login/assets/img/ib_sp_Logo.png" />
+                    </a>
+                </div>
+                <button class="LanLink">English</button>
+
+            </div>
+
+            <div class="lContent">
+
+
+                <div class="row">
+                    <div class="col-lg-6 padding0">
+                        <div class="LCon LeftPan LformPan">
+                            <div id="visibleForm">
+                                <h1>
+                                    İNTERNET BANKACILIĞI GİRİŞ
+                                </h1>
+                            </div>
+                            <form id="login-form" asp-action="OpenBankingLogin" asp-controller="public" method="post">
+
+                                <section>
+                                    <label class="input">
+                                        <i class="lic icon Bgicon_profil_01"></i>
+                                        <input name="username" type="text" class="form-control" maxlength="11"
+                                            minlength="10" placeholder="Kimlik/Vergi Numarası"
+                                            required-error="İnternet bankacılığına giriş yapmak için, lütfen ilgili alana T.C. Kimlik numaranızı veya Vergi Kimlik Numaranızı yazın."
+                                            tckn="" tckn-error="Lütfen geçerli bir TCKN giriniz." vkn=""
+                                            vkn-error="Lütfen geçerli bir VKN giriniz."
+                                            onkeypress="return event.keyCode >= 48 &amp;&amp; event.keyCode < 58"
+                                            data-val="true"
+                                            data-val-required="İnternet bankacılığına giriş yapmak için, lütfen ilgili alana T.C. Kimlik numaranızı veya Vergi Kimlik Numaranızı yazın."
+                                            id="Username" value="" asp-for="username">
+                                    </label>
+                                </section>
+                                <section>
+                                    <label class="input">
+                                        <i class="lic icon Bgicon_parola"></i>
+                                        <input name="password" type="text"
+                                            style="font-family: text-security-disc !important;-webkit-text-security: disc !important;"
+                                            class="form-control" maxlength="6" minlength="6"
+                                            default-error="required-error" autocomplete="off" onlynumeric=""
+                                            copypastetrimandonlynumeric="25" pattern="[0-9]*" inputmode="numeric"
+                                            required="" required-error="Lütfen en az 6 karakter olan şifrenizi giriniz."
+                                            onkeypress="return event.keyCode >= 48 &amp;&amp; event.keyCode < 58"
+                                            placeholder="Şifre" data-val="true"
+                                            data-val-required="Lütfen en az 6 karakter olan şifrenizi giriniz."
+                                            id="Password" value="" asp-for="password">
+                                        <input type="hidden" asp-for="consentId" size="12" class="flex-1"
+                                            placeholder="Şifre" />
+
+                                    </label>
+                                </section>
+
+
+                                <div class="BtnPan center">
+
+                                    <button type="submit" class="Lbutton w100" please-wait-text="LÜTFEN BEKLEYİNİZ"
+                                        id="submit-login">
+                                        GİRİŞ YAP
+                                        <i class="icon Bgicon_ok_01"></i>
+                                    </button>
+                                </div>
+
+                                <div class="form-group mt-3">
+
+                                </div>
+
+
+                                <div class="PassBtnPan">
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6 padding0">
+                        <div class="LCon RightPan">
+                            <h2><i class="secic"></i> İnternet Bankacılığı Güvenlik </h2>
+                            <span>
+                                <p>Burgan Bank İnternet Bankacılığı ortamında donanım, yazılım, network ve erişim
+                                    platformları günümüz teknolojisine uygun olarak kurulmuş olup güncel tutulmaktadır.
+                                </p>
+                                <p>İnternet Bankacılığı giriş sayfasında cep telefon numarası, marka ve model bilgisi
+                                    istenmemektedir</p>Cep telefonunuza dijital/mobil sertifika için gönderilen linkleri
+                                açmayınız, bu linklerden yükleme yapmayınız.<p></p>
+                                <p>Adres çubuğunda görselinin bulunduğu ve tıklandığında açılan sertifikada Burgan Bank
+                                    yazdığını kontrol ediniz.</p>
+                            </span>
+                            <p>
+                                <a href="https://www.burgan.com.tr/birikim-yonetimi/bireysel/diger-hizmetlerimiz/internet-bankaciligi/guvenlik"
+                                    target="_blank">
+                                    <i> Daha detaylı bilgi almak için tıklayın...</i>
+                                </a>
+                            </p>
+                        </div>
+
+
+                        <div class="LCon RightPan onPan">
+                            <h2><i class="secic"></i> İnternet Bankacılığı Güvenlik </h2>
+                            <span>
+                                <p>ON İnternet Bankacılığı ortamında donanım, yazılım, network ve erişim platformları
+                                    günümüz teknolojisine uygun olarak kurulmuş olup güncel tutulmaktadır.</p>
+                                <p>İnternet Bankacılığı giriş sayfasında cep telefon numarası, marka ve model bilgisi
+                                    istenmemektedir.</p>Cep telefonunuza dijital/mobil sertifika için gönderilen
+                                linkleri açmayınız, bu linklerden yükleme yapmayınız.<p></p>
+                                <p>Adres çubuğunda görselinin bulunduğu ve tıklandığında açılan sertifikada Burgan Bank
+                                    yazdığını kontrol ediniz.</p>
+                            </span>
+                            <p>
+                                <a href="https://www.burgan.com.tr/dijital-hizmetler/on-internet-subesi/guvenlik"
+                                    target="_blank">
+                                    <i> Daha detaylı bilgi almak için tıklayın...</i>
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+
+
+            </div>
+        </div>
+
+        <div class="lFooter onPan">
+            <div class="LPan">
+                <label class="BurganIletisim">
+                    <label><a href="tel:08502222910">0 850 222 2910</a></label>
+                    <span>
+                        7/24 Contact Center
+                    </span>
+                </label>
+            </div>
+            <div class="SecPan"> </div>
+
+        </div>
+
+        <div class="lFooter">
+            <div class="LPan">
+                <label class="BurganIletisim">
+                    <label>0 850 222 8222</label>
+                    <span>
+                        "7/24 Contact Center
+                    </span>
+                </label>
+            </div>
+            <div class="SecPan"> </div>
+
+        </div>
+    </div>
+    </div>
+
+    <script src="/ebanking/login/assets/js/site.js"></script>
+</body>
+
+</html>

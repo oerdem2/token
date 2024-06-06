@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -13,6 +13,13 @@
 <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.3.1" />
 <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.3.1" />
 <PackageReference Include="jose-jwt" Version="4.1.0" />
+	<PackageReference Include="System.ServiceModel.Duplex" Version="6.0.0" />
+	<PackageReference Include="System.ServiceModel.Federation" Version="8.0.0" />
+	<PackageReference Include="System.ServiceModel.Http" Version="8.0.0" />
+	<PackageReference Include="System.ServiceModel.NetTcp" Version="8.0.0" />
+	<PackageReference Include="System.ServiceModel.Security" Version="6.0.0" />
+	<PackageReference Include="System.Text.Regularexpressions" Version="4.3.1" />
+	<PackageReference Include="System.Security.Cryptography.pkcs" Version="6.0.3" />
 </ItemGroup>
 <ItemGroup>
   <Folder Include="Exceptions\Ekyc\" />
