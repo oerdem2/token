@@ -38,7 +38,7 @@ public static class EkycPrepare
         // WFID -- or zeen
         if (constCallType == EkycCallTypeConstants.Mevduat_ON ||
          callType == EkycCallTypeConstants.Mevduat_HEPSIBURADA || 
-         EkycCallTypeConstants.Mevduat_BRGN)
+        callType == EkycCallTypeConstants.Mevduat_BRGN)
         {
             if (wfId.IsNullOrEmpty())
             {
