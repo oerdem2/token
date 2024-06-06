@@ -30,19 +30,23 @@ public static class EkycPrepare
         string citizenShipNumber = dataChanged.entityData.UserName;
         var callType = dataChanged.entityData.CallType;
         string wfId = dataChanged.entityData.WfId;
-        string ApplicantFullName =  "XXXXXXXXXXXXX";  //dataChanged.entityData.ApplicantFullName;
+        string ApplicantFullName = dataChanged.entityData.ApplicantFullName;
         string constCallType = ekycService.GetCallType(callType);
         var instance = Guid.NewGuid();
         var isSelfServiceAvaible = true;
         bool hasWfId = false;
         // WFID -- or zeen
-        if (constCallType == EkycCallTypeConstants.Mevduat_ON || callType == EkycCallTypeConstants.Mevduat_HEPSIBURADA)
+        if (constCallType == EkycCallTypeConstants.Mevduat_ON ||
+         callType == EkycCallTypeConstants.Mevduat_HEPSIBURADA || 
+         EkycCallTypeConstants.Mevduat_BRGN)
         {
             if (wfId.IsNullOrEmpty())
             {
                 wfId = transactionId;
-                
-            }else{
+
+            }
+            else
+            {
                 hasWfId = true;
             }
 
@@ -55,11 +59,13 @@ public static class EkycPrepare
             Guid.TryParse(transactionId, out instance);
         }
 
-        if(!hasWfId){
-             await ekycService.CreateSession(instance, citizenShipNumber, callType, hasWfId);
+        if (!hasWfId)
+        {
+
+            await ekycService.CreateSession(instance, citizenShipNumber, callType);
         }
 
-       
+
 
         //Register the enqura 
 
@@ -76,7 +82,7 @@ public static class EkycPrepare
         variables.Add("CallType", constCallType);
         // variables.Add("Name", registerResult.Name);
         // variables.Add("Surname", registerResult.Surname);
-        variables.Add("ApplicantFullName",ApplicantFullName);
+        variables.Add("ApplicantFullName", ApplicantFullName);
         variables.Add("IsSelfServiceAvaible", isSelfServiceAvaible);
         variables.Add("Instance", instance);
 
@@ -93,7 +99,9 @@ public static class EkycPrepare
         var nfcMaxCount = Convert.ToInt32(configuration["EkycNfcFailMaxTryCountDefault"]);
         var faceMaxCount = Convert.ToInt32(configuration["EkycFaceFailMaxTryCountDefault"]);
 
-        if (constCallType == EkycCallTypeConstants.Mevduat_ON || constCallType == EkycCallTypeConstants.Mevduat_BRGN)
+        if (constCallType == EkycCallTypeConstants.Mevduat_ON || 
+        constCallType == EkycCallTypeConstants.Mevduat_BRGN || 
+        callType == EkycCallTypeConstants.Mevduat_HEPSIBURADA)
         {
             ocrMinCount = Convert.ToInt32(configuration["EkycOcrFailMinTryCountMevduat"]);
             nfcMinCount = Convert.ToInt32(configuration["EkycNfcFailMinTryCountMevduat"]);
