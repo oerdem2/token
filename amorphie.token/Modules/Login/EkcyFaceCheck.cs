@@ -33,15 +33,17 @@ public static class EkcyFaceCheck
 
             var callType = body.GetProperty("CallType").ToString();
             var instance = body.GetProperty("Instance").ToString();
-            var name = body.GetProperty("Name").ToString();
-            var surname = body.GetProperty("Surname").ToString();
+            // var name = body.GetProperty("Name").ToString();
+            // var surname = body.GetProperty("Surname").ToString();
             dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
             dataChanged.additionalData.callType = callType;
-            dataChanged.additionalData.customerName = name; // bu kısımları doldur.
-            dataChanged.additionalData.customerSurname = surname;
+            var ApplicantFullName = body.GetProperty("ApplicantFullName").ToString();
+            dataChanged.additionalData.applicantFullName = ApplicantFullName;
+            // dataChanged.additionalData.customerName = name; // bu kısımları doldur.
+            // dataChanged.additionalData.customerSurname = surname;
             dataChanged.additionalData.instanceId = instance;
 
-            
+
             var sessionId = body.GetProperty("SessionId").ToString();
             if (faceIsSuccess && !String.IsNullOrEmpty(sessionId))
             {
@@ -61,7 +63,7 @@ public static class EkcyFaceCheck
             {
 
 
-                 //Max-Min try count 
+                //Max-Min try count 
                 if (faceCurrentFailedCount >= EkycConstants.FaceFailedTryCount)
                 {
                     dataChanged.additionalData.pages = new List<EkycPageModel>
@@ -71,7 +73,7 @@ public static class EkcyFaceCheck
                     };
 
                 }
-                if(faceCurrentFailedCount>=EkycConstants.FaceFailedMaxTryCount)
+                if (faceCurrentFailedCount >= EkycConstants.FaceFailedMaxTryCount)
                 {
                     //Min try additional data
                     dataChanged.additionalData.pages = new List<EkycPageModel>
@@ -97,7 +99,7 @@ public static class EkcyFaceCheck
 
 
             variables.Add("Init", true);
-            
+
             // variables.Add("IsSelfServiceAvaliable", true); // bu client dan alınacak sanırım
             variables.Add("CurrentFaceFailedCount", faceCurrentFailedCount);
         }
