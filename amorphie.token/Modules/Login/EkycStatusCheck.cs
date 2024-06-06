@@ -19,7 +19,7 @@ public class EkycStatusCheck
         // var transactionId = body.GetProperty("InstanceId").ToString();
         var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
         dynamic dataChanged = Newtonsoft.Json.JsonConvert.DeserializeObject<ExpandoObject>(dataBody.ToString());
-         dynamic targetObject = new System.Dynamic.ExpandoObject();
+        dynamic targetObject = new System.Dynamic.ExpandoObject();
         targetObject.Data = dataChanged;
 
         dynamic variables = new Dictionary<string, dynamic>();
@@ -29,7 +29,8 @@ public class EkycStatusCheck
         var callType = body.GetProperty("CallType").ToString();
 
         var isSuccess = dataChanged.entityData.IsSuccess;
-        if(isSuccess){
+        if (isSuccess)
+        {
             dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
                     EkycAdditionalDataContstants.StandartItem,
@@ -40,7 +41,9 @@ public class EkycStatusCheck
         var videoCallCheck = false;
         var callTransactionType = "";
 
-        if (callType == EkycCallTypeConstants.Mevduat_ON || callType == EkycCallTypeConstants.Mevduat_HEPSIBURADA)
+        if (callType == EkycCallTypeConstants.Mevduat_ON ||
+        callType == EkycCallTypeConstants.Mevduat_HEPSIBURADA ||
+        callType == EkycCallTypeConstants.Mevduat_BRGN)
         {
             // Get token
             var request = new EkycMevduatStatusCheckModels.Request()
@@ -50,10 +53,12 @@ public class EkycStatusCheck
                 Counter = 1
             };
             var statusCheck = await ekycService.CheckCallStatusForMevduat(request);
-            if(statusCheck.StatusCode==200){
+            if (statusCheck.StatusCode == 200)
+            {
                 videoCallCheck = true;
 
-                switch(statusCheck.Response.CallTransactionsType){
+                switch (statusCheck.Response.CallTransactionsType)
+                {
                     case EkycMevduatStatusCheckModels.EkycPostCallTransactionsType.Survey:
                         callTransactionType = "Survey";
                         break;
@@ -70,17 +75,17 @@ public class EkycStatusCheck
 
 
             }
-            
-             
+
+
         }
 
-        
-        variables.Add("EkycButton",callTransactionType);
+
+        variables.Add("EkycButton", callTransactionType);
         variables.Add("Init", true);
         variables.Add("VideoCallCheck", videoCallCheck);
 
 
-         targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
+        targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
         targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
         variables.Add($"TRX{transitionName.ToString().Replace("-", "")}", targetObject);
 
