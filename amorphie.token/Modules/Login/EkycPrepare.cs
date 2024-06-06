@@ -30,6 +30,7 @@ public static class EkycPrepare
         string citizenShipNumber = dataChanged.entityData.UserName;
         var callType = dataChanged.entityData.CallType;
         string wfId = dataChanged.entityData.WfId;
+        string ApplicantFullName =  "XXXXXXXXXXXXX";  //dataChanged.entityData.ApplicantFullName;
         string constCallType = ekycService.GetCallType(callType);
         var instance = Guid.NewGuid();
         var isSelfServiceAvaible = true;
@@ -54,8 +55,11 @@ public static class EkycPrepare
             Guid.TryParse(transactionId, out instance);
         }
 
+        if(!hasWfId){
+             await ekycService.CreateSession(instance, citizenShipNumber, callType, hasWfId);
+        }
 
-        var registerResult = await ekycService.CreateSession(instance, citizenShipNumber, callType, hasWfId);
+       
 
         //Register the enqura 
 
@@ -70,8 +74,8 @@ public static class EkycPrepare
         variables.Add("CurrentNfcFailedCount", 0);
         variables.Add("CurrentFaceFailedCount", 0);
         variables.Add("CallType", constCallType);
-        variables.Add("Name", registerResult.Name);
-        variables.Add("Surname", registerResult.Surname);
+        // variables.Add("Name", registerResult.Name);
+        // variables.Add("Surname", registerResult.Surname);
         variables.Add("IsSelfServiceAvaible", isSelfServiceAvaible);
         variables.Add("Instance", instance);
 
@@ -115,9 +119,10 @@ public static class EkycPrepare
         dataChanged.additionalData = new ExpandoObject();
         dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
         dataChanged.additionalData.callType = constCallType;
-        dataChanged.additionalData.customerName = registerResult.Name; // bu kısımları doldur.
-        dataChanged.additionalData.customerSurname = registerResult.Surname;
+        // dataChanged.additionalData.customerName = registerResult.Name; // bu kısımları doldur.
+        // dataChanged.additionalData.customerSurname = registerResult.Surname;
         dataChanged.additionalData.instanceId = instance;
+        dataChanged.additionalData.applicantFullName = ApplicantFullName;
         dataChanged.additionalData.pages = new List<EkycPageModel>{
             new EkycPageModel
             {
