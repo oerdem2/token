@@ -76,6 +76,7 @@ public static class EkycPrepare
         variables.Add("CallType", constCallType);
         // variables.Add("Name", registerResult.Name);
         // variables.Add("Surname", registerResult.Surname);
+        variables.Add("ApplicantFullName",ApplicantFullName);
         variables.Add("IsSelfServiceAvaible", isSelfServiceAvaible);
         variables.Add("Instance", instance);
 
