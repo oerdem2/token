@@ -169,9 +169,12 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             accessDuration = TimeHelper.ConvertStrDurationToSeconds(accessInfo.duration!);
             if(_consent is not null)
             {
+                var consentData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(_consent!.additionalData!);
                 if(_consent.consentType!.Equals("OB_Account"))
                 {
-                    accessDuration = 10 * 24 * 60 * 60; // 10 days
+                    DateTime lastAccessDate = DateTime.Parse(consentData!.hspBlg.iznBlg.iznTur.erisimIzniSonTrh.ToString());
+                    var DateDiffAsDay = Convert.ToInt32((lastAccessDate - DateTime.Now).TotalDays);
+                    accessDuration = DateDiffAsDay > 30 ? (30 * 24 * 60 * 60) : (DateDiffAsDay * 24 * 60 * 60); 
                 }
                 if(_consent.consentType.Equals("OB_Payment"))
                 {

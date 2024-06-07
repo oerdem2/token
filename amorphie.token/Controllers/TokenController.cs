@@ -590,9 +590,25 @@ public class TokenController : Controller
             generateTokenRequest.ConsentId = consent.Response?.id;
 
             var token = await _tokenService.GenerateOpenBankingToken(generateTokenRequest, consent.Response);
+            if(token.StatusCode == 470)
+            {
+                return Json(new {
+                    httpCode = 404,
+                    httpMessage = "Not Found",
+                    errorCode = "TR.OHVPS.Resource.NotFound"
+                },new JsonSerializerOptions{
+                    PropertyNamingPolicy = null
+                });
+            }
             if (token.StatusCode != 200)
             {
-                return Problem(statusCode: token.StatusCode, detail: token.Detail);
+                return Json(new {
+                    httpCode = 500,
+                    httpMessage = "Internal Server Error",
+                    errorCode = "TR.OHVPS.Server.InternalError"
+                },new JsonSerializerOptions{
+                    PropertyNamingPolicy = null
+                });
             }
 
             var openBankingTokenResponse = new OpenBankingTokenResponse
