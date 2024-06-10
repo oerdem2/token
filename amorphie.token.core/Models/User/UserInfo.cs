@@ -12,7 +12,7 @@ namespace amorphie.token.core.Models.User
         public string reference { get; set; }
         public string password { get; set; }
         public string eMail { get; set; }
-        public UserPhone phone { get; set; }
+        public UserPhone? phone { get; set; }
         public string state { get; set; }
         public string salt { get; set; }
         public bool isArgonHash { get; set; }

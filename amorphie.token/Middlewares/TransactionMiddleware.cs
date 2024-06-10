@@ -38,9 +38,9 @@ namespace amorphie.token.Middlewares
                 {
                     await daprClient.InvokeBindingAsync(configuration["ZeebeCommand"], "throw-error", variables);
                 }
-                catch (System.Exception ex2)
+                catch 
                 {
-                    throw ex;
+                    
                 }
                 context.Response.StatusCode = 200;
                 context.Response.ContentType = "application/json";
@@ -64,7 +64,7 @@ namespace amorphie.token.Middlewares
                 {
                     await transactionService.SaveLogon();
                 }
-                catch (Exception ex)
+                catch
                 {
 
                 }
