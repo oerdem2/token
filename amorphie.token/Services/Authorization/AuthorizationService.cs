@@ -109,7 +109,7 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
 
             var authCode = new AuthorizationCode
             {
-                ClientId = request.ClientId,
+                ClientId = client.id,
                 RedirectUri = request.RedirectUri,
                 RequestedScopes = requestedScopes,
                 CodeChallenge = request.CodeChallange,
