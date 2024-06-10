@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>3aebe289-5ab8-42bd-a7dc-1f9ce0d48e11</UserSecretsId>
     <ThreadPoolMinThreads>10</ThreadPoolMinThreads>
+    <!--<NoWarn>CS8602;CS8601;CS8618;CS8620</NoWarn>-->
+    <NoWarn>CS8618</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

@@ -18,7 +18,7 @@ public class AuthorizationCode
     public IList<string>? RequestedScopes { get; set; }
 
     public LoginResponse? Subject { get; set; }
-    public SimpleProfileResponse Profile{get;set;}
+    public SimpleProfileResponse? Profile{get;set;}
     public string? CodeChallenge { get; set; }
     public string? CodeChallengeMethod { get; set; }
     public string? Nonce { get; set; }

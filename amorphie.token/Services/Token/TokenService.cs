@@ -916,7 +916,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             };
         }
 
-        var consentListResponse = await _roleService.GetConsents(_client.code, _user.Reference);
+        /*var consentListResponse = await _roleService.GetConsents(_client.code, _user.Reference);
         if(consentListResponse.StatusCode != 200)
         {
             return new ServiceResponse<TokenResponse>()
@@ -950,7 +950,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         }
         var amorphieRole = roleResponse.Response;
         _role = amorphieRole;
-
+        */
         var tokenResponse = await GenerateTokenResponse();
 
         if (tokenResponse.IdToken == string.Empty && tokenResponse.AccessToken == string.Empty)
