@@ -172,7 +172,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 var consentData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(_consent!.additionalData!);
                 if(_consent.consentType!.Equals("OB_Account"))
                 {
-                    DateTime lastAccessDate = DateTime.Parse(consentData!.hspBlg.iznBlg.iznTur.erisimIzniSonTrh.ToString());
+                    DateTime lastAccessDate = DateTime.Parse(consentData!.hspBlg.iznBlg.erisimIzniSonTrh.ToString());
                     var DateDiffAsDay = Convert.ToInt32((lastAccessDate - DateTime.Now).TotalDays);
                     accessDuration = DateDiffAsDay > 30 ? (30 * 24 * 60 * 60) : (DateDiffAsDay * 24 * 60 * 60); 
                 }
@@ -916,40 +916,40 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             };
         }
 
-        // var consentListResponse = await _roleService.GetConsents(_client.code, _user.Reference);
-        // if(consentListResponse.StatusCode != 200)
-        // {
-        //     return new ServiceResponse<TokenResponse>()
-        //     {
-        //         StatusCode = consentListResponse.StatusCode,
-        //         Detail = consentListResponse.Detail
-        //     };
-        // }
-        // var consentList = consentListResponse.Response;
+        var consentListResponse = await _roleService.GetConsents(_client.code, _user.Reference);
+        if(consentListResponse.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = consentListResponse.StatusCode,
+                Detail = consentListResponse.Detail
+            };
+        }
+        var consentList = consentListResponse.Response;
 
-        // if(consentList.Count() != 1)
-        // {
-        //     return new ServiceResponse<TokenResponse>()
-        //     {
-        //         StatusCode = 480,
-        //         Detail = "Password Grant Type Doesn't Support Multiple Consents"
-        //     };
-        // }
+        if(consentList.Count() != 1)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 480,
+                Detail = "Password Grant Type Doesn't Support Multiple Consents"
+            };
+        }
 
-        // var consent = consentList.First();
-        // _selectedConsent = consent;
+        var consent = consentList.First();
+        _selectedConsent = consent;
 
-        // var roleResponse = await _roleService.GetRoleDefinition(consent.RoleId);
-        // if(roleResponse.StatusCode != 200)
-        // {
-        //     return new ServiceResponse<TokenResponse>()
-        //     {
-        //         StatusCode = roleResponse.StatusCode,
-        //         Detail = roleResponse.Detail
-        //     };
-        // }
-        // var role = roleResponse.Response;
-        // _role = role;
+        var roleResponse = await _roleService.GetRoleDefinition(consent.RoleId);
+        if(roleResponse.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = roleResponse.StatusCode,
+                Detail = roleResponse.Detail
+            };
+        }
+        var amorphieRole = roleResponse.Response;
+        _role = amorphieRole;
 
         var tokenResponse = await GenerateTokenResponse();
 
