@@ -88,9 +88,9 @@ public class AuthorizeController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> GenerateAuthCodeForTestingPurpose([FromQuery(Name = "Reference")] string reference)
     {
-        if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").Equals("Test") || 
-        Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").Equals("Development") ||
-        Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").Equals("Preprod"))
+        if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")!.Equals("Test") || 
+        Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")!.Equals("Development") ||
+        Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")!.Equals("Preprod"))
         {
             var migrateUser = await _loginService.MigrateDodgeUserToAmorphie(reference);
             var user = await _userService.GetUserByReference(reference);
@@ -111,7 +111,7 @@ public class AuthorizeController : Controller
             });
 
             return Ok(new{
-                AuthCode = authCodeResponse.Response.Code,
+                AuthCode = authCodeResponse!.Response!.Code,
                 CodeVerifier = codeVerifier
             });
         }
@@ -177,6 +177,7 @@ public class AuthorizeController : Controller
         {
             var consent = consentResponse!.Response!;
             var deserializedData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent.additionalData!);
+            
             var redirectUri = deserializedData.gkd.yonAdr;
 
             var authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest()
@@ -189,7 +190,7 @@ public class AuthorizeController : Controller
             });
             var authCode = authResponse.Response.Code;
 
-            return Redirect($"{redirectUri}&rizaDrm=Y&yetKod={authCode}&rizaNo={consentId}&rizaTip={OpenBankingConstants.ConsentTypeMap[consent.consentType]}");
+            return Redirect($"{redirectUri}&rizaDrm=Y&yetKod={authCode}&rizaNo={consentId}&rizaTip={OpenBankingConstants.ConsentTypeMap[consent.consentType!]}");
         }
         return Forbid();
     }
@@ -386,6 +387,7 @@ public class AuthorizeController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> CollectionUsers()
     {
+        await Task.CompletedTask;
         return Ok(core.Constants.CollectionUsers.Users);
     }
 

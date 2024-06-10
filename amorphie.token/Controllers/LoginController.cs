@@ -16,17 +16,7 @@ using System.Text.Json.Serialization;
 
 namespace amorphie.token.core.Controllers;
 
-public class PhoneTest2
-{
-    public PhoneTest phone{get;set;}
-}
-public class PhoneTest
-{
-    [JsonPropertyName("phone1")]
-    public int phone1{get;set;}
-    [JsonPropertyName("phone2")]
-    public int phone2{get;set;}
-}
+
 public class LoginController : Controller
 {
     private readonly ILogger<TokenController> _logger;
@@ -63,13 +53,7 @@ public class LoginController : Controller
         _internetBankingUserService = internetBankingUserService;
     }
 
-    [HttpPost("public/testtest")]
-    [Consumes("application/json")]
-    public async Task<IActionResult> testttt([FromBody]PhoneTest phone)
-    {
-        var k = "123123";
-        throw new Exception();
-    }
+
         
 
     [ApiExplorerSettings(IgnoreApi = true)]
@@ -102,7 +86,7 @@ public class LoginController : Controller
             {
                 HttpContext.Session.SetString("LoggedUser", JsonSerializer.Serialize(user));
                 var profileResponse = await _profileService.GetCustomerSimpleProfile(user.Reference);
-                var authCodeInfo = await _authorizationService.AssignUserToAuthorizationCode(user, loginRequest.Code!, profileResponse.Response);
+                var authCodeInfo = await _authorizationService.AssignUserToAuthorizationCode(user, loginRequest.Code!, profileResponse.Response!);
 
                 return Redirect($"{authCodeInfo.RedirectUri}?code={loginRequest.Code}&response_type=code&state={authCodeInfo.State}");
             }
@@ -121,7 +105,7 @@ public class LoginController : Controller
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.ToString());
+            _logger.LogError("Login Failed! Ex:{0}",ex.ToString());
             return StatusCode(500);
         }
     }
@@ -193,7 +177,7 @@ public class LoginController : Controller
                 var amorphieUser = amorphieUserResult.Response;
                 HttpContext.Session.SetString("LoggedUser", JsonSerializer.Serialize(user));
 
-                var authCodeInfo = await _authorizationService.AssignCollectionUserToAuthorizationCode(amorphieUser, loginRequest.Code!,user);
+                var authCodeInfo = await _authorizationService.AssignCollectionUserToAuthorizationCode(amorphieUser!, loginRequest.Code!,user);
                 
                 return Redirect($"{authCodeInfo.RedirectUri}?code={loginRequest.Code}&response_type=code&state={authCodeInfo.State}");
            
@@ -219,7 +203,7 @@ public class LoginController : Controller
             return StatusCode(404);
         }
         var user = userResponse.Response;
-        var device = await _ibContext.UserDevice.FirstOrDefaultAsync(u => u.UserId == user.Id && u.Status == 10 && !string.IsNullOrWhiteSpace(u.DeviceToken));
+        var device = await _ibContext.UserDevice.FirstOrDefaultAsync(u => u.UserId == user!.Id && u.Status == 10 && !string.IsNullOrWhiteSpace(u.DeviceToken));
 
         if (device != null)
         {
@@ -244,7 +228,7 @@ public class LoginController : Controller
                 return StatusCode(500);
             }
 
-            var passwordResponse = await _ibUserService.GetPassword(userResponse.Response.Id);
+            var passwordResponse = await _ibUserService.GetPassword(userResponse.Response!.Id);
             if (passwordResponse.StatusCode != 200)
             {
                 //TODO
@@ -342,9 +326,9 @@ public class LoginController : Controller
                 SmsType = "Otp",
                 Phone = new
                 {
-                    CountryCode = amorphieUser.MobilePhone!.CountryCode,
-                    Prefix = amorphieUser.MobilePhone.Prefix,
-                    Number = amorphieUser.MobilePhone.Number
+                    amorphieUser!.MobilePhone!.CountryCode,
+                    amorphieUser!.MobilePhone.Prefix,
+                    amorphieUser!.MobilePhone.Number
                 },
                 Content = $"{code} şifresi ile giriş yapabilirsiniz",
                 Process = new
@@ -395,11 +379,11 @@ public class LoginController : Controller
         var sendedOtpValue = await _daprClient.GetStateAsync<string>(_configuration["DAPR_STATE_STORE_NAME"], $"{otpRequest.transactionId}_Login_Otp_Code");
         if (sendedOtpValue.Equals(otpRequest.OtpValue))
         {
-            if (consent.consentType.Equals("OB_Account"))
+            if (consent!.consentType!.Equals("OB_Account"))
             {
                 return Redirect(_configuration["OpenBankingAccount"] + otpRequest.consentId);
             }
-            if (consent.consentType.Equals("OB_Payment"))
+            if (consent!.consentType!.Equals("OB_Payment"))
             {
                 return Redirect(_configuration["OpenBankingPayment"] + otpRequest.consentId);
             }
