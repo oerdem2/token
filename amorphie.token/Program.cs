@@ -50,6 +50,11 @@ internal partial class Program
 
         await builder.Configuration.AddVaultSecrets(builder.Configuration["DAPR_SECRET_STORE_NAME"], new string[] { "ServiceConnections" });
 
+        builder.Services.AddAntiforgery(x =>
+        {
+            x.SuppressXFrameOptionsHeader = true;
+        });
+
         // Add services to the container.
         builder.Services.AddCors(options =>
         {
@@ -275,6 +280,7 @@ internal partial class Program
 
 
         app.UseCors();
+        app.UseAntiforgery();
 
         app.UseStaticFiles();
 
