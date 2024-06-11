@@ -21,17 +21,14 @@ public static class EkycExit
     // Add additional data object here !
     dataChanged.additionalData = new ExpandoObject();
 
-
-    // Add additional data object here !
-    dataChanged.additionalData = new ExpandoObject();
-    
-
-
+    dataChanged.additionalData.isEkyc = true;
+    dataChanged.additionalData.callType = callType;
 
     dynamic variables = new Dictionary<string, dynamic>();
     // variables here !
     variables.Add("EkycResult", EkycResultConstants.SelfServiceExit);
-    variables.Add("EkycButton","None");
+    variables.Add("EkycButton", "None");
+    variables.Add("EkycCallType", callType);
 
     targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
     targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
