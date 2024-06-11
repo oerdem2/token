@@ -171,7 +171,7 @@ public class EkycService : ServiceBase, IEkycService
 
             var result = await statusCheckResponse.Content.ReadFromJsonAsync<EkycMevduatStatusCheckModels.Response>();
 
-
+            Logger.LogInformation($"Ekyc status check service result: CallTransactionType = {result?.CallTransactionsType} ReferenceType: {result?.ReferenceType}");
 
             if (result.ReferenceType == EkycMevduatStatusCheckModels.EkycProcessRedirectType.Retry)
             {

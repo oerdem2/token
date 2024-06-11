@@ -36,10 +36,12 @@ public class EkycStatusCheck
                     EkycAdditionalDataContstants.StandartItem,
 
                 };
+                
         }
 
         var videoCallCheck = false;
         var callTransactionType = "";
+        var callResult = EkycResultConstants.VideoCallCompleted;
 
         if (callType == EkycCallTypeConstants.Mevduat_ON ||
         callType == EkycCallTypeConstants.Mevduat_HEPSIBURADA ||
@@ -53,25 +55,45 @@ public class EkycStatusCheck
                 Counter = 1
             };
             var statusCheck = await ekycService.CheckCallStatusForMevduat(request);
+            
             if (statusCheck.StatusCode == 200)
             {
                 videoCallCheck = true;
 
-                switch (statusCheck.Response.CallTransactionsType)
+                callTransactionType = statusCheck?.Response?.CallTransactionsType switch
                 {
-                    case EkycMevduatStatusCheckModels.EkycPostCallTransactionsType.Survey:
-                        callTransactionType = "Survey";
+                    EkycMevduatStatusCheckModels.EkycPostCallTransactionsType.Survey => "Survey",
+                    EkycMevduatStatusCheckModels.EkycPostCallTransactionsType.CreditUsage => "CreditUsage",
+                    EkycMevduatStatusCheckModels.EkycPostCallTransactionsType.SurveyAndCreditUsage => "SurveyAndCreditUsage",
+                    _ => "None"
+                };
+
+                switch (statusCheck?.Response?.ReferenceType)
+                {
+
+                    case EkycMevduatStatusCheckModels.EkycProcessRedirectType.Continue:
+                        callResult = EkycResultConstants.VideoCallCompleted;
                         break;
-                    case EkycMevduatStatusCheckModels.EkycPostCallTransactionsType.CreditUsage:
-                        callTransactionType = "CreditUsage";
+                    case EkycMevduatStatusCheckModels.EkycProcessRedirectType.Exit:
+                        callResult = EkycResultConstants.VideoCallExit;
                         break;
-                    case EkycMevduatStatusCheckModels.EkycPostCallTransactionsType.SurveyAndCreditUsage:
-                        callTransactionType = "SurveyAndCreditUsage";
+                    case EkycMevduatStatusCheckModels.EkycProcessRedirectType.ToCourier:
+                        callResult = EkycResultConstants.VideoCallCompleted;
                         break;
-                    case EkycMevduatStatusCheckModels.EkycPostCallTransactionsType.None:
-                        callTransactionType = "None";
+                    case EkycMevduatStatusCheckModels.EkycProcessRedirectType.Cancel:
+                        callResult = EkycResultConstants.VideoCallFailed;
+                        videoCallCheck = false;
                         break;
+                    case EkycMevduatStatusCheckModels.EkycProcessRedirectType.Retry:
+                        callResult = EkycResultConstants.VideoCallSuccess;
+                        break;
+                    default :
+                        callResult = EkycResultConstants.VideoCallCompleted;
+                        break;
+                    
+
                 }
+
 
 
             }
@@ -79,7 +101,7 @@ public class EkycStatusCheck
 
         }
 
-
+        variables.Add("EkycResult",callResult);
         variables.Add("EkycButton", callTransactionType);
         variables.Add("Init", true);
         variables.Add("VideoCallCheck", videoCallCheck);

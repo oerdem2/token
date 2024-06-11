@@ -46,7 +46,7 @@ public static class EkycEnded
 
         
 
-        variables.Add("EkycResult",EkycResultConstants.VideoCallCompleted);
+        // variables.Add("EkycResult",EkycResultConstants.VideoCallCompleted);
         variables.Add("EkycCallType",callType);
         
         
