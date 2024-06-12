@@ -27,98 +27,99 @@ public static class EkycNfcCheck
 
         variables.Add("IsSkip", isSkip);
         bool nfcStatus = false;
-        if(!isSkip){
-        var nfcIsSuccess = dataChanged.entityData.IsSuccess;
-        
-        dataChanged.additionalData = new ExpandoObject();
-        var callType = body.GetProperty("CallType").ToString();
-        var instance = body.GetProperty("Instance").ToString();
-        // var name = body.GetProperty("Name").ToString();
-        // var surname = body.GetProperty("Surname").ToString();
-        dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
-        dataChanged.additionalData.callType = callType;
-        var ApplicantFullName = body.GetProperty("ApplicantFullName").ToString();
-        dataChanged.additionalData.applicantFullName = ApplicantFullName;
-        // dataChanged.additionalData.customerName = name; // bu kısımları doldur.
-        // dataChanged.additionalData.customerSurname = surname;
-        dataChanged.additionalData.instanceId = instance;
-
-
-        bool identityNoCompatible = false;
-        
-       
-
-        var sessionId = body.GetProperty("SessionId").ToString();
-        if (nfcIsSuccess && !String.IsNullOrEmpty(sessionId))
+        if (!isSkip)
         {
+            var nfcIsSuccess = dataChanged.entityData.IsSuccess;
 
-            var session = await ekycService.GetSessionInfoAsync(Guid.Parse(sessionId));
-            if (session is not null && session.Data is not null && session.Data?.IDChip is not null)
+            dataChanged.additionalData = new ExpandoObject();
+            var callType = body.GetProperty("CallType").ToString();
+            var instance = body.GetProperty("Instance").ToString();
+            // var name = body.GetProperty("Name").ToString();
+            // var surname = body.GetProperty("Surname").ToString();
+            dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
+            dataChanged.additionalData.callType = callType;
+            var ApplicantFullName = body.GetProperty("ApplicantFullName").ToString();
+            dataChanged.additionalData.applicantFullName = ApplicantFullName;
+            // dataChanged.additionalData.customerName = name; // bu kısımları doldur.
+            // dataChanged.additionalData.customerSurname = surname;
+            dataChanged.additionalData.instanceId = instance;
+
+
+            bool identityNoCompatible = false;
+
+
+
+            var sessionId = body.GetProperty("SessionId").ToString();
+            if (nfcIsSuccess && !String.IsNullOrEmpty(sessionId))
             {
-                var identityNo = body.GetProperty("UserName").ToString();
 
-                identityNoCompatible = session.Data.IDChip.IdentityNo == identityNo;
-                if (identityNoCompatible && session.Data.IDChip.IsValid is true)
+                var session = await ekycService.GetSessionInfoAsync(Guid.Parse(sessionId));
+                if (session is not null && session.Data is not null && session.Data?.IDChip is not null)
                 {
-                    dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
-                    dataChanged.additionalData.NfcReadSuccess = true;
-                    nfcStatus = true;
+                    var identityNo = body.GetProperty("UserName").ToString();
+
+                    identityNoCompatible = session.Data.IDChip.IdentityNo == identityNo;
+                    if (identityNoCompatible && session.Data.IDChip.IsValid is true)
+                    {
+                        dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
+                        dataChanged.additionalData.NfcReadSuccess = true;
+                        nfcStatus = true;
+                    }
+
                 }
 
             }
 
-        }
-
-        var nfcCurrentFailedCount = Convert.ToInt32(body.GetProperty("CurrentNfcFailedCount").ToString());
+            var nfcCurrentFailedCount = Convert.ToInt32(body.GetProperty("CurrentNfcFailedCount").ToString());
 
 
-        if (!nfcStatus)
-        {
-
-            //Max-Min try count 
-            if (nfcCurrentFailedCount >= EkycConstants.NfcFailedTryCount)
+            if (!nfcStatus)
             {
-                dataChanged.additionalData.pages = new List<EkycPageModel>
+
+                //Max-Min try count 
+                if (nfcCurrentFailedCount >= EkycConstants.NfcFailedTryCount)
+                {
+                    dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
                     EkycAdditionalDataContstants.StandartItem,
                     EkycAdditionalDataContstants.NfcFailedBiggerThanMinForRetry
                 };
 
-            }
-            if(nfcCurrentFailedCount >= EkycConstants.NfcFailedMaxTryCount)
-            {
-                //Min try additional data
-                dataChanged.additionalData.pages = new List<EkycPageModel>
+                }
+                if (nfcCurrentFailedCount >= EkycConstants.NfcFailedMaxTryCount)
+                {
+                    //Min try additional data
+                    dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
                     EkycAdditionalDataContstants.StandartItem,
                     EkycAdditionalDataContstants.NfcFailedMinForRetry
                 };
+                }
+
+
+
+                variables.Add("FailedStepName", "nfc");
+                nfcCurrentFailedCount++;
             }
 
-
-
-            variables.Add("FailedStepName","nfc");
-            nfcCurrentFailedCount++;
-        }
-
-        if (nfcIsSuccess && nfcStatus)
-        {
-            dataChanged.additionalData.pages = new List<EkycPageModel>{
+            if (nfcIsSuccess && nfcStatus)
+            {
+                dataChanged.additionalData.pages = new List<EkycPageModel>{
                 EkycAdditionalDataContstants.StandartItem
             };
+            }
+            dataChanged.additionalData.exitTransition = "amorphie-ekyc-exit";
+
+
+
+            variables.Add("Init", true);
+
+            variables.Add("CurrentNfcFailedCount", nfcCurrentFailedCount);
         }
 
-
-
-
-        variables.Add("Init", true);
-        
-        variables.Add("CurrentNfcFailedCount", nfcCurrentFailedCount);
-        }
-
-        variables.Add("NfcStatus", nfcStatus); 
+        variables.Add("NfcStatus", nfcStatus);
         // variables.Add("NfcStatus", true);
-      
+
 
         targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
         targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());

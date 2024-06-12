@@ -18,15 +18,28 @@ public static class EkycExit
 
     dynamic targetObject = new System.Dynamic.ExpandoObject();
     targetObject.Data = dataChanged;
+
+    var fromVideoCall = dataChanged.entityData.IsFromVideoCall;
+
+    
+
+    
     // Add additional data object here !
     dataChanged.additionalData = new ExpandoObject();
 
     dataChanged.additionalData.isEkyc = true;
     dataChanged.additionalData.callType = callType;
 
+    var ekycResult = EkycResultConstants.SelfServiceExit;
+    if (fromVideoCall)
+    {
+      ekycResult = EkycResultConstants.VideoCallExit;
+    }
+
+
     dynamic variables = new Dictionary<string, dynamic>();
     // variables here !
-    variables.Add("EkycResult", EkycResultConstants.SelfServiceExit);
+    variables.Add("EkycResult", ekycResult);
     variables.Add("EkycButton", "None");
     variables.Add("EkycCallType", callType);
 

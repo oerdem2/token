@@ -657,7 +657,7 @@ public static class EkycAdditionalDataContstants
 
     };
 
-      public static readonly EkycPageModel VideoCallReadySuccessOcrRetryFail = new EkycPageModel
+    public static readonly EkycPageModel VideoCallReadySuccessOcrRetryFail = new EkycPageModel
     {
         type = "ocrRetryFailed",
         navText = "Müşterimiz Ol",
@@ -697,6 +697,51 @@ public static class EkycAdditionalDataContstants
                     itemNo = 1,
                     text = "Tekrar Dene",
                     action = "retry"
+            }
+        }
+
+    };
+
+
+    public static readonly EkycPageModel NfcActivePassiveAuth = new EkycPageModel
+    {
+        type = "auth",
+        navText = "Müşterimiz Ol",
+        image = "error",
+        title = "NFC Okuma Hatası",
+        subTexts = new List<string> { "Nfc Aktif Pasif Otantikasyon Hatası (Güncellenecek)" },
+        popUpVideoCall = new EkycPopUpModel
+        {
+            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
+            subTexts = new List<string>{
+                "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?"
+            },
+            buttons = new List<EkycButtonModel>{
+                new EkycButtonModel
+                {
+                    type="primary",
+                    itemNo=1,
+                    text="Onayla",
+                    action="Exit",
+                    transition="amorphie-ekyc-exit"
+                },
+                 new EkycButtonModel
+                {
+                    type="secondary",
+                    itemNo=2,
+                    text="Görüşmeye Devam Et",
+                    action="cancel"
+
+                }
+            }
+        },
+        buttons = new List<EkycButtonModel>{
+            new EkycButtonModel{
+                    type= "primary",
+                    itemNo = 1,
+                    text = "Giriş Ekranına Dön",
+                    action = "exit",
+                    transition = "amorphie-ekyc-exit"
             }
         }
 

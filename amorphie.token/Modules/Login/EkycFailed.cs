@@ -39,7 +39,7 @@ public static class EkycFailed
         };
 
 
-
+    dataChanged.additionalData.exitTransition = "amorphie-ekyc-exit";
     dynamic variables = new Dictionary<string, dynamic>();
     // variables here !
 
@@ -68,7 +68,7 @@ public static class EkycFailed
     // Add additional data object here !
     dataChanged.additionalData = new ExpandoObject();
 
-
+    dataChanged.additionalData.exitTransition = "amorphie-ekyc-exit";
     dynamic variables = new Dictionary<string, dynamic>();
     // variables here !
 

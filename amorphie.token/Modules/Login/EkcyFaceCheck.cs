@@ -103,7 +103,7 @@ public static class EkcyFaceCheck
             // variables.Add("IsSelfServiceAvaliable", true); // bu client dan alınacak sanırım
             variables.Add("CurrentFaceFailedCount", faceCurrentFailedCount);
         }
-
+        dataChanged.additionalData.exitTransition = "amorphie-ekyc-exit";
         variables.Add("FaceReadStatus", faceStatus);
         // variables.Add("FaceReadStatus", true);
 

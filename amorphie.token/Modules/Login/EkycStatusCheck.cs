@@ -100,11 +100,78 @@ public class EkycStatusCheck
 
 
         }
-
+        dataChanged.additionalData.exitTransition = "amorphie-ekyc-exit";
         variables.Add("EkycResult",callResult);
         variables.Add("EkycButton", callTransactionType);
         variables.Add("Init", true);
         variables.Add("VideoCallCheck", videoCallCheck);
+
+
+        targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
+        targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
+        variables.Add($"TRX{transitionName.ToString().Replace("-", "")}", targetObject);
+
+
+        return Results.Ok(variables);
+
+    }
+
+
+
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public static async Task<IResult> CheckForNonDeposit(
+       [FromBody] dynamic body,
+       [FromServices] IEkycService ekycService,
+       IConfiguration configuration
+   )
+    {
+
+        var transitionName = body.GetProperty("LastTransition").ToString();
+
+        // var transactionId = body.GetProperty("InstanceId").ToString();
+        var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
+        dynamic dataChanged = Newtonsoft.Json.JsonConvert.DeserializeObject<ExpandoObject>(dataBody.ToString());
+        dynamic targetObject = new System.Dynamic.ExpandoObject();
+        targetObject.Data = dataChanged;
+
+        dynamic variables = new Dictionary<string, dynamic>();
+        dataChanged.additionalData = new ExpandoObject();
+
+        var citizenShipNumber = body.GetProperty("UserName").ToString();
+        var callType = body.GetProperty("CallType").ToString();
+
+        
+        var hasProperty = body.GetType().GetProperty("StatusCheckTimerResult")!=null;
+        var hasReason = dataChanged.entityData.GetType().GetProperty("Reason") != null;
+        string ekycResult = EkycResultConstants.VideoCallCompleted;
+
+
+
+        if(hasReason){
+            var reason = dataChanged.entityData.Reason;
+            if(reason!=null && reason!="10"){
+                ekycResult = EkycResultConstants.VideoCallFailed;
+            }
+        }
+
+        if(hasProperty){
+            // Sor !
+            ekycResult = EkycResultConstants.VideoCallExit;
+        }
+
+       
+
+
+        
+        
+
+       
+        dataChanged.additionalData.exitTransition = "amorphie-ekyc-exit";
+        // variables.Add("EkycResult",callResult);
+        // variables.Add("EkycButton", callTransactionType);
+        variables.Add("Init", true);
+        variables.Add("EkycResult",ekycResult);
+        variables.Add("EkycCallType", callType);
 
 
         targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
