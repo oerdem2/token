@@ -6,9 +6,9 @@ namespace amorphie.token;
 
 public static class EkycEnded
 {
-     [ApiExplorerSettings(IgnoreApi = true)]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public static async Task<IResult> End([FromBody] dynamic body,
-      [FromServices] IEkycService ekycService)
+     [FromServices] IEkycService ekycService)
     {
         var transitionName = body.GetProperty("LastTransition").ToString();
         var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
@@ -23,7 +23,7 @@ public static class EkycEnded
         var instance = body.GetProperty("Instance").ToString();
         // var name = body.GetProperty("Name").ToString();
         // var surname = body.GetProperty("Surname").ToString();
-        
+
         dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
         dataChanged.additionalData.callType = callType;
         // dataChanged.additionalData.customerName = name; // bu kısımları doldur.
@@ -35,21 +35,21 @@ public static class EkycEnded
         dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
                     EkycAdditionalDataContstants.StandartItem
-                    
-                }; 
-        
 
+                };
+
+        dataChanged.additionalData.exitTransition = "amorphie-ekyc-exit";
         dynamic variables = new Dictionary<string, dynamic>();
-        // variables here !
 
 
 
-        
+
+
 
         // variables.Add("EkycResult",EkycResultConstants.VideoCallCompleted);
-        variables.Add("EkycCallType",callType);
-        
-        
+        variables.Add("EkycCallType", callType);
+
+
         targetObject.TriggeredBy = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredBy").ToString());
         targetObject.TriggeredByBehalfOf = Guid.Parse(body.GetProperty($"TRX-{transitionName}").GetProperty("TriggeredByBehalfOf").ToString());
         variables.Add($"TRX{transitionName.ToString().Replace("-", "")}", targetObject);

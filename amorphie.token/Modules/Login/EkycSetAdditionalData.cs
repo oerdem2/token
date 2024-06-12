@@ -38,24 +38,27 @@ public static class EkycSetAdditionalData
 
         var stepName = body.GetProperty("ForStepname").ToString();
 
-        if(stepName=="connection"){
+        if (stepName == "connection")
+        {
             dataChanged.additionalData.pages = new List<EkycPageModel>{
                 EkycAdditionalDataContstants.StandartItem
             };
         }
 
-        if(stepName=="ocr"){
-             dataChanged.additionalData.pages = new List<EkycPageModel>{
+        if (stepName == "ocr")
+        {
+            dataChanged.additionalData.pages = new List<EkycPageModel>{
                 EkycAdditionalDataContstants.StandartItem
             };
         }
 
-        if(stepName=="init"){
-             dataChanged.additionalData.pages = new List<EkycPageModel>{
+        if (stepName == "init")
+        {
+            dataChanged.additionalData.pages = new List<EkycPageModel>{
                 EkycAdditionalDataContstants.StandartItem
             };
         }
-
+        dataChanged.additionalData.exitTransition = "amorphie-ekyc-exit";
 
 
 
