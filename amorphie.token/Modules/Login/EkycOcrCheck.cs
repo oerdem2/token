@@ -135,10 +135,11 @@ public static class EkycOcrCheck
             dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
                     EkycAdditionalDataContstants.StandartItem,
-                    EkycAdditionalDataContstants.OcrSuccessForNfcItem
+                    EkycAdditionalDataContstants.OcrSuccessForNfcItem,
+                    EkycAdditionalDataContstants.NfcActivePassiveAuth
                 };
         }
-
+        dataChanged.additionalData.exitTransition = "amorphie-ekyc-exit";
         // dynamic variables = new ExpandoObject();
         variables.Add("Init", true);
         variables.Add("OcrStatus", ocrStatus);

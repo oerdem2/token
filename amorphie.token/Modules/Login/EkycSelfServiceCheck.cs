@@ -36,7 +36,7 @@ public static class EkycSelfServiceCheck
              selfServiceCheck = true;
         }
            
-
+        dataChanged.additionalData.exitTransition = "amorphie-ekyc-exit";
       
 
         variables.Add("Init", true);

@@ -26,7 +26,7 @@ public class EkycService : ServiceBase, IEkycService
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<EkycCreateSessionResultModel> CreateSession(Guid instanceId, string citizenshipNumber, string callType)
+    public async Task<EkycCreateSessionResultModel> CreateSession(string instanceId, string citizenshipNumber, string callType)
     {
 
         var customerInfoResult = await _profileService.GetCustomerSimpleProfile(citizenshipNumber);
@@ -115,7 +115,7 @@ public class EkycService : ServiceBase, IEkycService
 
 
 
-    private async Task<EkycRegisterModels.Request> SetRegisterRequest(Guid instanceId, string citizenshipNumber, SimpleProfileResponse? profileResponse)
+    private async Task<EkycRegisterModels.Request> SetRegisterRequest(string instanceId, string citizenshipNumber, SimpleProfileResponse? profileResponse)
     {
 
 

@@ -32,7 +32,7 @@ public static class EkycPrepare
         string wfId = dataChanged.entityData.WfId;
         string ApplicantFullName = dataChanged.entityData.ApplicantFullName;
         string constCallType = ekycService.GetCallType(callType);
-        var instance = Guid.NewGuid();
+        var instance = transactionId.ToString();
         var isSelfServiceAvaible = true;
         bool hasWfId = false;
         // WFID -- or zeen
@@ -40,28 +40,22 @@ public static class EkycPrepare
          callType == EkycCallTypeConstants.Mevduat_HEPSIBURADA || 
         callType == EkycCallTypeConstants.Mevduat_BRGN)
         {
-            if (wfId.IsNullOrEmpty())
-            {
-                wfId = transactionId;
-
-            }
-            else
+           
+            if(!wfId.IsNullOrEmpty())
             {
                 hasWfId = true;
             }
 
-            Guid.TryParse(wfId, out instance);
+            instance = wfId.ToString();
             isSelfServiceAvaible = false;
 
         }
-        else
-        {
-            Guid.TryParse(transactionId, out instance);
-        }
+       
 
         if (!hasWfId)
         {
-
+            // Add prefix for creating session
+            instance = $"{constCallType.ToLower()}_{instance}";
             await ekycService.CreateSession(instance, citizenShipNumber, callType);
         }
 
@@ -162,6 +156,8 @@ public static class EkycPrepare
                 buttons = new List<EkycButtonModel>()
             }
         };
+
+        dataChanged.additionalData.exitTransition = "amorphie-ekyc-exit";
 
 
 
