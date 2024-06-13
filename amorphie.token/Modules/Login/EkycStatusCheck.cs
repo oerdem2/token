@@ -149,7 +149,7 @@ public class EkycStatusCheck
 
         if(hasReason){
             var reason = dataChanged.entityData.Reason;
-            if(reason!=null && reason!="10"){
+            if(reason!=null && reason!="success"){
                 ekycResult = EkycResultConstants.VideoCallFailed;
             }
         }
