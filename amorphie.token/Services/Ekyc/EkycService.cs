@@ -87,7 +87,7 @@ public class EkycService : ServiceBase, IEkycService
         return result;
     }
 
-    public async Task<GetIntegrationInfoModels.Data> GetSessionByIntegrationReferenceAsync(Guid referenceId)
+    public async Task<GetIntegrationInfoModels.Data> GetSessionByIntegrationReferenceAsync(string referenceId)
     {
         var response = await _ekycProvider.GetIntegrationInfoAsync(referenceId);
         if (!response.IsSuccessful || !response.Data.Any())
