@@ -5,7 +5,7 @@ public class GetIntegrationInfoModels
     public class Request
     {
         public List<string> Types { get; set; }
-        public Guid Reference { get; set; }
+        public string Reference { get; set; }
         public string IdentityType { get; set; }
         public string IdentityNo { get; set; }
         public string SessionUId { get; set; }

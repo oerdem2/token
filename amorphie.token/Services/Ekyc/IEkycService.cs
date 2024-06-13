@@ -17,7 +17,7 @@ public interface IEkycService
     /// </summary>
     /// <param name="referenceId"></param>
     /// <returns></returns>
-    Task<GetIntegrationInfoModels.Data> GetSessionByIntegrationReferenceAsync(Guid referenceId);
+    Task<GetIntegrationInfoModels.Data> GetSessionByIntegrationReferenceAsync(string referenceId);
     /// <summary>
     /// Get session info using session Id
     /// </summary>

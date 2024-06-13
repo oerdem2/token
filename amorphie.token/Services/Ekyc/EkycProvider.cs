@@ -217,7 +217,7 @@ public class EkycProvider : BaseEkycProvider, IEkycProvider
     }
 
     #endregion
-    public async Task<GetIntegrationInfoModels.Response> GetIntegrationInfoAsync(Guid reference)
+    public async Task<GetIntegrationInfoModels.Response> GetIntegrationInfoAsync(string reference)
     {
         var resourceUrl = $"Verify/Integration/Get";
         var headers = await GetEnquraHeadersAsync();
