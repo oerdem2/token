@@ -573,6 +573,16 @@ public class TokenController : Controller
     [HttpPost("public/OpenBankingToken")]
     public async Task<IActionResult> OpenBankingToken([FromBody] OpenBankingTokenRequest openBankingTokenRequest)
     {
+        var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-request-id"));
+        var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-group-id"));
+        var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-aspsp-code"));
+        var tppCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-tpp-code"));
+
+        HttpContext.Response.Headers.Append("X-Request-ID", string.IsNullOrWhiteSpace(requestId.Value) ? Guid.NewGuid().ToString() : requestId.Value);
+        HttpContext.Response.Headers.Append("X-Group-ID", string.IsNullOrWhiteSpace(groupId.Value) ? Guid.NewGuid().ToString() : groupId.Value);
+        HttpContext.Response.Headers.Append("X-ASPSP-Code", string.IsNullOrWhiteSpace(aspspCode.Value) ? Guid.NewGuid().ToString() : aspspCode.Value);
+        HttpContext.Response.Headers.Append("X-TPP-Code", string.IsNullOrWhiteSpace(tppCode.Value) ? Guid.NewGuid().ToString() : tppCode.Value);
+
         var generateTokenRequest = new GenerateTokenRequest();
         var consent = await _consentService.GetConsent(Guid.Parse(openBankingTokenRequest.ConsentNo!));
         var clientResult = await _clientService.CheckClient(_configuration["OpenBankingClientId"]!);
@@ -595,6 +605,12 @@ public class TokenController : Controller
             var token = await _tokenService.GenerateOpenBankingToken(generateTokenRequest, consent.Response!);
             if(token.StatusCode == 470)
             {
+                SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, new {
+                    httpCode = 404,
+                    httpMessage = "Not Found",
+                    errorCode = "TR.OHVPS.Resource.NotFound"
+                });
+
                 return Json(new {
                     httpCode = 404,
                     httpMessage = "Not Found",
@@ -602,9 +618,15 @@ public class TokenController : Controller
                 },new JsonSerializerOptions{
                     PropertyNamingPolicy = null
                 });
+                
             }
             if (token.StatusCode != 200)
             {
+                SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, new {
+                    httpCode = 500,
+                    httpMessage = "Internal Server Error",
+                    errorCode = "TR.OHVPS.Server.InternalError"
+                });
                 return Json(new {
                     httpCode = 500,
                     httpMessage = "Internal Server Error",
@@ -625,18 +647,6 @@ public class TokenController : Controller
             await _daprClient.DeleteStateAsync(_configuration["DAPR_STATE_STORE_NAME"], "AuthCodeInfo_" + openBankingTokenRequest.ConsentNo);
 
             await _consentService.UpdateConsentForUsage(Guid.Parse(openBankingTokenRequest.ConsentNo!));
-
-
-            var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-request-id"));
-            var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-group-id"));
-            var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-aspsp-code"));
-            var tppCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-tpp-code"));
-
-
-            HttpContext.Response.Headers.Append("X-Request-ID", string.IsNullOrWhiteSpace(requestId.Value) ? Guid.NewGuid().ToString() : requestId.Value);
-            HttpContext.Response.Headers.Append("X-Group-ID", string.IsNullOrWhiteSpace(groupId.Value) ? Guid.NewGuid().ToString() : groupId.Value);
-            HttpContext.Response.Headers.Append("X-ASPSP-Code", string.IsNullOrWhiteSpace(aspspCode.Value) ? Guid.NewGuid().ToString() : aspspCode.Value);
-            HttpContext.Response.Headers.Append("X-TPP-Code", string.IsNullOrWhiteSpace(tppCode.Value) ? Guid.NewGuid().ToString() : tppCode.Value);
 
             SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, openBankingTokenResponse);
 
@@ -660,16 +670,7 @@ public class TokenController : Controller
                 RefreshToken = token.Response.RefreshToken,
                 RefreshTokenExpiresIn = token.Response.RefreshTokenExpiresIn
             };
-            var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-request-id"));
-            var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-group-id"));
-            var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-aspsp-code"));
-            var tppCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-tpp-code"));
-
-            HttpContext.Response.Headers.Append("X-Request-ID", string.IsNullOrWhiteSpace(requestId.Value) ? Guid.NewGuid().ToString() : requestId.Value);
-            HttpContext.Response.Headers.Append("X-Group-ID", string.IsNullOrWhiteSpace(groupId.Value) ? Guid.NewGuid().ToString() : groupId.Value);
-            HttpContext.Response.Headers.Append("X-ASPSP-Code", string.IsNullOrWhiteSpace(aspspCode.Value) ? Guid.NewGuid().ToString() : aspspCode.Value);
-            HttpContext.Response.Headers.Append("X-TPP-Code", string.IsNullOrWhiteSpace(tppCode.Value) ? Guid.NewGuid().ToString() : tppCode.Value);
-
+            
             SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, openBankingTokenResponse);
             return Ok(openBankingTokenResponse);
         }

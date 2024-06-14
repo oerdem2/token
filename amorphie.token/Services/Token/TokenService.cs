@@ -234,7 +234,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 tokenClaims.Add(new Claim("credentials", "IsInternetCustomer###1"));
                 tokenClaims.Add(new Claim("credentials", "IsAnonymous###1"));
                 tokenClaims.Add(new Claim("azp", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
-                tokenClaims.Add(new Claim("uppercase_name", (_profile?.data?.profile?.uppercase_name ?? string.Empty) + (string.IsNullOrWhiteSpace(_profile?.data?.profile?.middleName) ? string.Empty : _profile?.data?.profile?.middleName)));
+                tokenClaims.Add(new Claim("uppercase_name", (_profile?.data?.profile?.uppercase_name ?? string.Empty) + (string.IsNullOrWhiteSpace(_profile?.data?.profile?.middleName) ? string.Empty : " "+_profile?.data?.profile?.middleName)));
                 tokenClaims.Add(new Claim("uppercase_surname", (_profile?.data?.profile?.uppercase_surname ?? string.Empty)));
                 tokenClaims.Add(new Claim("logon_ip", _transactionService.IpAddress ?? "undefined"));
             }
@@ -295,10 +295,14 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             refreshDuration = TimeHelper.ConvertStrDurationToSeconds(refreshInfo.duration!);
             if(_consent is not null)
             {
-                if(_consent.consentType.Equals("OB_Account"))
+                var consentData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(_consent!.additionalData!);
+                if(_consent.consentType!.Equals("OB_Account"))
                 {
-                    refreshDuration = 90 * 24 * 60 * 60; // Until Consent Expires
+                    DateTime lastAccessDate = DateTime.Parse(consentData!.hspBlg.iznBlg.erisimIzniSonTrh.ToString());
+                    var DateDiffAsDay = Convert.ToInt32((lastAccessDate - DateTime.Now).TotalDays);
+                    refreshDuration = DateDiffAsDay > 30 ? (30 * 24 * 60 * 60) : (DateDiffAsDay * 24 * 60 * 60); 
                 }
+        
                 if(_consent.consentType.Equals("OB_Payment"))
                 {
                     refreshDuration = 15 * 24 * 60 * 60; // 15 day
