@@ -77,7 +77,7 @@ public static class EkycNfcCheck
             {
 
                 //Max-Min try count 
-                if (nfcCurrentFailedCount >= EkycConstants.NfcFailedTryCount)
+                if (nfcCurrentFailedCount >= EkycConstants.NfcFailedTryCount ||nfcCurrentFailedCount==0)
                 {
                     dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
