@@ -54,7 +54,8 @@ public class EkycVideoCallReadyCheck
                     EkycAdditionalDataContstants.VideoCallReadySuccessWait,
                     EkycAdditionalDataContstants.VideoCallReadySuccessOcrRetryFail,
                     EkycAdditionalDataContstants.VideoCallReadySuccessNfcRetryFail,
-                    EkycAdditionalDataContstants.VideoCallReadySuccessFaceRetryFail
+                    EkycAdditionalDataContstants.VideoCallReadySuccessFaceRetryFail,
+                    EkycAdditionalDataContstants.NfcType
                     
                 };
         }
