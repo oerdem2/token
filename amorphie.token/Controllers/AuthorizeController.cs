@@ -11,6 +11,8 @@ using amorphie.token.Services.Login;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
+using System.Runtime.CompilerServices;
+using System.Dynamic;
 
 
 namespace amorphie.token.core.Controllers;
@@ -48,7 +50,6 @@ public class AuthorizeController : Controller
         _profileService = profileService;
         _loginService = loginService;
     }
-
 
     [HttpPost("/public/get-user-info")]
     [ApiExplorerSettings(IgnoreApi = true)]
@@ -246,9 +247,11 @@ public class AuthorizeController : Controller
     public async Task<IResult> DodgeCreatePreLogin([FromHeader(Name = "x-userinfo")] string userinfo, [FromBody] CreatePreLoginRequest createPreLoginRequest)
     {
         var userInfoModel = JsonSerializer.Deserialize<dynamic>(Convert.FromBase64String(userinfo));
+        string username = string.Empty;
+        
         var usernameProperty = userInfoModel!.GetProperty("username");
-        string username = usernameProperty.ToString();
-
+        username = usernameProperty.ToString();
+        
         ServiceResponse<ClientResponse> targetClientResponse;
         if (Guid.TryParse(createPreLoginRequest.clientCode, out Guid _))
         {
@@ -265,42 +268,89 @@ public class AuthorizeController : Controller
         }
         var targetClient = targetClientResponse.Response;
 
-        var migrateResult = await _loginService.MigrateDodgeUserToAmorphie(username);
-        if(migrateResult.StatusCode != 200)
+        ServiceResponse<AuthorizationResponse> authResponse;
+        if(!username.Contains("ebt"))
         {
-            return Results.Problem(detail:migrateResult.Detail, statusCode:migrateResult.StatusCode);
-        }
+            var migrateResult = await _loginService.MigrateDodgeUserToAmorphie(username);
+            if(migrateResult.StatusCode != 200)
+            {
+                return Results.Problem(detail:migrateResult.Detail, statusCode:migrateResult.StatusCode);
+            }
 
-        var amorphieUserResult = await _loginService.GetAmorphieUser(username);
-        if(amorphieUserResult.StatusCode != 200)
-        {
-            return Results.Problem(detail:amorphieUserResult.Detail, statusCode:amorphieUserResult.StatusCode);
-        }
-        var amorphieUser = amorphieUserResult.Response;
-        
-        var profileResult = await _profileService.GetCustomerSimpleProfile(username);
-        if(profileResult.StatusCode != 200)
-        {
-            return Results.Problem(detail:profileResult.Detail, statusCode:profileResult.StatusCode);
-        }
-        var profile = profileResult.Response;
-        _logger.LogError("Profile Response : "+JsonSerializer.Serialize(profileResult));
-        var authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest{
-            ClientId = targetClient.id,
-            RedirectUri = targetClient.returnuri,
-            CodeChallange = createPreLoginRequest.CodeChallange,
-            CodeChallangeMethod = "SHA256",
-            Nonce = createPreLoginRequest.Nonce,
-            ResponseType = "code",
-            State = createPreLoginRequest.State,
-            Scope = ["openid","profile"],
-            User = amorphieUser,
-            Profile = profile
-        });
+            var amorphieUserResult = await _loginService.GetAmorphieUser(username);
+            if(amorphieUserResult.StatusCode != 200)
+            {
+                return Results.Problem(detail:amorphieUserResult.Detail, statusCode:amorphieUserResult.StatusCode);
+            }
+            var amorphieUser = amorphieUserResult.Response;
+            
+            var profileResult = await _profileService.GetCustomerSimpleProfile(username);
+            if(profileResult.StatusCode != 200)
+            {
+                return Results.Problem(detail:profileResult.Detail, statusCode:profileResult.StatusCode);
+            }
+            var profile = profileResult.Response;
 
-        if (authResponse.StatusCode != 200)
+            authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest{
+                ClientId = targetClient.id,
+                RedirectUri = targetClient.returnuri,
+                CodeChallange = createPreLoginRequest.CodeChallange,
+                CodeChallangeMethod = "SHA256",
+                Nonce = createPreLoginRequest.Nonce,
+                ResponseType = "code",
+                State = createPreLoginRequest.State,
+                Scope = ["openid","profile"],
+                User = amorphieUser,
+                Profile = profile
+            });
+
+            if (authResponse.StatusCode != 200)
+            {
+                return Results.Problem(detail:authResponse.Detail,statusCode:authResponse.StatusCode);
+            }
+        }
+        else
         {
-            return Results.Problem(detail:authResponse.Detail,statusCode:authResponse.StatusCode);
+            var integrationUserProperty = userInfoModel!.GetProperty("integration_user_name");
+            username = integrationUserProperty.ToString();
+            var user = core.Constants.CollectionUsers.Users.FirstOrDefault(u => u.LoginUser.Equals(username.Split("\\")[1]));
+            var userRequest = new UserInfo
+            {
+                firstName = user.Name,
+                lastName = user.Surname,
+                phone = null,
+                state = "Active",
+                salt = "Collection",
+                password = "123456",
+                explanation = "Migrated From Collection",
+                reason = "Amorphie Collection Login",
+                isArgonHash = true,
+                eMail = string.Empty,
+                reference = user.CitizenshipNo
+            };
+
+            var migrateResult = await _userService.SaveUser(userRequest);
+            var amorphieUserResult = await _userService.Login(new LoginRequest() { Reference = userRequest.reference!, Password = userRequest.password! });
+            var amorphieUser = amorphieUserResult.Response;
+            authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest
+            {
+                ClientId = targetClient.id,
+                RedirectUri = targetClient.returnuri,
+                CodeChallange = createPreLoginRequest.CodeChallange,
+                CodeChallangeMethod = "SHA256",
+                Nonce = createPreLoginRequest.Nonce,
+                ResponseType = "code",
+                State = createPreLoginRequest.State,
+                Scope = ["openid","profile"],
+                User = amorphieUser
+            });
+            if (authResponse.StatusCode != 200)
+            {
+                return Results.Problem(detail:authResponse.Detail,statusCode:authResponse.StatusCode);
+            }
+
+            var authCodeInfo = await _authorizationService.AssignCollectionUserToAuthorizationCode(amorphieUser!, authResponse.Response!.Code!,user);
+
         }
 
         return Results.Ok(new{AuthCode=authResponse.Response!.Code});
@@ -388,6 +438,7 @@ public class AuthorizeController : Controller
     public async Task<IActionResult> CollectionUsers()
     {
         await Task.CompletedTask;
+        
         return Ok(core.Constants.CollectionUsers.Users);
     }
 
