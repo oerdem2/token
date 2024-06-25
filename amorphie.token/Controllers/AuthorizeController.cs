@@ -248,16 +248,9 @@ public class AuthorizeController : Controller
     {
         var userInfoModel = JsonSerializer.Deserialize<dynamic>(Convert.FromBase64String(userinfo));
         string username = string.Empty;
-        try
-        {
-            var usernameProperty = userInfoModel!.GetProperty("username");
-            username = usernameProperty.ToString();
-        }
-        catch (Exception)
-        {
-            var usernameProperty = userInfoModel!.GetProperty("integration_user_name");
-            username = usernameProperty.ToString();
-        }
+        
+        var usernameProperty = userInfoModel!.GetProperty("username");
+        username = usernameProperty.ToString();
         
         ServiceResponse<ClientResponse> targetClientResponse;
         if (Guid.TryParse(createPreLoginRequest.clientCode, out Guid _))
@@ -276,7 +269,7 @@ public class AuthorizeController : Controller
         var targetClient = targetClientResponse.Response;
 
         ServiceResponse<AuthorizationResponse> authResponse;
-        if(username.Length == 11)
+        if(!username.Contains("ebt"))
         {
             var migrateResult = await _loginService.MigrateDodgeUserToAmorphie(username);
             if(migrateResult.StatusCode != 200)
@@ -318,7 +311,9 @@ public class AuthorizeController : Controller
         }
         else
         {
-            var user = core.Constants.CollectionUsers.Users.FirstOrDefault(u => u.LoginUser.Equals(username));
+            var integrationUserProperty = userInfoModel!.GetProperty("integration_user_name");
+            username = integrationUserProperty.ToString();
+            var user = core.Constants.CollectionUsers.Users.FirstOrDefault(u => u.LoginUser.Equals(username.Split("\\")[1]));
             var userRequest = new UserInfo
             {
                 firstName = user.Name,
