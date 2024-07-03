@@ -140,7 +140,7 @@ namespace amorphie.token.Services.InternetBanking
                 var passwordRecord = passwordResponse.Response;
 
                 var role = await _ibDatabaseContext.Role.Where(r => r.UserId.Equals(user!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
-                if(role is {} && (role.ExpireDate ?? DateTime.MinValue) > DateTime.Now)
+                if(role is {} && (role.ExpireDate ?? DateTime.MaxValue) > DateTime.Now)
                 {
                     var roleDefinition = await _ibDatabaseContext.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive);
                     if(roleDefinition is {})
