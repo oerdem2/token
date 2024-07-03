@@ -97,7 +97,7 @@ namespace amorphie.token.Modules.Login
 
             
             var role = await ibContext.Role.Where(r => r.UserId.Equals(user!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
-            if(role is {} && (role.ExpireDate ?? DateTime.MinValue) > DateTime.Now)
+            if(role is {} && (role.ExpireDate ?? DateTime.MaxValue) > DateTime.Now)
             {
                 var roleDefinition = await ibContext.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive);
                 if(roleDefinition is {})
