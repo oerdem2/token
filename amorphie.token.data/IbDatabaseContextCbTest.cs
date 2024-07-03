@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Design;
 namespace amorphie.token.data
 {
 
-    public class IbDatabaseContext : DbContext
+    public class IbDatabaseContextCbTest : DbContext
     {
         public DbSet<IBUser> User { get; set; }
         public DbSet<IBPassword> Password { get; set; }
@@ -16,9 +16,7 @@ namespace amorphie.token.data
         public DbSet<IBSecurityImage> SecurityImage { get; set; }
         public DbSet<IBStatus> Status { get; set; }
         public DbSet<IBUserDevice> UserDevice { get; set; }
-        public DbSet<IBRole> Role { get; set; }
-        public DbSet<IBRoleDefinition> RoleDefinition { get; set; }
-        public IbDatabaseContext(DbContextOptions<IbDatabaseContext> options) : base(options)
+        public IbDatabaseContextCbTest(DbContextOptions<IbDatabaseContext> options) : base(options)
         {
 
         }

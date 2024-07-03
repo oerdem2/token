@@ -47,6 +47,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
     private ConsentDto? _selectedConsent;
     private RoleDefinitionDto? _role;
     private core.Models.Collection.User? _collectionUser;
+    private TokenInfo? _refreshTokenInfo;
     private string? _deviceId;
 
     private async Task PersistTokenInfo()
@@ -168,9 +169,12 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             accessDuration = TimeHelper.ConvertStrDurationToSeconds(accessInfo.duration!);
             if(_consent is not null)
             {
+                var consentData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(_consent!.additionalData!);
                 if(_consent.consentType!.Equals("OB_Account"))
                 {
-                    accessDuration = 24 * 60 * 60; // 1 day
+                    DateTime lastAccessDate = DateTime.Parse(consentData!.hspBlg.iznBlg.erisimIzniSonTrh.ToString());
+                    var DateDiffAsDay = Convert.ToInt32((lastAccessDate - DateTime.Now).TotalDays);
+                    accessDuration = DateDiffAsDay > 30 ? (30 * 24 * 60 * 60) : (DateDiffAsDay * 24 * 60 * 60); 
                 }
                 if(_consent.consentType.Equals("OB_Payment"))
                 {
@@ -200,7 +204,8 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
 
             //TODO
             //Set Claims Dynamically
-            if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
+            if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6") || _client.code.Equals("BurganApp")
+            || _client.code.Equals("OnApp") || _client.code.Equals("WebApp"))
             {
                 tokenClaims.Add(new Claim("email", _profile?.data?.emails?.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
                 tokenClaims.Add(new Claim("phone_number", _profile?.data?.phones?.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString() ?? ""));
@@ -212,12 +217,23 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 {
                     try
                     {
-                        var roleName = _role.Tags.First();
-                        //TODO - Throw Exception For Else Case
-                        if(!string.IsNullOrWhiteSpace(roleName))
-                            tokenClaims.Add(new Claim("role", roleName));
+                        Console.WriteLine("Transaction Role Key : "+_transactionService.RoleKey);
+                        if(_transactionService.RoleKey == 10 || _transactionService.RoleKey == 20)
+                        {
+                            if(_transactionService.RoleKey == 10)
+                                tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                            else
+                                tokenClaims.Add(new Claim("role", "Viewer"));
+                        }
                         else
-                            tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                        {
+                            var roleName = _role.Tags.First();
+                            //TODO - Throw Exception For Else Case
+                            if(!string.IsNullOrWhiteSpace(roleName))
+                                tokenClaims.Add(new Claim("role", roleName));
+                            else
+                                tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                        }
                     }
                     catch (Exception)
                     {
@@ -230,7 +246,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 tokenClaims.Add(new Claim("credentials", "IsInternetCustomer###1"));
                 tokenClaims.Add(new Claim("credentials", "IsAnonymous###1"));
                 tokenClaims.Add(new Claim("azp", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
-                tokenClaims.Add(new Claim("uppercase_name", (_profile?.data?.profile?.uppercase_name ?? string.Empty) + (string.IsNullOrWhiteSpace(_profile?.data?.profile?.middleName) ? string.Empty : _profile?.data?.profile?.middleName)));
+                tokenClaims.Add(new Claim("uppercase_name", (_profile?.data?.profile?.uppercase_name ?? string.Empty) + (string.IsNullOrWhiteSpace(_profile?.data?.profile?.middleName) ? string.Empty : " "+_profile?.data?.profile?.middleName)));
                 tokenClaims.Add(new Claim("uppercase_surname", (_profile?.data?.profile?.uppercase_surname ?? string.Empty)));
                 tokenClaims.Add(new Claim("logon_ip", _transactionService.IpAddress ?? "undefined"));
             }
@@ -291,10 +307,14 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             refreshDuration = TimeHelper.ConvertStrDurationToSeconds(refreshInfo.duration!);
             if(_consent is not null)
             {
-                if(_consent.consentType.Equals("OB_Account"))
+                var consentData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(_consent!.additionalData!);
+                if(_consent.consentType!.Equals("OB_Account"))
                 {
-                    refreshDuration = 90 * 24 * 60 * 60; // Until Consent Expires
+                    DateTime lastAccessDate = DateTime.Parse(consentData!.hspBlg.iznBlg.erisimIzniSonTrh.ToString());
+                    var DateDiffAsDay = Convert.ToInt32((lastAccessDate - DateTime.Now).TotalDays);
+                    refreshDuration = DateDiffAsDay > 30 ? (30 * 24 * 60 * 60) : (DateDiffAsDay * 24 * 60 * 60); 
                 }
+        
                 if(_consent.consentType.Equals("OB_Payment"))
                 {
                     refreshDuration = 15 * 24 * 60 * 60; // 15 day
@@ -327,10 +347,19 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         {
             TokenType = "Bearer",
             AccessToken = await CreateAccessToken(),
-            ExpiresIn = _tokenInfoDetail.AccessTokenDuration,
-            RefreshToken = CreateRefreshToken(),
-            RefreshTokenExpiresIn = _tokenInfoDetail.RefreshTokenDuration
+            ExpiresIn = _tokenInfoDetail.AccessTokenDuration
         };
+
+        if(_tokenRequest.GrantType.Equals("refresh_token"))
+        {
+            tokenResponse.RefreshToken = _tokenRequest.RefreshToken;
+            tokenResponse.RefreshTokenExpiresIn = Convert.ToInt32((_refreshTokenInfo.ExpiredAt - DateTime.Now).TotalSeconds);
+        }
+        else
+        {
+            tokenResponse.RefreshToken = CreateRefreshToken();
+            tokenResponse.RefreshTokenExpiresIn = _tokenInfoDetail.RefreshTokenDuration;
+        }
 
         //openId Section
         if (!_tokenRequest.GrantType.Equals("client_credentials"))
@@ -360,7 +389,6 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         }
         var refreshTokenInfo = _databaseContext.Tokens.FirstOrDefault(t =>
         t.Id == Guid.Parse(refreshTokenJti!) && t.TokenType == TokenType.RefreshToken);
-
         if (refreshTokenInfo == null)
         {
             return new ServiceResponse<TokenResponse>()
@@ -380,6 +408,8 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 Response = null
             };
         }
+
+        _refreshTokenInfo = refreshTokenInfo;
 
         var relatedToken = _databaseContext.Tokens.FirstOrDefault(t =>
         t.Id == refreshTokenInfo.RelatedTokenId && t.TokenType == TokenType.AccessToken);
@@ -796,22 +826,24 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             };
         }
 
-        var mordorUserResponse = await internetBankingUserService.MordorGetUser(_tokenRequest.Username!);
-        if (mordorUserResponse.StatusCode == 200)
+        var role = await _ibContext.Role.Where(r => r.UserId.Equals(user!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
+        if(role is {} && (role.ExpireDate ?? DateTime.MaxValue) > DateTime.Now)
         {
-            var mordorUser = mordorUserResponse.Response;
-
-            var role = await ibContextMordor.Role.Where(r => r.UserId.Equals(mordorUser!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
-            if(role is {} && (role.ExpireDate ?? DateTime.MinValue) > DateTime.Now)
+            var roleDefinition = await _ibContext.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive);
+            if(roleDefinition is {})
             {
-                var roleDefinition = await ibContextMordor.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive && d.Key.Equals(0));
-                if(roleDefinition is {})
-                {
+                if(roleDefinition.Key == 0)
+                {  
                     return new ServiceResponse<TokenResponse>()
                     {
                         StatusCode = 471,
-                        Detail = "User is Not Active"
+                        Detail = ErrorHelper.GetErrorMessage(LoginErrors.NotAuthorized, "en-EN")
                     };
+                    
+                }
+                else
+                {
+                    _transactionService.RoleKey = roleDefinition.Key;
                 }
             }
         }
@@ -902,41 +934,41 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             };
         }
 
-        // var consentListResponse = await _roleService.GetConsents(_client.code, _user.Reference);
-        // if(consentListResponse.StatusCode != 200)
-        // {
-        //     return new ServiceResponse<TokenResponse>()
-        //     {
-        //         StatusCode = consentListResponse.StatusCode,
-        //         Detail = consentListResponse.Detail
-        //     };
-        // }
-        // var consentList = consentListResponse.Response;
+        /*var consentListResponse = await _roleService.GetConsents(_client.code, _user.Reference);
+        if(consentListResponse.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = consentListResponse.StatusCode,
+                Detail = consentListResponse.Detail
+            };
+        }
+        var consentList = consentListResponse.Response;
 
-        // if(consentList.Count() != 1)
-        // {
-        //     return new ServiceResponse<TokenResponse>()
-        //     {
-        //         StatusCode = 480,
-        //         Detail = "Password Grant Type Doesn't Support Multiple Consents"
-        //     };
-        // }
+        if(consentList.Count() != 1)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 480,
+                Detail = "Password Grant Type Doesn't Support Multiple Consents"
+            };
+        }
 
-        // var consent = consentList.First();
-        // _selectedConsent = consent;
+        var consent = consentList.First();
+        _selectedConsent = consent;
 
-        // var roleResponse = await _roleService.GetRoleDefinition(consent.RoleId);
-        // if(roleResponse.StatusCode != 200)
-        // {
-        //     return new ServiceResponse<TokenResponse>()
-        //     {
-        //         StatusCode = roleResponse.StatusCode,
-        //         Detail = roleResponse.Detail
-        //     };
-        // }
-        // var role = roleResponse.Response;
-        // _role = role;
-
+        var roleResponse = await _roleService.GetRoleDefinition(consent.RoleId);
+        if(roleResponse.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = roleResponse.StatusCode,
+                Detail = roleResponse.Detail
+            };
+        }
+        var amorphieRole = roleResponse.Response;
+        _role = amorphieRole;
+        */
         var tokenResponse = await GenerateTokenResponse();
 
         if (tokenResponse.IdToken == string.Empty && tokenResponse.AccessToken == string.Empty)
@@ -1156,7 +1188,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         _collectionUser = authorizationCodeInfo.CollectionUser;
         _tokenRequest.Scopes = authorizationCodeInfo.RequestedScopes;
 
-        if (!authorizationCodeInfo.ClientId!.Equals(tokenRequest.ClientId, StringComparison.OrdinalIgnoreCase))
+        if (!authorizationCodeInfo.ClientId!.Equals(_client.id, StringComparison.OrdinalIgnoreCase))
         {
             return new ServiceResponse<TokenResponse>()
             {

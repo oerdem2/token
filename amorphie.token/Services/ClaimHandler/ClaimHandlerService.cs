@@ -246,7 +246,7 @@ namespace amorphie.token.Services.ClaimHandler
             return null;
         }
 
-        private object? GetPropertyValue(object src, string propName)
+        private object? GetPropertyValue(object? src, string propName)
         {
             if (src == null) throw new ArgumentException("Value cannot be null.", "src");
             if (propName == null) throw new ArgumentException("Value cannot be null.", "propName");
@@ -278,7 +278,7 @@ namespace amorphie.token.Services.ClaimHandler
                 return property != null ? property.GetValue(src, null).ToString() : null;
             }
         }
-        public async Task<List<Claim>> PopulateClaims(List<string> clientClaims, LoginResponse? user, SimpleProfileResponse? profile = null, ConsentResponse? consent = null, core.Models.Collection.User collectionUser = null)
+        public async Task<List<Claim>> PopulateClaims(List<string> clientClaims, LoginResponse? user, SimpleProfileResponse? profile = null, ConsentResponse? consent = null, core.Models.Collection.User? collectionUser = null)
         {
             _profile = profile;
             if (consent != null)
@@ -343,7 +343,7 @@ namespace amorphie.token.Services.ClaimHandler
             return claims;
         }
 
-        public async Task<List<KeyValuePair<string, object>?>> PopulatePrivateClaims(List<string> clientClaims, LoginResponse? user, SimpleProfileResponse? profile = null, ConsentResponse? consent = null, core.Models.Collection.User collectionUser = null)
+        public async Task<List<KeyValuePair<string, object>?>> PopulatePrivateClaims(List<string> clientClaims, LoginResponse? user, SimpleProfileResponse? profile = null, ConsentResponse? consent = null, core.Models.Collection.User? collectionUser = null)
         {
             _profile = profile;
             if (consent != null)

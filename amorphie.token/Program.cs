@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.Json;
 using amorphie.core.Extension;
 using amorphie.token;
 using amorphie.token.core;
@@ -48,6 +50,11 @@ internal partial class Program
 
         await builder.Configuration.AddVaultSecrets(builder.Configuration["DAPR_SECRET_STORE_NAME"], new string[] { "ServiceConnections" });
 
+        builder.Services.AddAntiforgery(x =>
+        {
+            x.SuppressXFrameOptionsHeader = true;
+        });
+
         // Add services to the container.
         builder.Services.AddCors(options =>
         {
@@ -85,7 +92,51 @@ internal partial class Program
 
         builder.Services.AddDbContext<DatabaseContext>
             (options => options.UseNpgsql(builder.Configuration["DatabaseConnection"], b => b.MigrationsAssembly("amorphie.token.data")));
-        builder.Services.AddDbContext<IbDatabaseContext>(options => options.UseSqlServer(builder.Configuration["IbDatabaseConnection"]));
+        builder.Services.AddDbContext<IbDatabaseContext>((sp,options) => 
+        {
+            try
+            {
+                var httpContext = sp.GetRequiredService<IHttpContextAccessor>().HttpContext;
+                if(httpContext is not {})
+                {
+                    throw new Exception();
+                }
+                var request = httpContext!.Request;
+                if(request.Path.ToString().Equals("/public/Login"))
+                {
+                    var formData =  request.ReadFormAsync().GetAwaiter().GetResult();
+                    var code = formData!["code"];
+                    if(string.IsNullOrWhiteSpace(code))
+                    {
+                        throw new Exception();
+                    }
+
+                    
+                    var authorizationCodeInfo = client.GetStateAsync<AuthorizationCode>(builder.Configuration["DAPR_STATE_STORE_NAME"], code).GetAwaiter().GetResult();
+                    if(authorizationCodeInfo.ClientId!.Equals("609023ad-e525-483b-a167-42402ef2195c"))
+                    {
+                        options.UseSqlServer(builder.Configuration["IbDatabaseCbTestConnection"]);
+                    }
+                    else
+                    {
+                        options.UseSqlServer(builder.Configuration["IbDatabaseConnection"]);
+                    }
+                    
+                }
+                else
+                {
+                    options.UseSqlServer(builder.Configuration["IbDatabaseConnection"]);
+                }
+                
+                
+            }
+            catch (System.Exception)
+            {
+                options.UseSqlServer(builder.Configuration["IbDatabaseConnection"]);
+            }
+            
+        });
+        
         builder.Services.AddDbContext<IbSecurityDatabaseContext>(options => options.UseSqlServer(builder.Configuration["IbSecurityDatabaseConnection"]));
         builder.Services.AddDbContext<IbDatabaseContextMordor>(options => options.UseSqlServer(builder.Configuration["IbDatabaseMordorConnection"]));
         builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
@@ -229,6 +280,7 @@ internal partial class Program
 
 
         app.UseCors();
+        app.UseAntiforgery();
 
         app.UseStaticFiles();
 

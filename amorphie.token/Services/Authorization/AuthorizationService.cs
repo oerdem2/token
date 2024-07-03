@@ -109,7 +109,7 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
 
             var authCode = new AuthorizationCode
             {
-                ClientId = request.ClientId,
+                ClientId = client.id,
                 RedirectUri = request.RedirectUri,
                 RequestedScopes = requestedScopes,
                 CodeChallenge = request.CodeChallange,
@@ -121,8 +121,8 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
                 State = request.State,
                 Profile = request.Profile
             };
-            Logger.LogError("generated AuthCode : "+JsonSerializer.Serialize(authCode));
-            var code = await GenerateAuthorizationCode(authCode);
+            
+            var code = await GenerateAuthorizationCode(authCode, request.ClientId!.Equals(Configuration["OpenBankingClientId"]) ? "300" : "60");
             
             if(string.IsNullOrWhiteSpace(request.State))
             {
@@ -155,14 +155,14 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
 
     }
 
-    private async Task<string> GenerateAuthorizationCode(AuthorizationCode authorizationCode)
+    private async Task<string> GenerateAuthorizationCode(AuthorizationCode authorizationCode, string ttl)
     {
         var rand = RandomNumberGenerator.Create();
         byte[] bytes = new byte[32];
         rand.GetBytes(bytes);
         var code = Base64UrlEncoder.Encode(bytes);
 
-        await _daprClient.SaveStateAsync(Configuration["DAPR_STATE_STORE_NAME"], code, authorizationCode);
+        await _daprClient.SaveStateAsync(Configuration["DAPR_STATE_STORE_NAME"], code, authorizationCode, metadata: new Dictionary<string, string> { { "ttlInSeconds", ttl } });
 
         return code;
     }
