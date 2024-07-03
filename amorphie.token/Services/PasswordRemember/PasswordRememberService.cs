@@ -75,6 +75,11 @@ public class PasswordRememberService : ServiceBase, IPasswordRememberService
 
     }
 
+    public Task<ServiceResponse<bool>> VideoCallAvailableAsync()
+    {
+        throw new NotImplementedException();
+    }
+
 
     // private Task<string> GetToken()
     // {
