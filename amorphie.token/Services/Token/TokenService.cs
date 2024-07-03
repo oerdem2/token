@@ -204,7 +204,8 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
 
             //TODO
             //Set Claims Dynamically
-            if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
+            if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6") || _client.code.Equals("BurganApp")
+            || _client.code.Equals("OnApp") || _client.code.Equals("WebApp"))
             {
                 tokenClaims.Add(new Claim("email", _profile?.data?.emails?.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
                 tokenClaims.Add(new Claim("phone_number", _profile?.data?.phones?.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString() ?? ""));
@@ -216,6 +217,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 {
                     try
                     {
+                        Console.WriteLine("Transaction Role Key : "+_transactionService.RoleKey);
                         if(_transactionService.RoleKey == 10 || _transactionService.RoleKey == 20)
                         {
                             if(_transactionService.RoleKey == 10)
