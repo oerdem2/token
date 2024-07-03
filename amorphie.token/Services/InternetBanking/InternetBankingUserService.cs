@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using amorphie.token.core.Models.InternetBanking;
 using amorphie.token.data;
 using amorphie.token.Services.Profile;
+using amorphie.token.Services.TransactionHandler;
 using Elastic.CommonSchema;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,11 +17,14 @@ namespace amorphie.token.Services.InternetBanking
         private readonly IbDatabaseContext _ibDatabaseContext;
         private readonly IbDatabaseContextMordor _ibMordorDatabaseContext;
         private readonly IProfileService _profileService;
-        public InternetBankingUserService(IbDatabaseContext ibDatabaseContext, IProfileService profileService, IbDatabaseContextMordor ibMordorDatabaseContext, ILogger<InternetBankingUserService> logger, IConfiguration configuration) : base(logger, configuration)
+        private readonly ITransactionService _transactionService;
+        public InternetBankingUserService(IbDatabaseContext ibDatabaseContext, IProfileService profileService,
+        ITransactionService transactionService, IbDatabaseContextMordor ibMordorDatabaseContext, ILogger<InternetBankingUserService> logger, IConfiguration configuration) : base(logger, configuration)
         {
             _ibDatabaseContext = ibDatabaseContext;
             _ibMordorDatabaseContext = ibMordorDatabaseContext;
             _profileService = profileService;
+            _transactionService = transactionService;
         }
 
         public async Task<ServiceResponse<IBPassword>> GetPassword(Guid userId)
@@ -135,16 +139,22 @@ namespace amorphie.token.Services.InternetBanking
                 }
                 var passwordRecord = passwordResponse.Response;
 
-
-                var role = await _ibMordorDatabaseContext.Role.Where(r => r.UserId.Equals(user.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
+                var role = await _ibDatabaseContext.Role.Where(r => r.UserId.Equals(user!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
                 if(role is {} && (role.ExpireDate ?? DateTime.MinValue) > DateTime.Now)
                 {
-                    var roleDefinition = await _ibMordorDatabaseContext.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive && d.Key.Equals(0));
+                    var roleDefinition = await _ibDatabaseContext.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive);
                     if(roleDefinition is {})
                     {
-                        response.Detail = ErrorHelper.GetErrorMessage(LoginErrors.NotAuthorized, "en-EN");
-                        response.StatusCode = 481;
-                        return response;
+                        if(roleDefinition.Key == 0)
+                        {   
+                            response.Detail = ErrorHelper.GetErrorMessage(LoginErrors.NotAuthorized, "en-EN");
+                            response.StatusCode = 481;
+                            return response;
+                        }
+                        else
+                        {
+                            _transactionService.RoleKey = roleDefinition.Key;
+                        }
                     }
                 }
 

@@ -216,12 +216,22 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 {
                     try
                     {
-                        var roleName = _role.Tags.First();
-                        //TODO - Throw Exception For Else Case
-                        if(!string.IsNullOrWhiteSpace(roleName))
-                            tokenClaims.Add(new Claim("role", roleName));
+                        if(_transactionService.RoleKey == 10 || _transactionService.RoleKey == 20)
+                        {
+                            if(_transactionService.RoleKey == 10)
+                                tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                            else
+                                tokenClaims.Add(new Claim("role", "Viewer"));
+                        }
                         else
-                            tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                        {
+                            var roleName = _role.Tags.First();
+                            //TODO - Throw Exception For Else Case
+                            if(!string.IsNullOrWhiteSpace(roleName))
+                                tokenClaims.Add(new Claim("role", roleName));
+                            else
+                                tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                        }
                     }
                     catch (Exception)
                     {
@@ -814,22 +824,24 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             };
         }
 
-        var mordorUserResponse = await internetBankingUserService.MordorGetUser(_tokenRequest.Username!);
-        if (mordorUserResponse.StatusCode == 200)
+        var role = await _ibContext.Role.Where(r => r.UserId.Equals(user!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
+        if(role is {} && (role.ExpireDate ?? DateTime.MinValue) > DateTime.Now)
         {
-            var mordorUser = mordorUserResponse.Response;
-
-            var role = await ibContextMordor.Role.Where(r => r.UserId.Equals(mordorUser!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
-            if(role is {} && (role.ExpireDate ?? DateTime.MinValue) > DateTime.Now)
+            var roleDefinition = await _ibContext.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive);
+            if(roleDefinition is {})
             {
-                var roleDefinition = await ibContextMordor.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive && d.Key.Equals(0));
-                if(roleDefinition is {})
-                {
+                if(roleDefinition.Key == 0)
+                {  
                     return new ServiceResponse<TokenResponse>()
                     {
                         StatusCode = 471,
-                        Detail = "User is Not Active"
+                        Detail = ErrorHelper.GetErrorMessage(LoginErrors.NotAuthorized, "en-EN")
                     };
+                    
+                }
+                else
+                {
+                    _transactionService.RoleKey = roleDefinition.Key;
                 }
             }
         }
