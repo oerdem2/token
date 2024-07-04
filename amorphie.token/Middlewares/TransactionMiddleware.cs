@@ -30,9 +30,10 @@ namespace amorphie.token.Middlewares
             {
                 variables.jobKey = jobKey;
                 variables.errorCode = "exception-error";
-                variables.errorMessage = ex.Message;
+                variables.errorMessage = ex.ToString();
 
-                transactionService.Logon.Error = ex.Message;
+                Console.WriteLine(ex.ToString());
+                transactionService.Logon.Error = ex.ToString();
                 transactionService.Logon.LogonStatus = LogonStatus.Failed;
                 try
                 {
@@ -49,9 +50,10 @@ namespace amorphie.token.Middlewares
             {
                 variables.jobKey = jobKey;
                 variables.errorCode = "exception-error";
-                variables.errorMessage = ex.Message;
+                variables.errorMessage = ex.ToString();
 
-                transactionService.Logon.Error = ex.Message;
+                Console.WriteLine(ex.ToString());
+                transactionService.Logon.Error = ex.ToString();
                 transactionService.Logon.LogonStatus = LogonStatus.Failed;
 
                 await daprClient.InvokeBindingAsync(configuration["ZeebeCommand"], "throw-error", variables);
