@@ -63,6 +63,8 @@ namespace amorphie.token.core.Models.Profile
         public string? surname { get; set; }
         public string? uppercase_name{get;set;}
         public string? uppercase_surname{get;set;}
+        public string? currentMail{get;set;}
+        public string? currentPhone{get;set;}
         public bool hasMobApproval { get; set; }
         public bool hasCollectionRestriction { get; set; }
         public bool isPrivateBanking { get; set; }
@@ -73,7 +75,7 @@ namespace amorphie.token.core.Models.Profile
         public bool hasAmlApproval { get; set; }
         public bool hasForeignIdentity { get; set; }
         public string? userName { get; set; }
-        public string? companyId { get; set; }
+        public int? companyId { get; set; }
         public int? applicationBranchCode { get; set; }
     }
 
