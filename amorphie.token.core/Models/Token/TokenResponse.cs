@@ -20,4 +20,6 @@ public class TokenResponse
     public int ExpiresIn { get; set; }
     [JsonPropertyName("refresh_token_expires_in")]
     public int RefreshTokenExpiresIn { get; set; }
+    [JsonPropertyName("scope")]
+    public string? scope { get; set; }
 }

@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using amorphie.token.core.Models.Consent;
 using amorphie.token.core.Models.Profile;
 using amorphie.token.core.Models.Role;
@@ -19,46 +20,35 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace amorphie.token.Services.Token;
 
-public class TokenService : ServiceBase, ITokenService
+public class TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, IClaimHandlerService claimService,
+ITransactionService transactionService, IRoleService roleService, IbDatabaseContextMordor ibContextMordor, IConsentService consentService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext, IbSecurityDatabaseContext securityContext
+    , IInternetBankingUserService internetBankingUserService, IProfileService profileService, IbDatabaseContext ibContext) : ServiceBase(logger, configuration), ITokenService
 {
-    private readonly IClientService _clientService;
-    private readonly IUserService _userService;
-    private readonly DaprClient _daprClient;
-    private readonly DatabaseContext _databaseContext;
-    private readonly ITransactionService _transactionService;
-    private readonly IClaimHandlerService _claimService;
-    private readonly IConsentService _consentService;
+    private readonly IClientService _clientService = clientService;
+    private readonly IUserService _userService = userService;
+    private readonly DaprClient _daprClient = daprClient;
+    private readonly DatabaseContext _databaseContext = databaseContext;
+    private readonly ITransactionService _transactionService = transactionService;
+    private readonly IClaimHandlerService _claimService = claimService;
+    private readonly IConsentService _consentService = consentService;
+    private IInternetBankingUserService? _internetBankingUserService = internetBankingUserService;
+    private IbDatabaseContext _ibContext = ibContext;
+    private IbDatabaseContextMordor _ibContextMordor = ibContextMordor;
+    private IbSecurityDatabaseContext _ibSecurityContext = securityContext;
+    private IProfileService? _profileService = profileService;
+    private IRoleService? _roleService = roleService;
 
-    private TokenInfoDetail _tokenInfoDetail;
+    private TokenInfoDetail _tokenInfoDetail = new();
     private GenerateTokenRequest? _tokenRequest;
     private ClientResponse? _client;
     private ConsentResponse? _consent;
     private LoginResponse? _user;
     private SimpleProfileResponse? _profile;
-    private IInternetBankingUserService? _internetBankingUserService;
-    private IbDatabaseContext _ibContext;
-    private IProfileService? _profileService;
-    private IRoleService? _roleService;
-    private ConsentDto _selectedConsent;
-    private RoleDefinitionDto _role;
-    private string _deviceId;
-    public TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, IClaimHandlerService claimService,
-    ITransactionService transactionService,IRoleService roleService, IConsentService consentService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext
-    , IInternetBankingUserService internetBankingUserService, IProfileService profileService, IbDatabaseContext ibContext) : base(logger, configuration)
-    {
-        _clientService = clientService;
-        _userService = userService;
-        _daprClient = daprClient;
-        _databaseContext = databaseContext;
-        _transactionService = transactionService;
-        _claimService = claimService;
-        _internetBankingUserService = internetBankingUserService;
-        _profileService = profileService;
-        _consentService = consentService;
-        _roleService = roleService;
-        _ibContext = ibContext;
-        _tokenInfoDetail = new();
-    }
+    private ConsentDto? _selectedConsent;
+    private RoleDefinitionDto? _role;
+    private core.Models.Collection.User? _collectionUser;
+    private TokenInfo? _refreshTokenInfo;
+    private string? _deviceId;
 
     private async Task PersistTokenInfo()
     {
@@ -109,12 +99,12 @@ public class TokenService : ServiceBase, ITokenService
             {
                 identityInfo.claims = identityInfo.claims.Where(c => !IsUserBasedClaim(c)).ToList();
             }
-            var populatedClaims = await _claimService.PopulateClaims(identityInfo.claims, _user, _profile);
+            var populatedClaims = await _claimService.PopulateClaims(identityInfo.claims, _user, _profile, collectionUser : _collectionUser);
             if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
             {
                 claims.Add(new Claim("client_id", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
                 claims.Add(new Claim("email", _profile?.data?.emails?.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
-                claims.Add(new Claim("phone_number", _profile?.data?.phones?.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString()));
+                claims.Add(new Claim("phone_number", _profile?.data?.phones?.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString() ?? ""));
                 claims.Add(new Claim("role", "FullAuthorized"));
                 claims.Add(new Claim("credentials", "IsInternetCustomer###1"));
                 claims.Add(new Claim("credentials", "IsAnonymous###1"));
@@ -129,7 +119,6 @@ public class TokenService : ServiceBase, ITokenService
             claims.Add(new Claim("sub", _user.Reference.ToString()));
         }
 
-        claims.Add(new Claim("role","Viewer"));
         int idDuration = 0;
         try
         {
@@ -180,9 +169,12 @@ public class TokenService : ServiceBase, ITokenService
             accessDuration = TimeHelper.ConvertStrDurationToSeconds(accessInfo.duration!);
             if(_consent is not null)
             {
-                if(_consent.consentType.Equals("OB_Account"))
+                var consentData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(_consent!.additionalData!);
+                if(_consent.consentType!.Equals("OB_Account"))
                 {
-                    accessDuration = 24 * 60 * 60; // 1 day
+                    DateTime lastAccessDate = DateTime.Parse(consentData!.hspBlg.iznBlg.erisimIzniSonTrh.ToString());
+                    var DateDiffAsDay = Convert.ToInt32((lastAccessDate - DateTime.Now).TotalDays);
+                    accessDuration = DateDiffAsDay > 30 ? (30 * 24 * 60 * 60) : (DateDiffAsDay * 24 * 60 * 60); 
                 }
                 if(_consent.consentType.Equals("OB_Payment"))
                 {
@@ -203,14 +195,17 @@ public class TokenService : ServiceBase, ITokenService
             {
                 accessInfo.claims = accessInfo.claims.Where(c => !IsUserBasedClaim(c)).ToList();
             }
-            var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user, _profile, _consent);
+            var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user, _profile, _consent, collectionUser : _collectionUser);
             tokenClaims.AddRange(populatedClaims);
             if (_tokenRequest.Scopes.Contains("temporary"))
                 tokenClaims.Add(new Claim("isTemporary", "1"));
 
             tokenClaims.Add(new Claim("client_id", _client.code ?? _client.id));
 
-            if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
+            //TODO
+            //Set Claims Dynamically
+            if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6") || _client.code.Equals("BurganApp")
+            || _client.code.Equals("OnApp") || _client.code.Equals("WebApp"))
             {
                 tokenClaims.Add(new Claim("email", _profile?.data?.emails?.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
                 tokenClaims.Add(new Claim("phone_number", _profile?.data?.phones?.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString() ?? ""));
@@ -222,12 +217,23 @@ public class TokenService : ServiceBase, ITokenService
                 {
                     try
                     {
-                        var roleName = _role.Tags.First();
-                        //TODO - Throw Exception For Else Case
-                        if(!string.IsNullOrWhiteSpace(roleName))
-                            tokenClaims.Add(new Claim("role", roleName));
+                        Console.WriteLine("Transaction Role Key : "+_transactionService.RoleKey);
+                        if(_transactionService.RoleKey == 10 || _transactionService.RoleKey == 20)
+                        {
+                            if(_transactionService.RoleKey == 10)
+                                tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                            else
+                                tokenClaims.Add(new Claim("role", "Viewer"));
+                        }
                         else
-                            tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                        {
+                            var roleName = _role.Tags.First();
+                            //TODO - Throw Exception For Else Case
+                            if(!string.IsNullOrWhiteSpace(roleName))
+                                tokenClaims.Add(new Claim("role", roleName));
+                            else
+                                tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                        }
                     }
                     catch (Exception)
                     {
@@ -240,8 +246,8 @@ public class TokenService : ServiceBase, ITokenService
                 tokenClaims.Add(new Claim("credentials", "IsInternetCustomer###1"));
                 tokenClaims.Add(new Claim("credentials", "IsAnonymous###1"));
                 tokenClaims.Add(new Claim("azp", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
-                tokenClaims.Add(new Claim("uppercase_name", _profile?.data?.profile?.uppercase_name ?? string.Empty));
-                tokenClaims.Add(new Claim("uppercase_surname", _profile?.data?.profile?.uppercase_surname ?? string.Empty));
+                tokenClaims.Add(new Claim("uppercase_name", (_profile?.data?.profile?.uppercase_name ?? string.Empty) + (string.IsNullOrWhiteSpace(_profile?.data?.profile?.middleName) ? string.Empty : " "+_profile?.data?.profile?.middleName)));
+                tokenClaims.Add(new Claim("uppercase_surname", (_profile?.data?.profile?.uppercase_surname ?? string.Empty)));
                 tokenClaims.Add(new Claim("logon_ip", _transactionService.IpAddress ?? "undefined"));
             }
 
@@ -258,8 +264,8 @@ public class TokenService : ServiceBase, ITokenService
 
         if (accessInfo.privateClaims != null && accessInfo.privateClaims.Count() > 0)
         {
-            var populatedPrivateClaims = await _claimService.PopulateClaims(accessInfo.privateClaims, _user, _profile, _consent);
-            var dictFromPrivateClaims = populatedPrivateClaims.ToDictionary(c => c.Type, c => c.Value);
+            var populatedPrivateClaims = await _claimService.PopulatePrivateClaims(accessInfo.privateClaims, _user, _profile, _consent, collectionUser : _collectionUser);
+            var dictFromPrivateClaims = populatedPrivateClaims.Where(c => c is not null).ToDictionary(c => c!.Value.Key, c => c!.Value.Value);
             await _daprClient.SaveStateAsync(Configuration["DAPR_STATE_STORE_NAME"], $"{_tokenInfoDetail!.AccessTokenId.ToString()}_privateClaims", dictFromPrivateClaims, metadata: new Dictionary<string, string> { { "ttlInSeconds", (_tokenInfoDetail.AccessTokenDuration+60).ToString() } });
         }
 
@@ -301,10 +307,14 @@ public class TokenService : ServiceBase, ITokenService
             refreshDuration = TimeHelper.ConvertStrDurationToSeconds(refreshInfo.duration!);
             if(_consent is not null)
             {
-                if(_consent.consentType.Equals("OB_Account"))
+                var consentData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(_consent!.additionalData!);
+                if(_consent.consentType!.Equals("OB_Account"))
                 {
-                    refreshDuration = 90 * 24 * 60 * 60; // Until Consent Expires
+                    DateTime lastAccessDate = DateTime.Parse(consentData!.hspBlg.iznBlg.erisimIzniSonTrh.ToString());
+                    var DateDiffAsDay = Convert.ToInt32((lastAccessDate - DateTime.Now).TotalDays);
+                    refreshDuration = DateDiffAsDay > 30 ? (30 * 24 * 60 * 60) : (DateDiffAsDay * 24 * 60 * 60); 
                 }
+        
                 if(_consent.consentType.Equals("OB_Payment"))
                 {
                     refreshDuration = 15 * 24 * 60 * 60; // 15 day
@@ -337,10 +347,19 @@ public class TokenService : ServiceBase, ITokenService
         {
             TokenType = "Bearer",
             AccessToken = await CreateAccessToken(),
-            ExpiresIn = _tokenInfoDetail.AccessTokenDuration,
-            RefreshToken = CreateRefreshToken(),
-            RefreshTokenExpiresIn = _tokenInfoDetail.RefreshTokenDuration
+            ExpiresIn = _tokenInfoDetail.AccessTokenDuration
         };
+
+        if(_tokenRequest.GrantType.Equals("refresh_token"))
+        {
+            tokenResponse.RefreshToken = _tokenRequest.RefreshToken;
+            tokenResponse.RefreshTokenExpiresIn = Convert.ToInt32((_refreshTokenInfo.ExpiredAt - DateTime.Now).TotalSeconds);
+        }
+        else
+        {
+            tokenResponse.RefreshToken = CreateRefreshToken();
+            tokenResponse.RefreshTokenExpiresIn = _tokenInfoDetail.RefreshTokenDuration;
+        }
 
         //openId Section
         if (!_tokenRequest.GrantType.Equals("client_credentials"))
@@ -370,7 +389,6 @@ public class TokenService : ServiceBase, ITokenService
         }
         var refreshTokenInfo = _databaseContext.Tokens.FirstOrDefault(t =>
         t.Id == Guid.Parse(refreshTokenJti!) && t.TokenType == TokenType.RefreshToken);
-
         if (refreshTokenInfo == null)
         {
             return new ServiceResponse<TokenResponse>()
@@ -390,6 +408,8 @@ public class TokenService : ServiceBase, ITokenService
                 Response = null
             };
         }
+
+        _refreshTokenInfo = refreshTokenInfo;
 
         var relatedToken = _databaseContext.Tokens.FirstOrDefault(t =>
         t.Id == refreshTokenInfo.RelatedTokenId && t.TokenType == TokenType.AccessToken);
@@ -459,7 +479,7 @@ public class TokenService : ServiceBase, ITokenService
 
             _user = userResponse.Response;
 
-            var profile = await _profileService.GetCustomerSimpleProfile(refreshTokenInfo.Reference);
+            var profile = await _profileService!.GetCustomerSimpleProfile(refreshTokenInfo.Reference!);
             if (profile.StatusCode != 200)
             {
                 return new ServiceResponse<TokenResponse>()
@@ -550,7 +570,7 @@ public class TokenService : ServiceBase, ITokenService
             Response = tokenResponse
         };
     }
-
+    
     public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithDevice(GenerateTokenRequest tokenRequest)
     {
         _tokenRequest = tokenRequest;
@@ -770,7 +790,7 @@ public class TokenService : ServiceBase, ITokenService
                 Detail = "Client is Not Authorized For Requested Scopes"
             };
         }
-
+    
         var userResponse = await _internetBankingUserService.GetUser(_tokenRequest.Username!);
         if (userResponse.StatusCode != 200)
         {
@@ -804,6 +824,28 @@ public class TokenService : ServiceBase, ITokenService
                 StatusCode = 471,
                 Detail = "Password Doesn't Match"
             };
+        }
+
+        var role = await _ibContext.Role.Where(r => r.UserId.Equals(user!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
+        if(role is {} && (role.ExpireDate ?? DateTime.MaxValue) > DateTime.Now)
+        {
+            var roleDefinition = await _ibContext.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive);
+            if(roleDefinition is {})
+            {
+                if(roleDefinition.Key == 0)
+                {  
+                    return new ServiceResponse<TokenResponse>()
+                    {
+                        StatusCode = 471,
+                        Detail = ErrorHelper.GetErrorMessage(LoginErrors.NotAuthorized, "en-EN")
+                    };
+                    
+                }
+                else
+                {
+                    _transactionService.RoleKey = roleDefinition.Key;
+                }
+            }
         }
 
         var userInfoResult = await _profileService.GetCustomerSimpleProfile(_tokenRequest.Username!);
@@ -892,40 +934,125 @@ public class TokenService : ServiceBase, ITokenService
             };
         }
 
-        // var consentListResponse = await _roleService.GetConsents(_client.code, _user.Reference);
-        // if(consentListResponse.StatusCode != 200)
-        // {
-        //     return new ServiceResponse<TokenResponse>()
-        //     {
-        //         StatusCode = consentListResponse.StatusCode,
-        //         Detail = consentListResponse.Detail
-        //     };
-        // }
-        // var consentList = consentListResponse.Response;
+        /*var consentListResponse = await _roleService.GetConsents(_client.code, _user.Reference);
+        if(consentListResponse.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = consentListResponse.StatusCode,
+                Detail = consentListResponse.Detail
+            };
+        }
+        var consentList = consentListResponse.Response;
 
-        // if(consentList.Count() != 1)
-        // {
-        //     return new ServiceResponse<TokenResponse>()
-        //     {
-        //         StatusCode = 480,
-        //         Detail = "Password Grant Type Doesn't Support Multiple Consents"
-        //     };
-        // }
+        if(consentList.Count() != 1)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 480,
+                Detail = "Password Grant Type Doesn't Support Multiple Consents"
+            };
+        }
 
-        // var consent = consentList.First();
-        // _selectedConsent = consent;
+        var consent = consentList.First();
+        _selectedConsent = consent;
 
-        // var roleResponse = await _roleService.GetRoleDefinition(consent.RoleId);
-        // if(roleResponse.StatusCode != 200)
-        // {
-        //     return new ServiceResponse<TokenResponse>()
-        //     {
-        //         StatusCode = roleResponse.StatusCode,
-        //         Detail = roleResponse.Detail
-        //     };
-        // }
-        // var role = roleResponse.Response;
-        // _role = role;
+        var roleResponse = await _roleService.GetRoleDefinition(consent.RoleId);
+        if(roleResponse.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = roleResponse.StatusCode,
+                Detail = roleResponse.Detail
+            };
+        }
+        var amorphieRole = roleResponse.Response;
+        _role = amorphieRole;
+        */
+        var tokenResponse = await GenerateTokenResponse();
+
+        if (tokenResponse.IdToken == string.Empty && tokenResponse.AccessToken == string.Empty)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 500,
+                Detail = "Access Token And Id Token Couldn't Be Generated"
+            };
+        }
+
+        await PersistTokenInfo();
+
+        return new ServiceResponse<TokenResponse>()
+        {
+            StatusCode = 200,
+            Response = tokenResponse
+        };
+    }
+
+    public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithSystemUser(GenerateTokenRequest tokenRequest)
+    {
+        _tokenRequest = tokenRequest;
+        ServiceResponse<ClientResponse> clientResponse;
+        if (Guid.TryParse(_tokenRequest.ClientId!, out Guid _))
+        {
+            clientResponse = await _clientService.ValidateClient(_tokenRequest.ClientId!, _tokenRequest.ClientSecret!);
+        }
+        else
+        {
+            clientResponse = await _clientService.ValidateClientByCode(_tokenRequest.ClientId!, _tokenRequest.ClientSecret!);
+        }
+
+        if (clientResponse.StatusCode != 200)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = clientResponse.StatusCode,
+                Detail = clientResponse.Detail
+            };
+        }
+
+        _client = clientResponse.Response;
+        if (!_client!.allowedgranttypes!.Any(g => g.GrantType == tokenRequest.GrantType))
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "Client Has No Authorize To Use Requested Grant Type"
+            };
+        }
+
+        var requestedScopes = tokenRequest.Scopes!.ToList();
+
+        if (!requestedScopes.All(_client.allowedscopetags!.Contains))
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 473,
+                Detail = "Client is Not Authorized For Requested Scopes"
+            };
+        }
+
+        var user = await _ibSecurityContext.AspNetUsers.AsNoTracking().FirstOrDefaultAsync(u => u.UserName.Equals(_tokenRequest.Username));
+        if(user is not {})
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 404,
+                Detail = "User Not Found"
+            };
+        }
+
+        var passwordHasher = new PasswordHasher();
+        var isVerified = passwordHasher.VerifyHashedPassword(user!.PasswordHash!, _tokenRequest.Password!);
+        //Consider SuccessRehashNeeded
+        if (isVerified != PasswordVerificationResult.Success)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 471,
+                Detail = "Password Doesn't Match"
+            };
+        }
 
         var tokenResponse = await GenerateTokenResponse();
 
@@ -1014,8 +1141,17 @@ public class TokenService : ServiceBase, ITokenService
     public async Task<ServiceResponse<TokenResponse>> GenerateToken(GenerateTokenRequest tokenRequest)
     {
         _tokenRequest = tokenRequest;
+        ServiceResponse<ClientResponse> clientResponse;
 
-        var clientResponse = await _clientService.ValidateClient(tokenRequest.ClientId!, tokenRequest.ClientSecret!);
+        if(Guid.TryParse(tokenRequest.ClientId, out Guid _))
+        {
+            clientResponse = await _clientService.ValidateClient(tokenRequest.ClientId!, tokenRequest.ClientSecret!);
+        }
+        else
+        {
+            clientResponse = await _clientService.ValidateClientByCode(tokenRequest.ClientId!, tokenRequest.ClientSecret!);
+        }
+        
         if (clientResponse.StatusCode != 200)
         {
             return new ServiceResponse<TokenResponse>()
@@ -1035,7 +1171,7 @@ public class TokenService : ServiceBase, ITokenService
                 Detail = "Client Has No Authorize To Use Requested Grant Type"
             };
         }
-
+        
         var authorizationCodeInfo = await _daprClient.GetStateAsync<AuthorizationCode>(Configuration["DAPR_STATE_STORE_NAME"], tokenRequest.Code);
 
         if (authorizationCodeInfo == null)
@@ -1046,16 +1182,17 @@ public class TokenService : ServiceBase, ITokenService
                 Detail = "Invalid Authorization Code"
             };
         }
-
+        Logger.LogError("Auth Code Info :" + JsonSerializer.Serialize(authorizationCodeInfo));
         _user = authorizationCodeInfo.Subject;
         _profile = authorizationCodeInfo.Profile;
+        _collectionUser = authorizationCodeInfo.CollectionUser;
         _tokenRequest.Scopes = authorizationCodeInfo.RequestedScopes;
 
-        if (!authorizationCodeInfo.ClientId!.Equals(tokenRequest.ClientId, StringComparison.OrdinalIgnoreCase))
+        if (!authorizationCodeInfo.ClientId!.Equals(_client.id, StringComparison.OrdinalIgnoreCase))
         {
             return new ServiceResponse<TokenResponse>()
             {
-                StatusCode = 471,
+                StatusCode = 472,
                 Detail = "ClientId Not Matched"
             };
         }
@@ -1066,7 +1203,7 @@ public class TokenService : ServiceBase, ITokenService
             {
                 return new ServiceResponse<TokenResponse>()
                 {
-                    StatusCode = 472,
+                    StatusCode = 473,
                     Detail = "Code Verifier Not Matched"
                 };
             }
@@ -1152,6 +1289,7 @@ public class TokenService : ServiceBase, ITokenService
         }
 
         var tokenResponse = await GenerateTokenResponse();
+        tokenResponse.scope = string.Join(" ",authorizationCodeInfo!.RequestedScopes!);
 
         if (tokenResponse.IdToken == string.Empty && tokenResponse.AccessToken == string.Empty)
         {

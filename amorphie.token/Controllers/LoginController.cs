@@ -12,8 +12,10 @@ using amorphie.core.Enums;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 namespace amorphie.token.core.Controllers;
+
 
 public class LoginController : Controller
 {
@@ -30,8 +32,9 @@ public class LoginController : Controller
     private readonly IConsentService _consentService;
     private readonly IProfileService _profileService;
     private readonly IbDatabaseContext _ibContext;
+    private readonly IInternetBankingUserService _internetBankingUserService;
     public LoginController(ILogger<TokenController> logger, IAuthorizationService authorizationService, IUserService userService, DatabaseContext databaseContext
-    , IConfiguration configuration, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService, ITransactionService transactionService,
+    , IConfiguration configuration,IInternetBankingUserService internetBankingUserService, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService, ITransactionService transactionService,
     IFlowHandler flowHandler, IConsentService consentService, IProfileService profileService, IbDatabaseContext ibContext)
     {
         _logger = logger;
@@ -47,9 +50,8 @@ public class LoginController : Controller
         _consentService = consentService;
         _profileService = profileService;
         _ibContext = ibContext;
+        _internetBankingUserService = internetBankingUserService;
     }
-
-
 
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("public/Login")]
@@ -62,30 +64,24 @@ public class LoginController : Controller
                 ViewBag.HasError = true;
                 ViewBag.ErrorDetail = "Reference and Password Can Not Be Empty";
             }
-            var userResponse = await _userService.Login(new LoginRequest() { Reference = loginRequest.UserName!, Password = loginRequest.Password! });
+
+            var userResponse = await _internetBankingUserService.GetUser(loginRequest.UserName!);
             if (userResponse.StatusCode != 200)
             {
-                ViewBag.HasError = true;
-                ViewBag.ErrorDetail = userResponse.Detail;
-                var loginModel = new Login()
-                {
-                    Code = loginRequest.Code,
-                    RedirectUri = loginRequest.RedirectUri,
-                    RequestedScopes = loginRequest.RequestedScopes
-                };
-                return View("Login", loginModel);
+                
             }
             var user = userResponse.Response;
 
-            if (user?.State.ToLower() == "active" || user?.State.ToLower() == "new")
+            var passwordResponse = await _internetBankingUserService.GetPassword(user!.Id);
+            if (passwordResponse.StatusCode != 200)
             {
-                HttpContext.Session.SetString("LoggedUser", JsonSerializer.Serialize(user));
-                var profileResponse = await _profileService.GetCustomerSimpleProfile(user.Reference);
-                var authCodeInfo = await _authorizationService.AssignUserToAuthorizationCode(user, loginRequest.Code!,profileResponse.Response);
                 
-                return Redirect($"{authCodeInfo.RedirectUri}?code={loginRequest.Code}&response_type=code&state={authCodeInfo.State}");
             }
-            else
+            var passwordRecord = passwordResponse.Response;
+
+            var isVerified = _internetBankingUserService.VerifyPassword(passwordRecord!.HashedPassword!, loginRequest.Password!, passwordRecord.Id.ToString());
+            //Consider SuccessRehashNeeded
+            if (isVerified != PasswordVerificationResult.Success)
             {
                 ViewBag.HasError = true;
                 ViewBag.ErrorDetail = "User Is Disabled";
@@ -95,8 +91,137 @@ public class LoginController : Controller
                     RedirectUri = loginRequest.RedirectUri,
                     RequestedScopes = loginRequest.RequestedScopes
                 };
-                return View("Login", loginModel);
+                return View("Authorize/Login", loginModel);
+            } 
+            else
+            {
+                var profileResponse = await _profileService.GetCustomerSimpleProfile(user.UserName);
+                if (profileResponse.StatusCode != 200)
+                {
+                    
+                }
+
+                var userInfo = profileResponse.Response;
+
+                var mobilePhone = userInfo!.data!.phones!.FirstOrDefault(p => p.type!.Equals("mobile"));
+
+                var userRequest = new UserInfo
+                {
+                firstName = userInfo!.data.profile!.name!,
+                lastName = userInfo!.data.profile!.surname!,
+                phone = new core.Models.User.UserPhone()
+                {
+                    countryCode = mobilePhone!.countryCode!,
+                    prefix = mobilePhone!.prefix,
+                    number = mobilePhone!.number
+                },
+                state = "Active",
+                salt = passwordRecord.Id.ToString(),
+                password = loginRequest.Password!,
+                explanation = "Migrated From IB",
+                reason = "Amorphie Login",
+                isArgonHash = true
+                };
+
+                var verifiedMailAddress = userInfo.data.emails!.FirstOrDefault(m => m.isVerified == true);
+                userRequest.eMail = verifiedMailAddress?.address ?? "";
+                userRequest.reference = loginRequest.UserName!;
+
+                var migrateResult = await _userService.SaveUser(userRequest);
+                var amorphieUserResult = await _userService.Login(new LoginRequest() { Reference = loginRequest.UserName!, Password = loginRequest.Password! });
+                var amorphieUser = amorphieUserResult.Response;
+
+                HttpContext.Session.SetString("LoggedUser", JsonSerializer.Serialize(amorphieUser));
+                
+                var authCodeInfo = await _authorizationService.AssignUserToAuthorizationCode(amorphieUser, loginRequest.Code!, profileResponse.Response!);
+
+                return Redirect($"{authCodeInfo.RedirectUri}?code={loginRequest.Code}&response_type=code&state={authCodeInfo.State}");
+           
+                
+                
             }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Login Failed! Ex:{0}",ex.ToString());
+            return StatusCode(500);
+        }
+    }
+
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [HttpPost("public/CollectionLogin")]
+    public async Task<IActionResult> CollectionLogin(Login loginRequest)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(loginRequest.UserName) || string.IsNullOrWhiteSpace(loginRequest.Password))
+            {
+                ViewBag.HasError = true;
+                ViewBag.ErrorDetail = "Reference and Password Can Not Be Empty";
+                var loginModel = new Login()
+                {
+                    Code = loginRequest.Code,
+                    RedirectUri = loginRequest.RedirectUri,
+                    RequestedScopes = loginRequest.RequestedScopes
+                };
+                return View("CollectionLoginPage", loginModel);
+            }
+
+            var user = CollectionUsers.Users.FirstOrDefault(u => u.CitizenshipNo.Equals(loginRequest.UserName));
+            if(user is not {})
+            {
+                ViewBag.HasError = true;
+                ViewBag.ErrorDetail = "User Not Found";
+                var loginModel = new Login()
+                {
+                    Code = loginRequest.Code,
+                    RedirectUri = loginRequest.RedirectUri,
+                    RequestedScopes = loginRequest.RequestedScopes
+                };
+                return View("CollectionLoginPage", loginModel);
+            }
+            else
+            {
+                if(!loginRequest.Password.Equals("123456"))
+                {
+                    ViewBag.HasError = true;
+                    ViewBag.ErrorDetail = "Şifre Hatalı";
+                    var loginModel = new Login()
+                    {
+                        Code = loginRequest.Code,
+                        RedirectUri = loginRequest.RedirectUri,
+                        RequestedScopes = loginRequest.RequestedScopes
+                    };
+                    return View("CollectionLoginPage", loginModel);
+                }
+
+                var userRequest = new UserInfo
+                {
+                    firstName = user.Name,
+                    lastName = user.Surname,
+                    phone = null,
+                    state = "Active",
+                    salt = "Collection",
+                    password = "123456",
+                    explanation = "Migrated From Collection",
+                    reason = "Amorphie Collection Login",
+                    isArgonHash = true,
+                    eMail = string.Empty,
+                    reference = user.CitizenshipNo
+                };
+
+                var migrateResult = await _userService.SaveUser(userRequest);
+                var amorphieUserResult = await _userService.Login(new LoginRequest() { Reference = loginRequest.UserName!, Password = loginRequest.Password! });
+                var amorphieUser = amorphieUserResult.Response;
+                HttpContext.Session.SetString("LoggedUser", JsonSerializer.Serialize(user));
+
+                var authCodeInfo = await _authorizationService.AssignCollectionUserToAuthorizationCode(amorphieUser!, loginRequest.Code!,user);
+                
+                return Redirect($"{authCodeInfo.RedirectUri}?code={loginRequest.Code}&response_type=code&state={authCodeInfo.State}");
+           
+            }
+
+            
         }
         catch (Exception ex)
         {
@@ -109,18 +234,18 @@ public class LoginController : Controller
     [HttpGet("public/CheckDevice/{reference}")]
     public async Task<IActionResult> CheckDevice(string reference)
     {
-     
+
         var userResponse = await _ibUserService.GetUser(reference);
         if (userResponse.StatusCode != 200)
         {
             return StatusCode(404);
         }
         var user = userResponse.Response;
-        var device = await _ibContext.UserDevice.FirstOrDefaultAsync(u => u.UserId == user.Id && u.Status == 10 && !string.IsNullOrWhiteSpace(u.DeviceToken));
+        var device = await _ibContext.UserDevice.FirstOrDefaultAsync(u => u.UserId == user!.Id && u.Status == 10 && !string.IsNullOrWhiteSpace(u.DeviceToken));
 
         if (device != null)
         {
-            return Ok(new{os=device.Platform.ToLower().Equals("android") ? 1 : 2});
+            return Ok(new { os = device.Platform.ToLower().Equals("android") ? 1 : 2 });
         }
         else
         {
@@ -141,7 +266,7 @@ public class LoginController : Controller
                 return StatusCode(500);
             }
 
-            var passwordResponse = await _ibUserService.GetPassword(userResponse.Response.Id);
+            var passwordResponse = await _ibUserService.GetPassword(userResponse.Response!.Id);
             if (passwordResponse.StatusCode != 200)
             {
                 //TODO
@@ -172,7 +297,7 @@ public class LoginController : Controller
             }
 
             var userInfo = userInfoResult.Response;
-
+            
             if (userInfo!.data!.profile!.Equals("customer") || !userInfo!.data!.profile!.status!.Equals("active"))
             {
                 //TODO
@@ -239,9 +364,9 @@ public class LoginController : Controller
                 SmsType = "Otp",
                 Phone = new
                 {
-                    CountryCode = amorphieUser.MobilePhone!.CountryCode,
-                    Prefix = amorphieUser.MobilePhone.Prefix,
-                    Number = amorphieUser.MobilePhone.Number
+                    amorphieUser!.MobilePhone!.CountryCode,
+                    amorphieUser!.MobilePhone.Prefix,
+                    amorphieUser!.MobilePhone.Number
                 },
                 Content = $"{code} şifresi ile giriş yapabilirsiniz",
                 Process = new
@@ -263,7 +388,7 @@ public class LoginController : Controller
 
 
 
-            return View("Otp", new Otp
+            return View("newOtp", new Otp
             {
                 Phone = "0" + amorphieUser.MobilePhone.Prefix.ToString().Substring(0, 2) + "******" + amorphieUser.MobilePhone.Number.ToString().Substring(amorphieUser.MobilePhone.Number.Length - 2, 2),
                 transactionId = transactionId,
@@ -292,11 +417,11 @@ public class LoginController : Controller
         var sendedOtpValue = await _daprClient.GetStateAsync<string>(_configuration["DAPR_STATE_STORE_NAME"], $"{otpRequest.transactionId}_Login_Otp_Code");
         if (sendedOtpValue.Equals(otpRequest.OtpValue))
         {
-            if (consent.consentType.Equals("OB_Account"))
+            if (consent!.consentType!.Equals("OB_Account"))
             {
                 return Redirect(_configuration["OpenBankingAccount"] + otpRequest.consentId);
             }
-            if (consent.consentType.Equals("OB_Payment"))
+            if (consent!.consentType!.Equals("OB_Payment"))
             {
                 return Redirect(_configuration["OpenBankingPayment"] + otpRequest.consentId);
             }

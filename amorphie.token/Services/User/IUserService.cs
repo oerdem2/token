@@ -1,4 +1,6 @@
 
+using amorphie.token.core.Dtos;
+
 namespace amorphie.token.Services.User;
 
 public interface IUserService
@@ -15,6 +17,7 @@ public interface IUserService
     public Task<ServiceResponse<UserSecurityImageDto>> GetLastSecurityImage(Guid id);
     public Task<ServiceResponse<IEnumerable<SecurityQuestionDto>>> GetSecurityQuestions();
     public Task<ServiceResponse<IEnumerable<SecurityImageDto>>> GetSecurityImages();
+    public Task<ServiceResponse<IEnumerable<UserClaimDto>>> GetUserClaims(Guid userId);
     public Task<ServiceResponse> MigrateSecurityQuestion(MigrateSecurityQuestionRequest migrateSecurityQuestionRequest);
     public Task<ServiceResponse> MigrateSecurityImage(MigrateSecurityImageRequest migrateSecurityImageRequest);
     public Task<ServiceResponse> MigrateSecurityImages(List<SecurityImageRequestDto> securityImageRequestDtos);

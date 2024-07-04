@@ -1,5 +1,7 @@
 
 
+using amorphie.token.core.Dtos;
+
 namespace amorphie.token.Services.User;
 
 public class UserService : ServiceBase, IUserService
@@ -652,6 +654,38 @@ public class UserService : ServiceBase, IUserService
             {
                 StatusCode = 500,
                 Detail = "An Error Occured When Trying To Retrieve Last Security Image | Detail:" + ex.ToString()
+            };
+        }
+    }
+
+    public async Task<ServiceResponse<IEnumerable<UserClaimDto>>> GetUserClaims(Guid userId)
+    {
+        try
+        {
+            var userClaims = await _daprClient.InvokeMethodAsync<IEnumerable<UserClaimDto>>(HttpMethod.Get,Configuration["UserServiceAppName"], "/userClaim/getByUserId/"+userId);
+            return new ServiceResponse<IEnumerable<UserClaimDto>>()
+            {
+                StatusCode = 200,
+                Detail = "",
+                Response = userClaims
+            };
+        }
+        catch (InvocationException ex)
+        {
+            Logger.LogError("An Error Occured When Trying To Retrieve User Claims | Invocation Failed | Detail:" + ex.ToString());
+            return new ServiceResponse<IEnumerable<UserClaimDto>>()
+            {
+                StatusCode = (int)ex.Response.StatusCode,
+                Detail = await ex.Response.Content.ReadAsStringAsync()
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("An Error Occured When Trying To Retrieve User Claims | Detail:" + ex.ToString());
+            return new ServiceResponse<IEnumerable<UserClaimDto>>()
+            {
+                StatusCode = 500,
+                Detail = "An Error Occured When Trying To Retrieve User Claims | Detail:" + ex.ToString()
             };
         }
     }

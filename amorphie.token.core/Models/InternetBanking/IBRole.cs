@@ -11,5 +11,6 @@ namespace amorphie.token.core.Models.InternetBanking
         public int Channel{get;set;}
         public int Status{get;set;}
         public Guid DefinitionId{get;set;}
+        public DateTime? ExpireDate{get;set;}
     }
 }

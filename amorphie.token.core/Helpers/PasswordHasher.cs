@@ -29,7 +29,7 @@ namespace amorphie.token.core.Helpers
         private readonly RandomNumberGenerator _rng;
 
 
-
+    
         public PasswordHasher(PasswordHasherOptions? options = null)
         {
             var opt = options ?? new PasswordHasherOptions();
@@ -41,7 +41,7 @@ namespace amorphie.token.core.Helpers
             }
         }
 
-
+        
 
         private static bool ByteArraysEqual(byte[] a, byte[] b)
         {

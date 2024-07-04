@@ -19,6 +19,9 @@ using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using System.Security.Cryptography;
 using System.Net.Mime;
+using amorphie.token.Modules.Login;
+using Amazon.Internal;
+using System.Configuration;
 
 
 namespace amorphie.token.core.Controllers;
@@ -62,8 +65,8 @@ public class TokenController : Controller
     {
         return Ok(new 
         {
-            authorization_endpoint="http://localhost:4900/public/Authorize",
-            token_endpoint = "http://localhost:4900/public/Token"
+            authorization_endpoint= _configuration["Basepath"]+"/public/Authorize",
+            token_endpoint = _configuration["Basepath"]+"/public/Token"
         });
     }
 
@@ -184,6 +187,7 @@ public class TokenController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> SignalR()
     {
+        await Task.CompletedTask;
         return View("SignalR");
     }
 
@@ -264,7 +268,7 @@ public class TokenController : Controller
 
         }
 
-        var privateClaims = await _daprClient.GetStateAsync<Dictionary<string,string>>(_configuration["DAPR_STATE_STORE_NAME"], $"{accessTokenInfo.Id.ToString()}_privateClaims");
+        var privateClaims = await _daprClient.GetStateAsync<Dictionary<string,object>>(_configuration["DAPR_STATE_STORE_NAME"], $"{accessTokenInfo.Id.ToString()}_privateClaims");
         if(privateClaims is not null && privateClaims.Count() > 0)
         {
             foreach (var claim in privateClaims)
@@ -280,7 +284,7 @@ public class TokenController : Controller
                         if (!claim.Key.Equals("exp") && !claim.Key.Equals("nbf") && !claim.Key.Equals("iat"))
                             claimValues.Add(claim.Key.Replace(".", "_"), claim.Value);
                         else
-                            claimValues.Add(claim.Key.Replace(".", "_"), long.Parse(claim.Value));
+                            claimValues.Add(claim.Key.Replace(".", "_"), Convert.ToInt64(claim.Value));
                     }
                 }
             }
@@ -314,10 +318,18 @@ public class TokenController : Controller
         var httpResponse = await httpClient.PostAsync(_configuration["localAddress"] + "public/Token", request);
         var resp = await httpResponse.Content.ReadFromJsonAsync<TokenResponse>();
 
-        ViewBag.accessToken = resp.AccessToken;
-        ViewBag.refreshToken = resp.RefreshToken;
+        ViewBag.accessToken = resp!.AccessToken;
+        ViewBag.refreshToken = resp!.RefreshToken;
 
         return View("callback");
+    }
+
+    [HttpPost("public/SaveEkycResult")]
+    public async Task<IActionResult> SaveEkyResult([FromBody] dynamic body)
+    {
+        await Task.CompletedTask;
+        Console.WriteLine("Save ekyc result Model"+JsonSerializer.Serialize(body));
+        return Ok();
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
@@ -327,9 +339,17 @@ public class TokenController : Controller
     {
         string? xforwardedfor = HttpContext.Request.Headers.ContainsKey("X-Forwarded-For") ? HttpContext.Request.Headers.FirstOrDefault(h => h.Key.ToLower().Equals("x-forwarded-for")).Value.ToString() : HttpContext.Connection.RemoteIpAddress?.ToString();
         var ipAddress = xforwardedfor?.Split(",")[0].Trim() ?? xforwardedfor;
-        _transactionService.IpAddress = ipAddress;
+        _transactionService.IpAddress = ipAddress!;
 
         var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
+        if(generateTokenRequest.Scopes?.Count() == 0)
+        {
+            if(!string.IsNullOrEmpty(tokenRequest.scope))
+            {
+                generateTokenRequest.Scopes = tokenRequest.scope.Split(" ");
+            }
+        }
+
         if (tokenRequest.GrantType == "device")
         {
             var token = await _tokenService.GenerateTokenWithDevice(generateTokenRequest);
@@ -406,9 +426,17 @@ public class TokenController : Controller
     {
         string? xforwardedfor = HttpContext.Request.Headers.ContainsKey("X-Forwarded-For") ? HttpContext.Request.Headers.FirstOrDefault(h => h.Key.ToLower().Equals("x-forwarded-for")).Value.ToString() : HttpContext.Connection.RemoteIpAddress?.ToString();
         var ipAddress = xforwardedfor?.Split(",")[0].Trim() ?? xforwardedfor;
-        _transactionService.IpAddress = ipAddress;
+        _transactionService.IpAddress = ipAddress!;
 
         var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
+        if(generateTokenRequest.Scopes?.Count() == 0)
+        {
+            if(!string.IsNullOrEmpty(tokenRequest.scope))
+            {
+                generateTokenRequest.Scopes = tokenRequest.scope.Split(" ");
+            }
+        }
+
         if (tokenRequest.GrantType == "device")
         {
             var token = await _tokenService.GenerateTokenWithDevice(generateTokenRequest);
@@ -418,7 +446,7 @@ public class TokenController : Controller
             }
             else
             {
-                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object>{{"errorCode",token.StatusCode}});
+                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object?>{{"errorCode",token.StatusCode}});
             }
         }
         if (tokenRequest.GrantType == "authorization_code")
@@ -430,7 +458,7 @@ public class TokenController : Controller
             }
             else
             {
-                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object>{{"errorCode",token.StatusCode}});
+                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object?>{{"errorCode",token.StatusCode}});
             }
         }
         if (tokenRequest.GrantType == "password")
@@ -445,7 +473,7 @@ public class TokenController : Controller
             }
             else
             {
-                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object>{{"errorCode",token.StatusCode}});
+                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object?>{{"errorCode",token.StatusCode}});
             }
         }
 
@@ -458,7 +486,7 @@ public class TokenController : Controller
             }
             else
             {
-                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object>{{"errorCode",token.StatusCode}});
+                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object?>{{"errorCode",token.StatusCode}});
             }
         }
 
@@ -471,7 +499,7 @@ public class TokenController : Controller
             }
             else
             {
-                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object>{{"errorCode",token.StatusCode}});
+                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object?>{{"errorCode",token.StatusCode}});
             }
         }
 
@@ -482,6 +510,7 @@ public class TokenController : Controller
     [SwaggerResponse(200, "Check Token Authorize")]
     public async Task<IActionResult> CheckScope(string reference, string scope, [FromHeader(Name = "scope")] string[] scopes)
     {
+        await Task.CompletedTask;
         if (!scopes.Contains(scope))
         {
             return StatusCode(401);
@@ -544,6 +573,16 @@ public class TokenController : Controller
     [HttpPost("public/OpenBankingToken")]
     public async Task<IActionResult> OpenBankingToken([FromBody] OpenBankingTokenRequest openBankingTokenRequest)
     {
+        var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-request-id"));
+        var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-group-id"));
+        var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-aspsp-code"));
+        var tppCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-tpp-code"));
+
+        HttpContext.Response.Headers.Append("X-Request-ID", string.IsNullOrWhiteSpace(requestId.Value) ? Guid.NewGuid().ToString() : requestId.Value);
+        HttpContext.Response.Headers.Append("X-Group-ID", string.IsNullOrWhiteSpace(groupId.Value) ? Guid.NewGuid().ToString() : groupId.Value);
+        HttpContext.Response.Headers.Append("X-ASPSP-Code", string.IsNullOrWhiteSpace(aspspCode.Value) ? Guid.NewGuid().ToString() : aspspCode.Value);
+        HttpContext.Response.Headers.Append("X-TPP-Code", string.IsNullOrWhiteSpace(tppCode.Value) ? Guid.NewGuid().ToString() : tppCode.Value);
+
         var generateTokenRequest = new GenerateTokenRequest();
         var consent = await _consentService.GetConsent(Guid.Parse(openBankingTokenRequest.ConsentNo!));
         var clientResult = await _clientService.CheckClient(_configuration["OpenBankingClientId"]!);
@@ -563,10 +602,38 @@ public class TokenController : Controller
             generateTokenRequest.Code = openBankingTokenRequest.AuthCode;
             generateTokenRequest.ConsentId = consent.Response?.id;
 
-            var token = await _tokenService.GenerateOpenBankingToken(generateTokenRequest, consent.Response);
+            var token = await _tokenService.GenerateOpenBankingToken(generateTokenRequest, consent.Response!);
+            if(token.StatusCode == 470)
+            {
+                SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, new {
+                    httpCode = 404,
+                    httpMessage = "Not Found",
+                    errorCode = "TR.OHVPS.Resource.NotFound"
+                });
+
+                return Json(new {
+                    httpCode = 404,
+                    httpMessage = "Not Found",
+                    errorCode = "TR.OHVPS.Resource.NotFound"
+                },new JsonSerializerOptions{
+                    PropertyNamingPolicy = null
+                });
+                
+            }
             if (token.StatusCode != 200)
             {
-                return Problem(statusCode: token.StatusCode, detail: token.Detail);
+                SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, new {
+                    httpCode = 500,
+                    httpMessage = "Internal Server Error",
+                    errorCode = "TR.OHVPS.Server.InternalError"
+                });
+                return Json(new {
+                    httpCode = 500,
+                    httpMessage = "Internal Server Error",
+                    errorCode = "TR.OHVPS.Server.InternalError"
+                },new JsonSerializerOptions{
+                    PropertyNamingPolicy = null
+                });
             }
 
             var openBankingTokenResponse = new OpenBankingTokenResponse
@@ -580,18 +647,6 @@ public class TokenController : Controller
             await _daprClient.DeleteStateAsync(_configuration["DAPR_STATE_STORE_NAME"], "AuthCodeInfo_" + openBankingTokenRequest.ConsentNo);
 
             await _consentService.UpdateConsentForUsage(Guid.Parse(openBankingTokenRequest.ConsentNo!));
-
-
-            var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-request-id"));
-            var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-group-id"));
-            var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-aspsp-code"));
-            var tppCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-tpp-code"));
-
-
-            HttpContext.Response.Headers.Add("X-Request-ID", string.IsNullOrWhiteSpace(requestId.Value) ? Guid.NewGuid().ToString() : requestId.Value);
-            HttpContext.Response.Headers.Add("X-Group-ID", string.IsNullOrWhiteSpace(groupId.Value) ? Guid.NewGuid().ToString() : groupId.Value);
-            HttpContext.Response.Headers.Add("X-ASPSP-Code", string.IsNullOrWhiteSpace(aspspCode.Value) ? Guid.NewGuid().ToString() : aspspCode.Value);
-            HttpContext.Response.Headers.Add("X-TPP-Code", string.IsNullOrWhiteSpace(tppCode.Value) ? Guid.NewGuid().ToString() : tppCode.Value);
 
             SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, openBankingTokenResponse);
 
@@ -615,16 +670,7 @@ public class TokenController : Controller
                 RefreshToken = token.Response.RefreshToken,
                 RefreshTokenExpiresIn = token.Response.RefreshTokenExpiresIn
             };
-            var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-request-id"));
-            var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-group-id"));
-            var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-aspsp-code"));
-            var tppCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-tpp-code"));
-
-            HttpContext.Response.Headers.Add("X-Request-ID", string.IsNullOrWhiteSpace(requestId.Value) ? Guid.NewGuid().ToString() : requestId.Value);
-            HttpContext.Response.Headers.Add("X-Group-ID", string.IsNullOrWhiteSpace(groupId.Value) ? Guid.NewGuid().ToString() : groupId.Value);
-            HttpContext.Response.Headers.Add("X-ASPSP-Code", string.IsNullOrWhiteSpace(aspspCode.Value) ? Guid.NewGuid().ToString() : aspspCode.Value);
-            HttpContext.Response.Headers.Add("X-TPP-Code", string.IsNullOrWhiteSpace(tppCode.Value) ? Guid.NewGuid().ToString() : tppCode.Value);
-
+            
             SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, openBankingTokenResponse);
             return Ok(openBankingTokenResponse);
         }

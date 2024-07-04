@@ -38,6 +38,19 @@ public class BaseEkycProvider
 
     protected async Task<string> GetTokenAsync()
     {
+
+        var expires = await _daprClient.GetStateAsync<string>(_configuration["DAPR_STATE_STORE_NAME"], "amorphie-enquraToken-expires");
+        if (expires is not null)
+        {
+            var expireDate = Convert.ToDateTime(expires);
+            if (expireDate <= DateTime.Now)
+            {
+                await RemoveTokenState();
+            }
+        }
+
+
+
         var token = await _daprClient.GetStateAsync<string>(_configuration["DAPR_STATE_STORE_NAME"], "amorphie-enquraToken");
         if (token is null)
         {
@@ -66,10 +79,16 @@ public class BaseEkycProvider
             }
 
             await _daprClient.SaveStateAsync<string>(_configuration["DAPR_STATE_STORE_NAME"], "amorphie-enquraToken", resp.Token);
+            await _daprClient.SaveStateAsync<string>(_configuration["DAPR_STATE_STORE_NAME"], "amorphie-enquraToken-expires", resp.Expires);
             token = resp.Token;
 
         }
 
         return token;
+    }
+
+    protected Task RemoveTokenState()
+    {
+        return _daprClient.DeleteStateAsync(_configuration["DAPR_STATE_STORE_NAME"], "amorphie-enquraToken");
     }
 }
