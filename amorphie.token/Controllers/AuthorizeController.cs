@@ -376,22 +376,38 @@ public class AuthorizeController : Controller
         }
         if (consent.consentType.Equals("OB_Payment"))
         {
-            kmlkNo = consentData!.odmBsltm.kmlk.kmlkVrs.ToString();
+            try
+            {
+                kmlkNo = consentData!.odmBsltm.kmlk.kmlkVrs.ToString();
+            }
+            catch (Exception ex)
+            {
+                kmlkNo = "";
+            }
+            
         }
 
-        var customerInfoResult = await _profileService.GetCustomerSimpleProfile(kmlkNo);
-        if (customerInfoResult.StatusCode != 200)
+        if(!string.IsNullOrWhiteSpace(kmlkNo))
         {
-            ViewBag.ErrorDetail = customerInfoResult.Detail;
-            return View("Error");
+            var customerInfoResult = await _profileService.GetCustomerSimpleProfile(kmlkNo);
+            if (customerInfoResult.StatusCode != 200)
+            {
+                ViewBag.ErrorDetail = customerInfoResult.Detail;
+                return View("Error");
+            }
+            var customerInfo = customerInfoResult.Response;
+            ViewBag.isOn = customerInfo!.data!.profile!.businessLine;
         }
-        var customerInfo = customerInfoResult.Response;
-
+        else
+        {
+            ViewBag.isOn = "X";
+        }
+        
         var loginModel = new OpenBankingLogin
         {
             consentId = authorizationRequest.riza_no
         };
-        ViewBag.isOn = customerInfo!.data!.profile!.businessLine;
+        
         // if (customerInfo!.data!.profile!.businessLine == "X")
         // {
         //     return View("OpenBankingLoginOn", loginModel);

@@ -573,6 +573,10 @@ public class TokenController : Controller
     [HttpPost("public/OpenBankingToken")]
     public async Task<IActionResult> OpenBankingToken([FromBody] OpenBankingTokenRequest openBankingTokenRequest)
     {
+        var requestUri = Request.Headers.FirstOrDefault(h => h.Key.Equals("request_uri"));
+        var requestTime = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:sszzz");
+        var responseId = Guid.NewGuid();
+
         var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-request-id"));
         var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-group-id"));
         var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-aspsp-code"));
@@ -608,13 +612,23 @@ public class TokenController : Controller
                 SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, new {
                     httpCode = 404,
                     httpMessage = "Not Found",
-                    errorCode = "TR.OHVPS.Resource.NotFound"
+                    errorCode = "TR.OHVPS.Resource.NotFound",
+                    path = requestUri,
+                    timestamp = requestTime,
+                    id = responseId,
+                    moreInformation = "Resource Not Found",
+                    moreInformationTr = "Kaynak bulunamadı."
                 });
 
                 return Json(new {
                     httpCode = 404,
                     httpMessage = "Not Found",
-                    errorCode = "TR.OHVPS.Resource.NotFound"
+                    errorCode = "TR.OHVPS.Resource.NotFound",
+                    path = requestUri,
+                    timestamp = requestTime,
+                    id = responseId,
+                    moreInformation = "Resource Not Found",
+                    moreInformationTr = "Kaynak bulunamadı."
                 },new JsonSerializerOptions{
                     PropertyNamingPolicy = null
                 });
@@ -625,7 +639,7 @@ public class TokenController : Controller
                 SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, new {
                     httpCode = 500,
                     httpMessage = "Internal Server Error",
-                    errorCode = "TR.OHVPS.Server.InternalError"
+                    errorCode = "TR.OHVPS.Server.InternalError",
                 });
                 return Json(new {
                     httpCode = 500,
