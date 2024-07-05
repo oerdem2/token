@@ -9,7 +9,7 @@
 
 <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Burgan Bank</title>
     <link rel="stylesheet" href="/ebanking/login/assets/css/css/bootstrap-4.1.3/css/bootstrap.min.css" />
@@ -80,7 +80,11 @@
 
 
                                 <div class="BtnPan center">
-
+                                    @if(ViewBag.hasError){
+                                    <div class="alert alert-danger" role="alert">
+                                        @ViewBag.errorMessage
+                                    </div>
+                                    }
                                     <button type="submit" class="Lbutton w100" please-wait-text="LÜTFEN BEKLEYİNİZ"
                                         id="submit-login">
                                         GİRİŞ YAP
@@ -179,4 +183,4 @@
     <script src="/ebanking/login/assets/js/site.js"></script>
 </body>
 
-</html>
+</html> 

@@ -160,15 +160,9 @@ namespace amorphie.token.Services.Consent
         public async Task<ServiceResponse> CheckAuthorizeForInstutitionConsent(Guid consentId, string citizenshipNo)
         {
             var httpClient = _httpClientFactory.CreateClient("Consent");
-            StringContent req = new StringContent(JsonSerializer.Serialize(new
-            {
-                consentId = consentId,
-                tckn = citizenshipNo
-            }), System.Text.Encoding.UTF8, "application/json");
-
-            var httpResponseMessage = await httpClient.PostAsync(
-                "OpenBankingConsentHHS/CheckAuthorizeForInstutitionConsent", req);
-                
+            StringContent req = new StringContent("", System.Text.Encoding.UTF8, "application/json");
+            
+            var httpResponseMessage = await httpClient.SendAsync(new HttpRequestMessage(){Method=HttpMethod.Post, RequestUri = new Uri(Configuration["ConsentBaseAddress"]+"OpenBankingConsentHHS/CheckAuthorizeForInstitutionConsent?consentId="+consentId+"&tckn="+citizenshipNo)});
             if (httpResponseMessage.IsSuccessStatusCode)
             {
                 return new ServiceResponse() { StatusCode = 200 };
