@@ -402,7 +402,17 @@ public class AuthorizeController : Controller
         {
             ViewBag.isOn = "X";
         }
-        
+
+        if(!string.IsNullOrWhiteSpace(authorizationRequest.error_message))
+        {
+            ViewBag.hasError = true;
+            ViewBag.errorMessage = Encoding.UTF8.GetString(Convert.FromBase64String(authorizationRequest.error_message));
+        }
+        else
+        {
+            ViewBag.hasError = false;
+        }
+
         var loginModel = new OpenBankingLogin
         {
             consentId = authorizationRequest.riza_no
