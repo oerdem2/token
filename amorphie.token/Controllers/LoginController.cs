@@ -290,7 +290,11 @@ public class LoginController : Controller
                 if(checkAuthorize.StatusCode != 200)
                 {
                     //TODO
-                    return StatusCode(500);
+                    return RedirectToAction("OpenBankingAuthorize","Authorize",new
+                    {
+                        riza_no=openBankingLoginRequest.consentId,
+                        error_message = Convert.ToBase64String(Encoding.UTF8.GetBytes("Kurumsal açık bankacılık işlemine izin vermelisiniz."))
+                    });
                 }
             }
 

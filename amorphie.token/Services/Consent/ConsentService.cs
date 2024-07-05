@@ -247,10 +247,9 @@ namespace amorphie.token.Services.Consent
         {
             try
             {
-                await _daprClient.InvokeMethodAsync<dynamic, dynamic>(Configuration["ConsentServiceAppName"], "OpenBankingConsentHHS/CheckAuthorizeForInstutitionConsent", new
+                await _daprClient.InvokeMethodAsync<dynamic, dynamic>(Configuration["ConsentServiceAppName"], "OpenBankingConsentHHS/CheckAuthorizeForInstutitionConsent?consentId="+consentId+"&tckn="+citizenshipNo, new
                 {
-                    consentId = consentId,
-                    tckn = citizenshipNo
+                    
                 });
 
                 return new ServiceResponse()
