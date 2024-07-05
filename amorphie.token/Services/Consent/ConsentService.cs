@@ -208,6 +208,74 @@ namespace amorphie.token.Services.Consent
                 };
             }
         }
+
+        public async Task<ServiceResponse> UpdateConsentInOtp(Guid consentId, string citizenshipNo)
+        {
+            try
+            {
+                await _daprClient.InvokeMethodAsync<dynamic, dynamic>(Configuration["ConsentServiceAppName"], "OpenBankingConsentHHS/UpdateConsentInOtp", new
+                {
+                    id = consentId,
+                    userTckn = citizenshipNo
+                });
+
+                return new ServiceResponse()
+                {
+                    StatusCode = 200,
+                    Detail = ""
+                };
+            }
+            catch (InvocationException ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = (int)ex.Response.StatusCode,
+                    Detail = await ex.Response.Content.ReadAsStringAsync()
+                };
+            }
+            catch (System.Exception ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = 500,
+                    Detail = ex.ToString()
+                };
+            }
+        }
+
+        public async Task<ServiceResponse> CheckAuthorizeForInstutitionConsent(Guid consentId, string citizenshipNo)
+        {
+            try
+            {
+                await _daprClient.InvokeMethodAsync<dynamic, dynamic>(Configuration["ConsentServiceAppName"], "OpenBankingConsentHHS/CheckAuthorizeForInstutitionConsent", new
+                {
+                    consentId = consentId,
+                    tckn = citizenshipNo
+                });
+
+                return new ServiceResponse()
+                {
+                    StatusCode = 200,
+                    Detail = ""
+                };
+            }
+            catch (InvocationException ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = (int)ex.Response.StatusCode,
+                    Detail = await ex.Response.Content.ReadAsStringAsync()
+                };
+            }
+            catch (System.Exception ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = 500,
+                    Detail = ex.ToString()
+                };
+            }
+        }
     }
 }
 
