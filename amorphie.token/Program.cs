@@ -180,12 +180,16 @@ internal partial class Program
             builder.Services.AddScoped<IClientService, ClientService>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ITagService, TagService>();
-            builder.Services.AddScoped<IRoleService, RoleService>();
+            builder.Services.AddScoped<IRoleService, RoleServiceLocal>();
             //builder.Services.AddScoped<IConsentService, ConsentService>();
             builder.Services.AddScoped<IConsentService, ConsentServiceLocal>();
             builder.Services.AddHttpClient("Consent", httpClient =>
             {
                 httpClient.BaseAddress = new Uri(builder.Configuration["ConsentBaseAddress"]!);
+            });
+            builder.Services.AddHttpClient("Role", httpClient =>
+            {
+                httpClient.BaseAddress = new Uri(builder.Configuration["RoleBaseAddress"]!);
             });
         }
 
