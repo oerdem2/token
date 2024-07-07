@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using amorphie.token.core.Models.InternetBanking;
+using amorphie.token.core.Models.Role;
 using amorphie.token.data;
 using amorphie.token.Services.Role;
 using Microsoft.EntityFrameworkCore;
@@ -57,7 +58,13 @@ namespace amorphie.token.Services.Migration
             }).ToList());
 
             var roleDefinitions = await _ibDatabaseContext.RoleDefinition.ToListAsync();
-            
+            await _roleService.MigrateRoleDefinitions(roleDefinitions.Select(i => new RoleDefinitionDto{
+                Description = i.Description!,
+                Key = i.Key,
+                Id = i.Id,
+                Status = i.IsActive.Equals(1) ? "active" : "deactive",
+                Tags = ["amorphie"]
+            }).ToList());
 
             return new ServiceResponse
             {
