@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using amorphie.token.core.Models.InternetBanking;
+using amorphie.token.core.Models.Role;
 using amorphie.token.data;
+using amorphie.token.Services.Role;
 using Microsoft.EntityFrameworkCore;
 
 namespace amorphie.token.Services.Migration
@@ -12,10 +14,12 @@ namespace amorphie.token.Services.Migration
     {
         private readonly IbDatabaseContext _ibDatabaseContext;
         private readonly IUserService _userService;
-        public MigrationService(IbDatabaseContext ibDatabaseContext, IUserService userService, IConfiguration configuration, ILogger<MigrationService> logger) : base(logger, configuration)
+        private readonly IRoleService _roleService;
+        public MigrationService(IbDatabaseContext ibDatabaseContext, IRoleService roleService, IUserService userService, IConfiguration configuration, ILogger<MigrationService> logger) : base(logger, configuration)
         {
             _ibDatabaseContext = ibDatabaseContext;
             _userService = userService;
+            _roleService = roleService;
         }
 
         public async Task<ServiceResponse> MigrateStaticData()
@@ -51,6 +55,15 @@ namespace amorphie.token.Services.Migration
                 Key = i.Key,
                 Priority = i.Priority,
                 ValueTypeClr = i.ValueTypeClr
+            }).ToList());
+
+            var roleDefinitions = await _ibDatabaseContext.RoleDefinition.ToListAsync();
+            await _roleService.MigrateRoleDefinitions(roleDefinitions.Select(i => new RoleDefinitionDto{
+                Description = i.Description!,
+                Key = i.Key,
+                Id = i.Id,
+                Status = i.IsActive.Equals(1) ? "active" : "deactive",
+                Tags = ["amorphie"]
             }).ToList());
 
             return new ServiceResponse

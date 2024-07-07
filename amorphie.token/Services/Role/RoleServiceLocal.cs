@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using amorphie.token.core.Models.Role;
 
@@ -55,6 +57,24 @@ namespace amorphie.token.Services.Role
             else
             {
                 return new ServiceResponse<RoleDefinitionDto>() { StatusCode = (int)httpResponseMessage.StatusCode };
+            }
+        }
+
+        public async Task<ServiceResponse> MigrateRoleDefinitions(List<RoleDefinitionDto> roleDefinitions)
+        {
+            var httpClient = _httpClientFactory.CreateClient("Role");
+            
+            var request = new StringContent(JsonSerializer.Serialize(roleDefinitions), Encoding.UTF8, "application/json");
+            var httpResponseMessage = await httpClient.PostAsync(
+                "roleDefinition/upsert", request);
+
+            if (httpResponseMessage.IsSuccessStatusCode)
+            {
+                return new ServiceResponse() { StatusCode = 200 };
+            }
+            else
+            {
+                return new ServiceResponse() { StatusCode = (int) httpResponseMessage.StatusCode };
             }
         }
     }
