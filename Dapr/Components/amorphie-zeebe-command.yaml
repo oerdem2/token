@@ -7,7 +7,7 @@ spec:
   version: v1
   metadata:
   - name: gatewayAddr
-    value: 10.180.141.16:30499
+    value: localhost:26500
   - name: gatewayKeepAlive
     value: 45s
   - name: usePlainTextConnection
