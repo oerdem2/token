@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using amorphie.token.core.Models.InternetBanking;
 using amorphie.token.core.Models.Role;
@@ -58,14 +59,15 @@ namespace amorphie.token.Services.Migration
             }).ToList());
 
             var roleDefinitions = await _ibDatabaseContext.RoleDefinition.ToListAsync();
-            await _roleService.MigrateRoleDefinitions(roleDefinitions.Select(i => new RoleDefinitionDto{
+            
+            var resp = await _roleService.MigrateRoleDefinitions(roleDefinitions.Select(i => new RoleDefinitionDto{
                 Description = i.Description!,
                 Key = i.Key,
                 Id = i.Id,
                 Status = i.IsActive.Equals(1) ? "active" : "deactive",
                 Tags = ["amorphie"]
             }).ToList());
-
+            Logger.LogInformation("Migrate Role Response Code : " + JsonSerializer.Serialize(resp));
             return new ServiceResponse
             {
                 StatusCode = 200
