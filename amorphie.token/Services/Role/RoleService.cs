@@ -75,5 +75,35 @@ namespace amorphie.token.Services.Role
                 };
             }
         }
+
+        public async Task<ServiceResponse> MigrateRoleDefinitions(List<RoleDefinitionDto> roleDefinitions)
+        {
+            try
+            {
+                await _daprClient.InvokeMethodAsync(Configuration["RoleServiceAppName"], $"roleDefinition/upsert",roleDefinitions);
+
+                return new ServiceResponse()
+                {
+                    StatusCode = 200,
+                    Detail = ""
+                };
+            }
+            catch (InvocationException ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = (int)ex.Response.StatusCode,
+                    Detail = await ex.Response.Content.ReadAsStringAsync()
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = 500,
+                    Detail = ex.ToString()
+                };
+            }
+        }
     }
 }
