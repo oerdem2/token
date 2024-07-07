@@ -32,9 +32,9 @@ namespace amorphie.token.Middlewares
                 variables.errorCode = "exception-error";
                 variables.errorMessage = ex.ToString();
 
-                Console.WriteLine(ex.ToString());
                 transactionService.Logon.Error = ex.ToString();
                 transactionService.Logon.LogonStatus = LogonStatus.Failed;
+                
                 try
                 {
                     await daprClient.InvokeBindingAsync(configuration["ZeebeCommand"], "throw-error", variables);
@@ -52,7 +52,6 @@ namespace amorphie.token.Middlewares
                 variables.errorCode = "exception-error";
                 variables.errorMessage = ex.ToString();
 
-                Console.WriteLine(ex.ToString());
                 transactionService.Logon.Error = ex.ToString();
                 transactionService.Logon.LogonStatus = LogonStatus.Failed;
 

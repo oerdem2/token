@@ -1,11 +1,13 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: zeebe-local
+  name: amorphie-otp-process-check-otp
 spec:
-  type: bindings.zeebe.command
+  type: bindings.zeebe.jobworker
   version: v1
   metadata:
+  - name: jobType
+    value: amorphie-otp-process-check-otp
   - name: gatewayAddr
     value: 10.180.141.16:30499
   - name: gatewayKeepAlive
