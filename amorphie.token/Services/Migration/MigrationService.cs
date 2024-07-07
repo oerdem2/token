@@ -64,7 +64,7 @@ namespace amorphie.token.Services.Migration
                 Description = i.Description!,
                 Key = i.Key,
                 Id = i.Id,
-                Status = i.IsActive.Equals(1) ? "active" : "deactive",
+                Status = i.IsActive.Equals(true) ? "active" : "deactive",
                 Tags = ["amorphie"]
             }).ToList());
             Logger.LogInformation("Migrate Role Response Code : " + JsonSerializer.Serialize(resp));
