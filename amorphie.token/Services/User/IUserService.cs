@@ -22,4 +22,5 @@ public interface IUserService
     public Task<ServiceResponse> MigrateSecurityImage(MigrateSecurityImageRequest migrateSecurityImageRequest);
     public Task<ServiceResponse> MigrateSecurityImages(List<SecurityImageRequestDto> securityImageRequestDtos);
     public Task<ServiceResponse> MigrateSecurityQuestions(List<SecurityQuestionRequestDto> securityQuestionRequestDtos);
+    public Task<ServiceResponse<GetPublicDeviceDto>> GetPublicDevice(string clientCode, string reference);
 }

@@ -530,6 +530,58 @@ public class UserService : ServiceBase, IUserService
         }
     }
 
+    public async Task<ServiceResponse<GetPublicDeviceDto>> GetPublicDevice(string clientCode, string reference)
+    {
+        try
+        {
+            var res = await _daprClient.InvokeMethodAsync<GetPublicDeviceDto>(HttpMethod.Get, Configuration["UserServiceAppName"], $"/public/device/{clientCode}/{reference}");
+            return new ServiceResponse<GetPublicDeviceDto>()
+            {
+                StatusCode = 200,
+                Detail = "Success",
+                Response = res
+            };
+        }
+        catch (InvocationException ex)
+        {
+
+            if ((int)ex.Response.StatusCode >= 400 && (int)ex.Response.StatusCode < 500)
+            {
+                if ((int)ex.Response.StatusCode == 404)
+                {
+                    return new ServiceResponse<GetPublicDeviceDto>()
+                    {
+                        StatusCode = 404,
+                        Detail = "User Device Not Found"
+                    };
+                }
+                return new ServiceResponse<GetPublicDeviceDto>()
+                {
+                    StatusCode = (int)ex.Response.StatusCode,
+                    Detail = "User Device Not Found"
+                };
+            }
+            else
+            {
+                Logger.LogError("An Error Occured At User Device Invocation | Detail:" + ex.ToString());
+                return new ServiceResponse<GetPublicDeviceDto>()
+                {
+                    StatusCode = 500,
+                    Detail = "Server Error"
+                };
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Logger.LogError("An Error Occured At User Device Invocation | Detail:" + ex.ToString());
+        }
+        return new ServiceResponse<GetPublicDeviceDto>()
+        {
+            StatusCode = 500,
+            Detail = "Server Error"
+        };
+    }
+
     public async Task<ServiceResponse<IEnumerable<SecurityQuestionDto>>> GetSecurityQuestions()
     {
         try

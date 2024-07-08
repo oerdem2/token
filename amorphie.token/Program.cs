@@ -7,6 +7,7 @@ using amorphie.token.data;
 using amorphie.token.Middlewares;
 using amorphie.token.Modules.Login;
 using amorphie.token.Services.Card;
+using amorphie.token.Services.Cardion;
 using amorphie.token.Services.ClaimHandler;
 using amorphie.token.Services.Consent;
 using amorphie.token.Services.FlowHandler;
@@ -237,6 +238,13 @@ internal partial class Program
 
         builder.Services.AddRefitClient<IPasswordRememberCard>()
         .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["cardValidationUri"]!));
+        
+        builder.Services.AddRefitClient<ICardionService>()
+            .ConfigureHttpClient(c =>
+            {
+                c.BaseAddress = new Uri(builder.Configuration["Cardion:BaseAddress"]!);
+                c.DefaultRequestHeaders.Add("Authorization", builder.Configuration["Cardion:ApiKey"]!);
+            });
 
         builder.Services.AddHttpClient("Enqura", httpClient =>
         {
