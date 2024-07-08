@@ -156,6 +156,14 @@ namespace amorphie.token.Modules.Login
                 .ExcludeFromDescription()
                 .Produces(StatusCodes.Status200OK);
 
+            app.MapPost("/amorphie-ekyc-verify-results", EkycStatusCheck.CheckForNonDeposit)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+
+            app.MapPost("/amorphie-remember-password-sms", RememberPasswordSms.SendTempPassworSms)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+
             app.MapGet("/amorphie-login-test", () =>
             {
                 dynamic dd = new ExpandoObject();

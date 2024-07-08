@@ -26,21 +26,22 @@ public static class EkycSelfServiceCheck
 
 
 
-        bool selfServiceCheck = false;
+       
         
-        var ocrStatus =Convert.ToBoolean(body.GetProperty("OcrStatus").ToString());
-        var nfcStatus =Convert.ToBoolean(body.GetProperty("NfcStatus").ToString());
-        var faceStatus =Convert.ToBoolean(body.GetProperty("FaceReadStatus").ToString());
+        // var ocrStatus =Convert.ToBoolean(body.GetProperty("OcrStatus").ToString());
+        // var nfcStatus =Convert.ToBoolean(body.GetProperty("NfcStatus").ToString());
+        // var faceStatus =Convert.ToBoolean(body.GetProperty("FaceReadStatus").ToString());
 
-        if(ocrStatus && nfcStatus && faceStatus){
-             selfServiceCheck = true;
-        }
+        // if(ocrStatus && nfcStatus && faceStatus){
+        //      selfServiceCheck = true;
+        // }
            
-
+        dataChanged.additionalData.exitTransition = "amorphie-ekyc-exit";
       
 
         variables.Add("Init", true);
-        variables.Add("IsSelfServiceCheck", selfServiceCheck);
+        variables.Add("EkycResult", "SelfServiceCompleted");
+        variables.Add("EkycButton","None"); // self service ile işlem sonlandığında üst flow için
         
         
         return Results.Ok(variables);
