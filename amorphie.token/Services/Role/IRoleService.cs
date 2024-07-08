@@ -8,5 +8,6 @@ namespace amorphie.token.Services.Role
     {
         public Task<ServiceResponse<IEnumerable<ConsentDto>>> GetConsents(string clientCode,string reference);
         public Task<ServiceResponse<RoleDefinitionDto>> GetRoleDefinition(Guid roleId);
+        public Task<ServiceResponse> MigrateRoleDefinitions(List<RoleDefinitionDto> roleDefinitions);
     }
 }

@@ -9,5 +9,6 @@ namespace amorphie.token.core.Models.InternetBanking
     {
         public int Key{get;set;}
         public bool IsActive{get;set;}
+        public string? Description{get;set;}
     }
 }

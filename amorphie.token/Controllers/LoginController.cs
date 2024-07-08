@@ -259,6 +259,45 @@ public class LoginController : Controller
     {
         try
         {
+            var consentResponse = await _consentService.GetConsent(openBankingLoginRequest.consentId);
+            if(consentResponse.StatusCode != 200)
+            {
+                //TODO
+                return StatusCode(500);
+            }
+            var consent = consentResponse.Response;
+            var consentData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent!.additionalData!);
+            var ohkTur = string.Empty;
+            if (consent.consentType.Equals("OB_Account"))
+            {
+                ohkTur = consentData!.kmlk.ohkTur.ToString();
+            }
+            if (consent.consentType.Equals("OB_Payment"))
+            {
+                try
+                {
+                    ohkTur = consentData!.odmBsltm.kmlk.ohkTur.ToString();
+                }
+                catch (Exception ex)
+                {
+                    ohkTur = "";
+                }
+                
+            }
+            if(ohkTur.Equals("K"))
+            {
+                var checkAuthorize = await _consentService.CheckAuthorizeForInstutitionConsent(openBankingLoginRequest.consentId, openBankingLoginRequest.username);
+                if(checkAuthorize.StatusCode != 200)
+                {
+                    //TODO
+                    return RedirectToAction("OpenBankingAuthorize","Authorize",new
+                    {
+                        riza_no=openBankingLoginRequest.consentId,
+                        error_message = Convert.ToBase64String(Encoding.UTF8.GetBytes("Kurumsal açık bankacılık işlemine izin vermelisiniz."))
+                    });
+                }
+            }
+
             var userResponse = await _ibUserService.GetUser(openBankingLoginRequest.username!);
             if (userResponse.StatusCode != 200)
             {
@@ -417,6 +456,13 @@ public class LoginController : Controller
         var sendedOtpValue = await _daprClient.GetStateAsync<string>(_configuration["DAPR_STATE_STORE_NAME"], $"{otpRequest.transactionId}_Login_Otp_Code");
         if (sendedOtpValue.Equals(otpRequest.OtpValue))
         {
+            if(string.IsNullOrWhiteSpace(consent!.userTCKN))
+            {
+                var user = await _daprClient.GetStateAsync<LoginResponse>(_configuration["DAPR_STATE_STORE_NAME"], $"{consent.id}_User");
+
+                await _consentService.UpdateConsentInOtp(consent.id,user.Reference);
+            }
+
             if (consent!.consentType!.Equals("OB_Account"))
             {
                 return Redirect(_configuration["OpenBankingAccount"] + otpRequest.consentId);

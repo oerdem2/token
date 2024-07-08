@@ -81,6 +81,7 @@ public class AuthorizationService : ServiceBase, IAuthorizationService
             }
             
             var client = clientResponse.Response;
+            authorizationResponse.Client = client!;
 
             if (string.IsNullOrEmpty(request.ResponseType) || request.ResponseType != "code")
             {
