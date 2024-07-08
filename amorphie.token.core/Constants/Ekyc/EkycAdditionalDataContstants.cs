@@ -604,8 +604,15 @@ public static class EkycAdditionalDataContstants
             new EkycButtonModel{
                     type= "primary",
                     itemNo = 1,
-                    text = "Tekrar Dene",
-                    action = "retry"
+                    text = "Görüntülü Görüşme",
+                    action = "ReturnVideoCall"
+            },
+            new EkycButtonModel{
+                    type= "secondary",
+                    itemNo = 2,
+                    text = "Giriş Ekranına Dön",
+                    action = "Exit",
+                    transition="amorphie-ekyc-exit"
             }
         }
 
@@ -647,11 +654,18 @@ public static class EkycAdditionalDataContstants
             }
         },
         buttons = new List<EkycButtonModel>{
-            new EkycButtonModel{
+           new EkycButtonModel{
                     type= "primary",
                     itemNo = 1,
-                    text = "Tekrar Dene",
-                    action = "retry"
+                    text = "Görüntülü Görüşme",
+                    action = "ReturnVideoCall"
+            },
+            new EkycButtonModel{
+                    type= "secondary",
+                    itemNo = 2,
+                    text = "Giriş Ekranına Dön",
+                    action = "Exit",
+                    transition="amorphie-ekyc-exit"
             }
         }
 
@@ -695,8 +709,15 @@ public static class EkycAdditionalDataContstants
             new EkycButtonModel{
                     type= "primary",
                     itemNo = 1,
-                    text = "Tekrar Dene",
-                    action = "retry"
+                    text = "Görüntülü Görüşme",
+                    action = "ReturnVideoCall"
+            },
+            new EkycButtonModel{
+                    type= "secondary",
+                    itemNo = 2,
+                    text = "Giriş Ekranına Dön",
+                    action = "Exit",
+                    transition="amorphie-ekyc-exit"
             }
         }
 

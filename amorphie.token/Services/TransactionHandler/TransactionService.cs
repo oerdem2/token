@@ -10,6 +10,8 @@ namespace amorphie.token.Services.TransactionHandler
         public string IpAddress { get => _ip; set => _ip = value; }
         private Logon _logon;
         public Logon Logon { get => _logon; set => _logon = value; }
+        private int _roleKey{get;set;}
+        public int RoleKey { set => _roleKey = value; get => _roleKey;}
         private DatabaseContext _databaseContext;
 
         public TransactionService(ILogger<TransactionService> logger, IConfiguration configuration, DatabaseContext databaseContext) : base(logger, configuration)

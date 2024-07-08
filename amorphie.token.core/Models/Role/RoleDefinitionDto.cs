@@ -11,6 +11,9 @@ namespace amorphie.token.core.Models.Role
         [JsonPropertyName("id")]
         public Guid Id{get;set;}
         [JsonPropertyName("tags")]
-        public IEnumerable<string> Tags{get;set;}
+        public string[]? Tags { get; set; }
+        public string? Status { get; set; }
+        public int Key { get; set; }
+        public string Description { get; set; } = string.Empty;
     }
 }

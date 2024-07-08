@@ -3,9 +3,11 @@ using System.Text.Json;
 using amorphie.core.Extension;
 using amorphie.token;
 using amorphie.token.core;
+using amorphie.token.core.Models.Profile;
 using amorphie.token.data;
 using amorphie.token.Middlewares;
 using amorphie.token.Modules.Login;
+using amorphie.token.Modules.OtpProcess;
 using amorphie.token.Services.Card;
 using amorphie.token.Services.Cardion;
 using amorphie.token.Services.ClaimHandler;
@@ -21,6 +23,7 @@ using amorphie.token.Services.Role;
 using amorphie.token.Services.TransactionHandler;
 using Elastic.Apm.NetCoreAll;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using Refit;
 using Serilog;
 using Serilog.Formatting.Compact;
@@ -30,7 +33,6 @@ internal partial class Program
    
     private static async Task Main(string[] args)
     {
-        
         var builder = WebApplication.CreateBuilder(args);
         builder.Configuration.AddEnvironmentVariables();
         var client = new DaprClientBuilder().Build();
@@ -179,12 +181,16 @@ internal partial class Program
             builder.Services.AddScoped<IClientService, ClientService>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ITagService, TagService>();
-            builder.Services.AddScoped<IRoleService, RoleService>();
+            builder.Services.AddScoped<IRoleService, RoleServiceLocal>();
             //builder.Services.AddScoped<IConsentService, ConsentService>();
             builder.Services.AddScoped<IConsentService, ConsentServiceLocal>();
             builder.Services.AddHttpClient("Consent", httpClient =>
             {
                 httpClient.BaseAddress = new Uri(builder.Configuration["ConsentBaseAddress"]!);
+            });
+            builder.Services.AddHttpClient("Role", httpClient =>
+            {
+                httpClient.BaseAddress = new Uri(builder.Configuration["RoleBaseAddress"]!);
             });
         }
 
@@ -277,6 +283,7 @@ internal partial class Program
         app.MapHealthChecks("/health");
 
         app.MapLoginWorkflowEndpoints();
+        app.MapOtpProcessWorkflowEndpoints();
 
         // Configure the HTTP request pipeline.
         if (!app.Environment.IsDevelopment())

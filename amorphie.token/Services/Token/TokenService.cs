@@ -204,7 +204,8 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
 
             //TODO
             //Set Claims Dynamically
-            if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
+            if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6") || _client.code.Equals("BurganApp")
+            || _client.code.Equals("OnApp") || _client.code.Equals("WebApp"))
             {
                 tokenClaims.Add(new Claim("email", _profile?.data?.emails?.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
                 tokenClaims.Add(new Claim("phone_number", _profile?.data?.phones?.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString() ?? ""));
@@ -216,12 +217,23 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 {
                     try
                     {
-                        var roleName = _role.Tags.First();
-                        //TODO - Throw Exception For Else Case
-                        if(!string.IsNullOrWhiteSpace(roleName))
-                            tokenClaims.Add(new Claim("role", roleName));
+                        Console.WriteLine("Transaction Role Key : "+_transactionService.RoleKey);
+                        if(_transactionService.RoleKey == 10 || _transactionService.RoleKey == 20)
+                        {
+                            if(_transactionService.RoleKey == 10)
+                                tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                            else
+                                tokenClaims.Add(new Claim("role", "Viewer"));
+                        }
                         else
-                            tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                        {
+                            var roleName = _role.Tags.First();
+                            //TODO - Throw Exception For Else Case
+                            if(!string.IsNullOrWhiteSpace(roleName))
+                                tokenClaims.Add(new Claim("role", roleName));
+                            else
+                                tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                        }
                     }
                     catch (Exception)
                     {
@@ -814,22 +826,24 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             };
         }
 
-        var mordorUserResponse = await internetBankingUserService.MordorGetUser(_tokenRequest.Username!);
-        if (mordorUserResponse.StatusCode == 200)
+        var role = await _ibContext.Role.Where(r => r.UserId.Equals(user!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
+        if(role is {} && (role.ExpireDate ?? DateTime.MaxValue) > DateTime.Now)
         {
-            var mordorUser = mordorUserResponse.Response;
-
-            var role = await ibContextMordor.Role.Where(r => r.UserId.Equals(mordorUser!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
-            if(role is {} && (role.ExpireDate ?? DateTime.MinValue) > DateTime.Now)
+            var roleDefinition = await _ibContext.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive);
+            if(roleDefinition is {})
             {
-                var roleDefinition = await ibContextMordor.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive && d.Key.Equals(0));
-                if(roleDefinition is {})
-                {
+                if(roleDefinition.Key == 0)
+                {  
                     return new ServiceResponse<TokenResponse>()
                     {
                         StatusCode = 471,
-                        Detail = "User is Not Active"
+                        Detail = ErrorHelper.GetErrorMessage(LoginErrors.NotAuthorized, "en-EN")
                     };
+                    
+                }
+                else
+                {
+                    _transactionService.RoleKey = roleDefinition.Key;
                 }
             }
         }
