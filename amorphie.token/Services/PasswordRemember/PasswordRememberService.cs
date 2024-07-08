@@ -1,6 +1,8 @@
 ﻿
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using amorphie.token.core.Models.RememberPassword;
 using Microsoft.Extensions.Options;
 using Refit;
 
@@ -10,13 +12,16 @@ public class PasswordRememberService : ServiceBase, IPasswordRememberService
 {
     // private readonly CardValidationOptions options;
     private readonly IPasswordRememberCard _passwordRememberCard;
+    private readonly DaprClient _daprClient;
     public PasswordRememberService(
         ILogger<PasswordRememberService> logger,
         IConfiguration configuration,
+        DaprClient daprClient,
         IPasswordRememberCard passwordRememberCard) : base(logger, configuration)
     {
 
         _passwordRememberCard = passwordRememberCard;
+        _daprClient = daprClient;
     }
 
     public async Task<ServiceResponse<bool>> HasCardAsync(string citizenshipNo)
@@ -75,14 +80,80 @@ public class PasswordRememberService : ServiceBase, IPasswordRememberService
 
     }
 
-    public Task<ServiceResponse<bool>> VideoCallAvailableAsync()
+    public async Task<ServiceResponse<bool>> VideoCallAvailableAsync()
     {
-        throw new NotImplementedException();
+
+        var token = await GetVideoCallTokenAsync();
+
+        if(token is not null){
+            using var httpClient = new HttpClient();
+            var header = new AuthenticationHeaderValue("Bearer", token);
+
+            httpClient.DefaultRequestHeaders.Authorization = header;
+
+            var resp = await httpClient.GetAsync(Configuration["VideoCallAvailable"]);
+
+            if (resp.IsSuccessStatusCode)
+            {
+                var response = await resp.Content.ReadFromJsonAsync<VideoCallAvailableResponse>();
+                TimeSpan activeStartHour = TimeSpan.Parse(response.ActiveStartHour);
+                TimeSpan activeDueHour = TimeSpan.Parse(response.ActiveDueHour);
+                if (activeStartHour < DateTime.Now.TimeOfDay && DateTime.Now.TimeOfDay < activeDueHour){
+                    return new ServiceResponse<bool> { Response = true };
+                }
+
+            }
+
+
+        }
+        
+        return new ServiceResponse<bool> { Response = false };
     }
 
 
-    // private Task<string> GetToken()
-    // {
-    //     return null;
-    // }
+    private async Task<string> GetVideoCallTokenAsync()
+    {
+
+        var token = await _daprClient.GetStateAsync<string>(Configuration["DAPR_STATE_STORE_NAME"], "amorphie-videoCallToken");
+
+        if (token is not null)
+        {
+            return token;
+        }
+
+
+        using var httpClient = new HttpClient();
+
+        StringContent request = new(JsonSerializer.Serialize(new CardValidationOptions
+        {
+            ClientId = Configuration["VideoCallTokenClientId"],
+            ClientSecret = Configuration["VideoCallTokenClientSecret"],
+            GrantType = "client_credentials",
+            Scopes = new List<string>() { "openId" }
+        }), Encoding.UTF8, "application/json");
+
+        var httpResponse = httpClient.PostAsync(Configuration["VideoCallAvailableTokenUrl"], request);
+        if (!httpResponse.Result.IsSuccessStatusCode)
+        {
+            var resp = await httpResponse.Result.Content.ReadFromJsonAsync<TokenResponse>();
+            if (resp is not null)
+            {
+
+                var metadata = new Dictionary<string, string>
+            {
+                { "ttlInSeconds", resp.ExpiresIn.ToString() }
+            };
+
+            // Save Redis 
+
+                await _daprClient.SaveStateAsync<string>(Configuration["DAPR_STATE_STORE_NAME"], "amorphie-videoCallToken", resp!.AccessToken, metadata: metadata);
+            }
+
+
+        }
+
+
+
+        return token;
+    }
 }
