@@ -172,6 +172,24 @@ namespace amorphie.token.Modules.Login
             .ExcludeFromDescription()
             .Produces(StatusCodes.Status200OK);
 
+            #region IvrLogin Endpoints
+            app.MapPost("/amorphie-ivr-login-customer-channels", IvrLoginEndpoints.GetCustomerChannelsAsync)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+            
+            app.MapPost("/amorphie-ivr-login-generate-otp", IvrLoginEndpoints.GenerateOtpAsync)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+            
+            app.MapPost("/amorphie-ivr-login-type", IvrLoginEndpoints.LoginTypeAsync)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+            
+            app.MapPost("/amorphie-ivr-login-check-sms-otp", IvrLoginEndpoints.CheckSmsOtpAsync)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+            #endregion
+
         }
 
 
