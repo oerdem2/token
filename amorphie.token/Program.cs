@@ -277,9 +277,11 @@ internal partial class Program
         var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
         db.Database.Migrate();
       
-        var migrateService = scope.ServiceProvider.GetRequiredService<IMigrationService>();
-        await migrateService.MigrateStaticData();
-
+        if (app.Environment.IsDevelopment())
+        {
+            var migrateService = scope.ServiceProvider.GetRequiredService<IMigrationService>();
+            await migrateService.MigrateStaticData();
+        }
         app.MapHealthChecks("/health");
 
         app.MapLoginWorkflowEndpoints();
