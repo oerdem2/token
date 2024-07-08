@@ -62,6 +62,7 @@ public record CheckSmsOtpInput
 
 public record CheckOtpOutput
 {
+    public bool Valid { get; set; }
 }
 
 #endregion
@@ -196,6 +197,7 @@ public static class IvrLoginEndpoints
     )
     {
         var response = new Response<CheckOtpOutput>();
+        response.Data = new CheckOtpOutput();
         var generatedCode = await daprClient.GetStateAsync<string?>(configuration["DAPR_STATE_STORE_NAME"],
             $"{input.CallUuid}_IvrLogin_Otp_Code");
         if (generatedCode == null)
@@ -209,6 +211,7 @@ public static class IvrLoginEndpoints
         {
             response.Code = 200;
             response.Message = "Success";
+            response.Data.Valid = true;
             return Results.Ok(response);
         }
 
