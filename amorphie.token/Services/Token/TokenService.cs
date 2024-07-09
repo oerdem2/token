@@ -100,17 +100,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 identityInfo.claims = identityInfo.claims.Where(c => !IsUserBasedClaim(c)).ToList();
             }
             var populatedClaims = await _claimService.PopulateClaims(identityInfo.claims, _user, _profile, collectionUser : _collectionUser);
-            if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
-            {
-                claims.Add(new Claim("client_id", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
-                claims.Add(new Claim("email", _profile?.data?.emails?.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
-                claims.Add(new Claim("phone_number", _profile?.data?.phones?.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString() ?? ""));
-                claims.Add(new Claim("role", "FullAuthorized"));
-                claims.Add(new Claim("credentials", "IsInternetCustomer###1"));
-                claims.Add(new Claim("credentials", "IsAnonymous###1"));
-                claims.Add(new Claim("azp", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
-                claims.Add(new Claim("logon_ip", _transactionService.IpAddress ?? "undefined"));
-            }
+            
             claims.AddRange(populatedClaims);
 
         }
@@ -201,58 +191,42 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 tokenClaims.Add(new Claim("isTemporary", "1"));
 
             tokenClaims.Add(new Claim("client_id", _client.code ?? _client.id));
+        
+            
+        }
 
-            //TODO
-            //Set Claims Dynamically
-            if (_client.id.Equals("3fa85f64-5717-4562-b3fc-2c963f66afa6") || _client.code.Equals("BurganApp")
-            || _client.code.Equals("OnApp") || _client.code.Equals("WebApp"))
+        if(_user?.Reference == "99999999998")
+        {
+            tokenClaims.Add(new Claim("role", "Viewer"));
+        }
+        else
+        {
+            try
             {
-                tokenClaims.Add(new Claim("email", _profile?.data?.emails?.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? ""));
-                tokenClaims.Add(new Claim("phone_number", _profile?.data?.phones?.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString() ?? ""));
-                if(_user?.Reference == "99999999998")
+                Console.WriteLine("Transaction Role Key : "+_transactionService.RoleKey);
+                if(_transactionService.RoleKey == 10 || _transactionService.RoleKey == 20)
                 {
-                    tokenClaims.Add(new Claim("role", "Viewer"));
+                    if(_transactionService.RoleKey == 10)
+                        tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                    else
+                        tokenClaims.Add(new Claim("role", "Viewer"));
                 }
                 else
                 {
-                    try
-                    {
-                        Console.WriteLine("Transaction Role Key : "+_transactionService.RoleKey);
-                        if(_transactionService.RoleKey == 10 || _transactionService.RoleKey == 20)
-                        {
-                            if(_transactionService.RoleKey == 10)
-                                tokenClaims.Add(new Claim("role", "FullAuthorized"));
-                            else
-                                tokenClaims.Add(new Claim("role", "Viewer"));
-                        }
-                        else
-                        {
-                            var roleName = _role.Tags.First();
-                            //TODO - Throw Exception For Else Case
-                            if(!string.IsNullOrWhiteSpace(roleName))
-                                tokenClaims.Add(new Claim("role", roleName));
-                            else
-                                tokenClaims.Add(new Claim("role", "FullAuthorized"));
-                        }
-                    }
-                    catch (Exception)
-                    {
+                    var roleName = _role.Tags.First();
+                    //TODO - Throw Exception For Else Case
+                    if(!string.IsNullOrWhiteSpace(roleName))
+                        tokenClaims.Add(new Claim("role", roleName));
+                    else
                         tokenClaims.Add(new Claim("role", "FullAuthorized"));
-                    }
-                    
                 }
-                
-                
-                tokenClaims.Add(new Claim("credentials", "IsInternetCustomer###1"));
-                tokenClaims.Add(new Claim("credentials", "IsAnonymous###1"));
-                tokenClaims.Add(new Claim("azp", "3fa85f64-5717-4562-b3fc-2c963f66afa6"));
-                tokenClaims.Add(new Claim("uppercase_name", (_profile?.data?.profile?.uppercase_name ?? string.Empty) + (string.IsNullOrWhiteSpace(_profile?.data?.profile?.middleName) ? string.Empty : " "+_profile?.data?.profile?.middleName)));
-                tokenClaims.Add(new Claim("uppercase_surname", (_profile?.data?.profile?.uppercase_surname ?? string.Empty)));
-                tokenClaims.Add(new Claim("logon_ip", _transactionService.IpAddress ?? "undefined"));
             }
-
-            
+            catch (Exception)
+            {
+                tokenClaims.Add(new Claim("role", "FullAuthorized"));
+            }
         }
+
         tokenClaims.Add(new Claim("jti", _tokenInfoDetail.AccessTokenId.ToString()));
         
         if (_user != null)
@@ -443,6 +417,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             };
         }
         _client = clientResponse.Response;
+        _transactionService.Client = _client;
 
         if (!_client!.allowedgranttypes!.Any(g => g.GrantType == tokenRequest.GrantType))
         {
@@ -546,6 +521,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         _tokenRequest = tokenRequest;
 
         _client = client;
+        _transactionService.Client = _client;
         _user = user;
         _profile = profile;
         _deviceId = deviceId;
@@ -603,6 +579,8 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         }
 
         _client = clientResponse.Response;
+        _transactionService.Client = _client;
+
         if (!_client!.allowedgranttypes!.Any(g => g.GrantType == tokenRequest.GrantType))
         {
             return new ServiceResponse<TokenResponse>()
@@ -771,6 +749,8 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         }
 
         _client = clientResponse.Response;
+        _transactionService.Client = _client;
+
         if (!_client!.allowedgranttypes!.Any(g => g.GrantType == tokenRequest.GrantType))
         {
             return new ServiceResponse<TokenResponse>()
@@ -1012,6 +992,8 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         }
 
         _client = clientResponse.Response;
+        _transactionService.Client = _client;
+
         if (!_client!.allowedgranttypes!.Any(g => g.GrantType == tokenRequest.GrantType))
         {
             return new ServiceResponse<TokenResponse>()
@@ -1098,6 +1080,8 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         }
 
         _client = clientResponse.Response;
+        _transactionService.Client = _client;
+
         if (!_client!.allowedgranttypes!.Any(g => g.GrantType == tokenRequest.GrantType))
         {
             return new ServiceResponse<TokenResponse>()
@@ -1162,6 +1146,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         }
 
         _client = clientResponse.Response;
+        _transactionService.Client = _client;
 
         if (!_client!.allowedgranttypes!.Any(g => g.GrantType == tokenRequest.GrantType))
         {
@@ -1244,6 +1229,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         }
 
         _client = clientResponse.Response;
+        _transactionService.Client = _client;
 
         if (!_client!.allowedgranttypes!.Any(g => g.GrantType == tokenRequest.GrantType))
         {
