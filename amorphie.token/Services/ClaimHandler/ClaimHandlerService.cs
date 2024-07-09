@@ -42,13 +42,12 @@ namespace amorphie.token.Services.ClaimHandler
                     return null;
                 Type t = _transactionService!.GetType();
 
-                var property = t.GetProperties().FirstOrDefault(p => p.Name.ToLower(new CultureInfo("en-US",false)) == claimPath[1]);
-                if (property == null)
-                    return null;
-                if (property!.GetValue(_transactionService!) == null)
-                    return null;
+                var propValue = GetPropertyValue(_transactionService, string.Join('.', claimPath.ToList().Skip(1)));
 
-                return property!.GetValue(_transactionService!)!.ToString()!;
+                if (propValue != null)
+                    return propValue!.ToString()!;
+                else
+                    return null;
             }
             if (claimPath.First().Equals("tag"))
             {
@@ -260,7 +259,7 @@ namespace amorphie.token.Services.ClaimHandler
             }
             else
             {
-                var property = src.GetType().GetProperties().FirstOrDefault(p => p.Name.ToLower() == propName.ToLower());
+                var property = src.GetType().GetProperties().FirstOrDefault(p => p.Name.ToLower(new CultureInfo("en-US",false)) == propName.ToLower());
                 if(property is {})
                 {
                     if(property.PropertyType.IsEnum)
