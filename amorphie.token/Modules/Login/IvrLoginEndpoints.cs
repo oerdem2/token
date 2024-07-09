@@ -41,6 +41,7 @@ public record LoginTypeInput
 public record LoginTypeOutput
 {
     public string OtpType { get; set; }
+    public string PhoneNumber { get; set;}
 }
 
 public record GenerateOtpInput
@@ -161,7 +162,8 @@ public static class IvrLoginEndpoints
         response.Message = "Success";
         response.Data = new LoginTypeOutput()
         {
-            OtpType = "SmsOtp"
+            OtpType = "SmsOtp",
+            PhoneNumber = $"{mobilePhone.countryCode}{mobilePhone.prefix}{mobilePhone.number}"
         };
         return Results.Ok(response);
     }
