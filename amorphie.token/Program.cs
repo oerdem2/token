@@ -46,7 +46,6 @@ internal partial class Program
                 Console.WriteLine("Dapr Sidecar Doesn't Respond " + ex.ToString());
                 return;
             }
-
         }
 
 
