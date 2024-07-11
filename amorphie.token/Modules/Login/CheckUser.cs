@@ -111,7 +111,7 @@ namespace amorphie.token.Modules.Login
                     }
                     else
                     {
-                        transactionService.RoleKey = roleDefinition.Key;
+                        variables.UserRoleKey = roleDefinition.Key;
                     }
                 }
             }

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using amorphie.token.core.Extensions;
 using amorphie.token.core.Models.Profile;
 using amorphie.token.data;
+using amorphie.token.Modules.OtpProcess;
 using amorphie.token.Services.TransactionHandler;
 using Microsoft.AspNetCore.Mvc;
 
@@ -61,7 +62,16 @@ namespace amorphie.token.Modules.Login
 
             string xforwardedfor = body.GetProperty("Headers").GetProperty("xforwardedfor").ToString();
             var ipAddress = xforwardedfor.Split(",")[0].Trim();
-
+            try
+            {
+                string UserRoleKey = body.GetProperty("UserRoleKey").ToString();
+                transactionService.RoleKey = Convert.ToInt32(UserRoleKey);
+            }
+            catch (Exception)
+            {
+                transactionService.RoleKey = 10;
+            }
+            
             transactionService.IpAddress = ipAddress;
             var deviceId = body.GetProperty("Headers").GetProperty("xdeviceid").ToString();
             var installationId = body.GetProperty("Headers").GetProperty("xtokenid").ToString();

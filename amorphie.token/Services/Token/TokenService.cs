@@ -223,7 +223,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             }
             catch (Exception)
             {
-                tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                tokenClaims.Add(new Claim("role", "Viewer"));
             }
         }
 
