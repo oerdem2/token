@@ -12,6 +12,13 @@ namespace amorphie.token.core.Constants
         public static readonly IEnumerable<User> Users = new List<User>()
         {
             {new User{
+                Name = "HASAN KAĞAN",
+                Surname = "BAYRAM",
+                CitizenshipNo = "61363026298",
+                LoginUser = "U06385",
+                Role = Role.Agent
+            }},
+            {new User{
                 Name = "ATILAY",
                 Surname = "KARAKABAK",
                 CitizenshipNo = "32867085234",
