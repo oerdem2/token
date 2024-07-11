@@ -8,7 +8,7 @@ public interface ICardionService
     Task<CardionResponse<List<CardionCardValidatePinResult>>> GetCardListAsync(string customerId);
 
     [Post("/configuration/{customerId}/validatepin")]
-    Task<CardionResponse<CardionCardValidatePinResult>> CardValidatePin(string customerId, [Body] CardionCardValidatePinRequest input);
+    Task<CardionResponse<CardionCardValidatePinResult>> CardValidatePinAsync(string customerId, [Body] CardionCardValidatePinRequest input);
 }
 
 public class CardionResponse<T> where T: class, new()
