@@ -188,6 +188,10 @@ namespace amorphie.token.Modules.Login
             app.MapPost("/amorphie-ivr-login-check-sms-otp", IvrLoginEndpoints.CheckSmsOtpAsync)
                 .ExcludeFromDescription()
                 .Produces(StatusCodes.Status200OK);
+            
+            app.MapPost("/amorphie-ivr-login-authorize", IvrLoginEndpoints.AuthorizeAsync)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
             #endregion
 
         }

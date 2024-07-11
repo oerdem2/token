@@ -36,12 +36,13 @@ public record LoginTypeInput
 {
     public string CallUuid { get; set; }
     public string CitizenshipNo { get; set; }
+    public string PinCode { get; set; }
 }
 
 public record LoginTypeOutput
 {
     public string OtpType { get; set; }
-    public string PhoneNumber { get; set;}
+    public string PhoneNumber { get; set; }
 }
 
 public record GenerateOtpInput
@@ -58,12 +59,27 @@ public record GenerateOtpOutput
 public record CheckSmsOtpInput
 {
     public string CallUuid { get; set; }
+    public string CitizenshipNo { get; set; }
     public string OtpCode { get; set; }
 }
 
 public record CheckOtpOutput
 {
     public bool Valid { get; set; }
+}
+
+public class AuthorizationInput
+{
+    public string? ResponseType { get; set; }
+    public string? ClientId { get; set; }
+    public string[]? Scope { get; set; }
+    public string? State { get; set; }
+    public string UserName { get; set; }
+}
+
+public class AuthorizationOutput
+{
+    public string Code { get; set; }
 }
 
 #endregion
@@ -114,6 +130,7 @@ public static class IvrLoginEndpoints
         [FromBody] LoginTypeInput input,
         [FromServices] IProfileService profileService,
         [FromServices] IUserService userService,
+        [FromServices] ICardionService cardionService,
         IConfiguration configuration
     )
     {
@@ -128,6 +145,15 @@ public static class IvrLoginEndpoints
 
         var userInfo = userInfoResult.Response;
         if (userInfo!.data!.profile!.Equals("customer") || !userInfo!.data!.profile!.status!.Equals("active"))
+        {
+            response.Code = 595;
+            response.Message = "User is not active";
+            return Results.Json(response, statusCode: response.Code);
+        }
+
+        var pinCheckResponse = await CardPinCheckAsync(cardionService, input.CitizenshipNo, input.PinCode);
+
+        if (pinCheckResponse.Code == 200)
         {
             response.Code = 595;
             response.Message = "User is not active";
@@ -149,7 +175,7 @@ public static class IvrLoginEndpoints
                 return Results.Ok(response);
             }
         }
-        
+
         var mobilePhone = GetMobilePhone(userInfo);
         if (mobilePhone == null)
         {
@@ -157,7 +183,7 @@ public static class IvrLoginEndpoints
             response.Message = "Device and mobile are not active";
             return Results.Json(response, statusCode: response.Code);
         }
-        
+
         response.Code = 200;
         response.Message = "Success";
         response.Data = new LoginTypeOutput()
@@ -167,7 +193,7 @@ public static class IvrLoginEndpoints
         };
         return Results.Ok(response);
     }
-    
+
     [ApiExplorerSettings(IgnoreApi = true)]
     public static async Task<IResult> GenerateOtpAsync(
         [FromBody] GenerateOtpInput input,
@@ -176,12 +202,12 @@ public static class IvrLoginEndpoints
     )
     {
         var response = new Response<GenerateOtpOutput>();
-        
+
         var code = GenerateOtpCode();
         await daprClient.SaveStateAsync(configuration["DAPR_STATE_STORE_NAME"], $"{input.CallUuid}_IvrLogin_Otp_Code",
             code,
             metadata: new Dictionary<string, string> { { "ttlInSeconds", "180" } });
-        
+
         response.Code = 200;
         response.Message = "Success";
         response.Data = new GenerateOtpOutput()
@@ -190,7 +216,7 @@ public static class IvrLoginEndpoints
         };
         return Results.Ok(response);
     }
-    
+
     [ApiExplorerSettings(IgnoreApi = true)]
     public static async Task<IResult> CheckSmsOtpAsync(
         [FromBody] CheckSmsOtpInput input,
@@ -222,8 +248,44 @@ public static class IvrLoginEndpoints
         return Results.Json(response, statusCode: response.Code);
     }
 
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public static async Task<IResult> AuthorizeAsync(
+        [FromBody] AuthorizationInput input,
+        [FromServices] IAuthorizationService authorizationService,
+        [FromServices] IProfileService profileService,
+        [FromServices] IUserService userService,
+        IConfiguration configuration
+    )
+    {
+        var response = new Response<AuthorizationOutput>();
+        response.Data = new AuthorizationOutput();
+        var userInfoResult = await profileService.GetCustomerSimpleProfile(input.UserName);
+        var userResponse = await userService.GetUserByReference(input.UserName);
+        var authorize = await authorizationService.Authorize(new AuthorizationServiceRequest
+        {
+            ClientId = input.ClientId,
+            ResponseType = input.ResponseType,
+            Scope = input.Scope,
+            State = input.State,
+            User = userResponse.Response,
+            Profile = userInfoResult.Response
+        });
+
+        if (authorize.StatusCode == 200)
+        {
+            response.Code = 200;
+            response.Message = "Success";
+            response.Data.Code = authorize!.Response!.Code;
+            return Results.Ok(response);
+        }
+
+        response.Code = authorize.StatusCode;
+        response.Message = authorize.Detail;
+        return Results.Json(response, statusCode: response.Code);
+    }
+
     #region Private Methods
-    
+
     private static string GenerateOtpCode()
     {
         var rand = new Random();
@@ -298,6 +360,35 @@ public static class IvrLoginEndpoints
                 Code = state ? 200 : 593,
                 Message = state ? "Success" : "IsUserStatusActive null",
                 Data = checkResponse.StatusCode == 200 && checkResponse.Result.Any()
+            };
+        }
+        catch (Exception e)
+        {
+            return new Response<bool>()
+            {
+                Code = 599,
+                Message = "General error",
+                Data = false
+            };
+        }
+    }
+
+    private static async Task<Response<bool>> CardPinCheckAsync(ICardionService cardionService, string citizenshipNo,
+        string pinCode)
+    {
+        try
+        {
+            var checkResponse = await cardionService.CardValidatePinAsync(citizenshipNo,
+                new CardionCardValidatePinRequest()
+                {
+                    Pin = pinCode
+                });
+            var state = checkResponse.StatusCode == 200;
+            return new Response<bool>()
+            {
+                Code = state ? 200 : 593,
+                Message = state ? "Success" : "Pin invalid",
+                Data = checkResponse.StatusCode == 200
             };
         }
         catch (Exception e)
