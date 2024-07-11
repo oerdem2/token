@@ -132,10 +132,12 @@ public class PasswordRememberService : ServiceBase, IPasswordRememberService
             Scopes = new List<string>() { "openId" }
         }), Encoding.UTF8, "application/json");
 
+
         var httpResponse = await httpClient.PostAsync(Configuration["VideoCallAvailableTokenUrl"], request);
         if (httpResponse.IsSuccessStatusCode)
         {
             var resp = await httpResponse.Content.ReadFromJsonAsync<TokenResponse>();
+
             if (resp is not null)
             {
 
@@ -145,7 +147,9 @@ public class PasswordRememberService : ServiceBase, IPasswordRememberService
             };
 
             // Save Redis 
+
                 token = resp!.AccessToken;
+
                 await _daprClient.SaveStateAsync<string>(Configuration["DAPR_STATE_STORE_NAME"], "amorphie-videoCallToken", resp!.AccessToken, metadata: metadata);
             }
 
