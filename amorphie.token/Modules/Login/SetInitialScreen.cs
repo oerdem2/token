@@ -34,6 +34,7 @@ namespace amorphie.token.Modules.Login
 
             var ibUserSerialized = body.GetProperty("ibUserSerialized").ToString();
             IBUser ibUser = JsonSerializer.Deserialize<IBUser>(ibUserSerialized);
+            
 
             var securityQuestion = await ibContext.Question.Where(q => q.UserId == ibUser.Id)
                 .OrderByDescending(q => q.CreatedAt).FirstOrDefaultAsync();
@@ -42,6 +43,7 @@ namespace amorphie.token.Modules.Login
 
 
             dynamic variables = new Dictionary<string, dynamic>();
+
             var resultList = new List<string>();
             if (securityQuestion == null)
             {
@@ -77,6 +79,8 @@ namespace amorphie.token.Modules.Login
             }
 
             variables.Add("pages", resultList);
+            variables.Add("citizenshipNumber", ibUser.UserName);
+           
             dataChanged.additionalData.pages = resultList;
 
 
