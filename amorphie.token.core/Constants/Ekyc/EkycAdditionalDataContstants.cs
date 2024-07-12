@@ -273,7 +273,7 @@ public static class EkycAdditionalDataContstants
                      type="secondary",
                      itemNo=2,
                      text="Görüntülü Görüşmeye Bağlan",
-                     action="skip"
+                     action="Skip"
 
                   }
                 }
@@ -440,7 +440,7 @@ public static class EkycAdditionalDataContstants
                      type="secondary",
                      itemNo=2,
                      text="Görüntülü Görüşmeye Bağlan",
-                     action="skip"
+                     action="Skip"
 
                   }
                 }
