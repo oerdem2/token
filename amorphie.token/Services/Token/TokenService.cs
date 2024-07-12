@@ -203,7 +203,6 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         {
             try
             {
-                Console.WriteLine("Transaction Role Key : "+_transactionService.RoleKey);
                 if(_transactionService.RoleKey == 10 || _transactionService.RoleKey == 20)
                 {
                     if(_transactionService.RoleKey == 10)
@@ -286,7 +285,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 {
                     DateTime lastAccessDate = DateTime.Parse(consentData!.hspBlg.iznBlg.erisimIzniSonTrh.ToString());
                     var DateDiffAsDay = Convert.ToInt32((lastAccessDate - DateTime.Now).TotalDays);
-                    refreshDuration = DateDiffAsDay > 30 ? (30 * 24 * 60 * 60) : (DateDiffAsDay * 24 * 60 * 60); 
+                    refreshDuration = DateDiffAsDay * 24 * 60 * 60; 
                 }
         
                 if(_consent.consentType.Equals("OB_Payment"))
@@ -472,6 +471,39 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                     StatusCode = 470,
                     Detail = "User is disabled"
                 };
+            }
+
+            var dodgeUserResponse = await _internetBankingUserService.GetUser(refreshTokenInfo.Reference!);
+            if (dodgeUserResponse.StatusCode != 200)
+            {
+                return new ServiceResponse<TokenResponse>()
+                {
+                    StatusCode = 404,
+                    Detail = "User Not Found"
+                };
+            }
+            var dodgeUser = dodgeUserResponse.Response;
+
+            var role = await _ibContext.Role.Where(r => r.UserId.Equals(dodgeUser!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
+            if(role is {} && (role.ExpireDate ?? DateTime.MaxValue) > DateTime.Now)
+            {
+                var roleDefinition = await _ibContext.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive);
+                if(roleDefinition is {})
+                {
+                    if(roleDefinition.Key == 0)
+                    {  
+                        return new ServiceResponse<TokenResponse>()
+                        {
+                            StatusCode = 471,
+                            Detail = ErrorHelper.GetErrorMessage(LoginErrors.NotAuthorized, "en-EN")
+                        };
+                        
+                    }
+                    else
+                    {
+                        _transactionService.RoleKey = roleDefinition.Key;
+                    }
+                }
             }
         }
         else
