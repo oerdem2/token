@@ -1,6 +1,5 @@
 
 using System.Dynamic;
-using amorphie.token.core;
 
 namespace amorphie.token.Modules.Login
 {
@@ -153,6 +152,14 @@ namespace amorphie.token.Modules.Login
                 .Produces(StatusCodes.Status200OK);
             
             app.MapPost("/amorphie-ekyc-set-additional-data", EkycSetAdditionalData.Add)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+
+            app.MapPost("/amorphie-ekyc-verify-results", EkycStatusCheck.CheckForNonDeposit)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+
+            app.MapPost("/amorphie-remember-password-sms", RememberPasswordSms.SendTempPassworSms)
                 .ExcludeFromDescription()
                 .Produces(StatusCodes.Status200OK);
 

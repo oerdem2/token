@@ -111,13 +111,11 @@ namespace amorphie.token.Modules.Login
                     }
                     else
                     {
-                        transactionService.RoleKey = roleDefinition.Key;
+                        variables.UserRoleKey = roleDefinition.Key;
                     }
                 }
             }
             
-            
-
             var userInfoResult = await profileService.GetCustomerSimpleProfile(request.Username!);
             if (userInfoResult.StatusCode != 200)
             {
@@ -126,7 +124,7 @@ namespace amorphie.token.Modules.Login
                 variables.wrongCredentials = true;
                 return Results.Ok(variables);
             }
-
+        
             var userInfo = userInfoResult.Response;
 
             if (userInfo!.data!.profile!.Equals("customer") || !userInfo!.data!.profile!.status!.Equals("active"))

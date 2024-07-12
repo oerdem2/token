@@ -38,11 +38,11 @@ namespace amorphie.token.Modules.Login
             var securityQuestion = await ibContext.Question.Where(q => q.UserId == ibUser.Id)
                 .OrderByDescending(q => q.CreatedAt).FirstOrDefaultAsync();
 
+            
+
 
             dynamic variables = new Dictionary<string, dynamic>();
-            var resultList = new List<string>(){
-                "PAGE_IDENTITY_CARD"
-            };
+            var resultList = new List<string>();
             if (securityQuestion == null)
             {
                 variables.Add("status", true);
@@ -60,18 +60,24 @@ namespace amorphie.token.Modules.Login
                 else
                 {
                     variables.Add("status", true);
-                    resultList.Add("PAGE_QUESTION");
+                    resultList.Add("QUESTION_PAGE");
                 }
             }
 
             var hasCards = await passwordRememberService.HasCardAsync(request.Username);
             if (hasCards.Response)
             {
-                resultList.Add("PAGE_CARD");
+                resultList.Add("CARD_PAGE");
+            }
+            var videoCallAvailable = await passwordRememberService.VideoCallAvailableAsync();
+            // Has nfc ?
+
+            if(videoCallAvailable.Response){
+                resultList.Add("IDENTITY_PAGE");
             }
 
             variables.Add("pages", resultList);
-
+            dataChanged.additionalData.pages = resultList;
 
 
 

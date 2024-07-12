@@ -25,7 +25,7 @@ public static class EkycOcrCheck
         targetObject.Data = dataChanged;
 
         var ocrIsSuccess = dataChanged.entityData.IsSuccess;
-        
+
 
         bool identityNoCompatible = false;
         bool ocrStatus = false;
@@ -35,12 +35,14 @@ public static class EkycOcrCheck
 
         var callType = body.GetProperty("CallType").ToString();
         var instance = body.GetProperty("Instance").ToString();
-        var name = body.GetProperty("Name").ToString();
-        var surname = body.GetProperty("Surname").ToString();
+        // var name = body.GetProperty("Name").ToString();
+        // var surname = body.GetProperty("Surname").ToString();
         dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
         dataChanged.additionalData.callType = callType;
-        dataChanged.additionalData.customerName = name; // bu kısımları doldur.
-        dataChanged.additionalData.customerSurname = surname;
+        var ApplicantFullName = body.GetProperty("ApplicantFullName").ToString();
+        dataChanged.additionalData.applicantFullName = ApplicantFullName;
+        // dataChanged.additionalData.customerName = name; // bu kısımları doldur.
+        // dataChanged.additionalData.customerSurname = surname;
         dataChanged.additionalData.instanceId = instance;
 
         var sessionId = "";
@@ -49,7 +51,7 @@ public static class EkycOcrCheck
         #region GetSession after connection state
         try
         {
-            GetIntegrationInfoModels.Data sessionIntegrationInfo = await ekycService.GetSessionByIntegrationReferenceAsync(Guid.Parse(transactionId));
+            GetIntegrationInfoModels.Data sessionIntegrationInfo = await ekycService.GetSessionByIntegrationReferenceAsync(instance);
 
             if (sessionIntegrationInfo is not null && sessionIntegrationInfo.SessionUId is not null)
             {
@@ -100,43 +102,48 @@ public static class EkycOcrCheck
             //     showTyrAgainButton = false;
             // }
             ocrCurrentFailedCount++;
-            variables.Add("FailedStepName","ocr");
+            variables.Add("FailedStepName", "ocr");
             // ocr failed
+
+
+            if (!ocrStatus && ocrIsSuccess)
+            {
+                dataChanged.additionalData.pages = new List<EkycPageModel>
+                {
+                    EkycAdditionalDataContstants.StandartItem,
+                    EkycAdditionalDataContstants.OcrFailedItemForIdentityMatch
+                };
+            }
+
             if (!ocrIsSuccess)
             {
                 dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
                     EkycAdditionalDataContstants.StandartItem,
                     EkycAdditionalDataContstants.OcrFailedItemForRetry
-                    
+
                 };
 
-                
 
-            }
 
-            if(!ocrStatus){
-                dataChanged.additionalData.pages = new List<EkycPageModel>
-                {
-                    EkycAdditionalDataContstants.StandartItem,
-                    EkycAdditionalDataContstants.OcrFailedItemForIdentityMatch
-                }; 
             }
 
         }
 
-        if(ocrStatus && ocrIsSuccess){
-             dataChanged.additionalData.pages = new List<EkycPageModel>
+        if (ocrStatus && ocrIsSuccess)
+        {
+            dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
                     EkycAdditionalDataContstants.StandartItem,
-                    EkycAdditionalDataContstants.OcrSuccessForNfcItem
-                }; 
+                    EkycAdditionalDataContstants.OcrSuccessForNfcItem,
+                    EkycAdditionalDataContstants.NfcActivePassiveAuth
+                };
         }
-
+        dataChanged.additionalData.exitTransition = "amorphie-ekyc-exit";
         // dynamic variables = new ExpandoObject();
         variables.Add("Init", true);
         variables.Add("OcrStatus", ocrStatus);
-        
+
         variables.Add("CurrentOcrFailedCount", ocrCurrentFailedCount);
         variables.Add("HasNfc", hasNfc);
 

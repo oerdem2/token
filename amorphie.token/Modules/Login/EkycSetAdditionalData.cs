@@ -26,34 +26,39 @@ public static class EkycSetAdditionalData
 
         var callType = body.GetProperty("CallType").ToString();
         var instance = body.GetProperty("Instance").ToString();
-        var name = body.GetProperty("Name").ToString();
-        var surname = body.GetProperty("Surname").ToString();
+        // var name = body.GetProperty("Name").ToString();
+        // var surname = body.GetProperty("Surname").ToString();
         dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
         dataChanged.additionalData.callType = callType;
-        dataChanged.additionalData.customerName = name; // bu kısımları doldur.
-        dataChanged.additionalData.customerSurname = surname;
+        var ApplicantFullName = body.GetProperty("ApplicantFullName").ToString();
+        dataChanged.additionalData.applicantFullName = ApplicantFullName;
+        // dataChanged.additionalData.customerName = name; // bu kısımları doldur.
+        // dataChanged.additionalData.customerSurname = surname;
         dataChanged.additionalData.instanceId = instance;
 
         var stepName = body.GetProperty("ForStepname").ToString();
 
-        if(stepName=="connection"){
+        if (stepName == "connection")
+        {
             dataChanged.additionalData.pages = new List<EkycPageModel>{
                 EkycAdditionalDataContstants.StandartItem
             };
         }
 
-        if(stepName=="ocr"){
-             dataChanged.additionalData.pages = new List<EkycPageModel>{
+        if (stepName == "ocr")
+        {
+            dataChanged.additionalData.pages = new List<EkycPageModel>{
                 EkycAdditionalDataContstants.StandartItem
             };
         }
 
-        if(stepName=="init"){
-             dataChanged.additionalData.pages = new List<EkycPageModel>{
+        if (stepName == "init")
+        {
+            dataChanged.additionalData.pages = new List<EkycPageModel>{
                 EkycAdditionalDataContstants.StandartItem
             };
         }
-
+        dataChanged.additionalData.exitTransition = "amorphie-ekyc-exit";
 
 
 

@@ -8,4 +8,11 @@ public interface IPasswordRememberService
     /// <param name="citizenshipNo"></param>
     /// <returns>Service response bool</returns>
     Task<ServiceResponse<bool>> HasCardAsync(string citizenshipNo);
+
+    /// <summary>
+    /// Get ekyc settings and check if video call is available
+    /// for remember password process
+    /// </summary>
+    /// <returns></returns>
+    Task<ServiceResponse<bool>> VideoCallAvailableAsync();
 }

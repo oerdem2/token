@@ -35,7 +35,9 @@
     <PackageReference Include="System.ServiceModel.NetTcp" Version="8.0.0" />
     <PackageReference Include="System.ServiceModel.Security" Version="6.0.0" />
 	  <PackageReference Include="System.Text.Regularexpressions" Version="4.3.1" />
-	  <PackageReference Include="System.Security.Cryptography.pkcs" Version="6.0.3" />
+	  <PackageReference Include="System.Security.Cryptography.pkcs" Version="8.0.0" />
+    <PackageReference Include="System.Formats.asn1" Version="8.0.1" />
+    <PackageReference Include="System.Text.Json" Version="8.0.4" />
   </ItemGroup>
 
   <ItemGroup>

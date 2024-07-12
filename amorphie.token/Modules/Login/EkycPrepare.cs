@@ -1,5 +1,8 @@
 ﻿using amorphie.token.core;
+using amorphie.token.core.Models.Profile;
+using amorphie.token.Services.Profile;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using System.Dynamic;
 using System.Runtime.CompilerServices;
 namespace amorphie.token;
@@ -10,6 +13,7 @@ public static class EkycPrepare
     public static async Task<IResult> Prepare(
         [FromBody] dynamic body,
         [FromServices] IEkycService ekycService,
+        [FromServices] IProfileService profileService,
         IConfiguration configuration
 
     )
@@ -23,31 +27,39 @@ public static class EkycPrepare
 
         dynamic targetObject = new System.Dynamic.ExpandoObject();
         targetObject.Data = dataChanged;
-        var citizenShipNumber = dataChanged.entityData.UserName;
+        string citizenShipNumber = dataChanged.entityData.UserName;
         var callType = dataChanged.entityData.CallType;
-        var wfId = dataChanged.entityData.WfId;
-        var constCallType = ekycService.GetCallType(callType);
-        var instance = Guid.NewGuid();
+        string wfId = dataChanged.entityData.WfId;
+        string ApplicantFullName = dataChanged.entityData.ApplicantFullName;
+        string constCallType = ekycService.GetCallType(callType);
+        var instance = transactionId.ToString();
         var isSelfServiceAvaible = true;
-        if (constCallType == EkycCallTypeConstants.Mevduat_ON || callType == EkycCallTypeConstants.Mevduat_HEPSIBURADA)
+        bool hasWfId = false;
+        // WFID -- or zeen
+        if (constCallType == EkycCallTypeConstants.Mevduat_ON ||
+         callType == EkycCallTypeConstants.Mevduat_HEPSIBURADA || 
+        callType == EkycCallTypeConstants.Mevduat_BRGN)
         {
-            //var wfId = body.GetProperty("Wfi").ToString(); TODO: use this part test or prod.
-            wfId = transactionId;
-            Guid.TryParse(wfId, out instance);
+           
+            if(!wfId.IsNullOrEmpty())
+            {
+                hasWfId = true;
+            }
+
+            instance = wfId.ToString();
             isSelfServiceAvaible = false;
 
         }
-        else
-        {
+       
 
-            Guid.TryParse(transactionId, out instance);
+        if (!hasWfId)
+        {
+            // Add prefix for creating session
+            instance = $"{constCallType.ToLower()}_{instance}";
+            await ekycService.CreateSession(instance, citizenShipNumber, callType);
         }
 
 
-
-
-
-        var registerResult = await ekycService.CreateSession(instance, citizenShipNumber, callType);
 
         //Register the enqura 
 
@@ -58,13 +70,13 @@ public static class EkycPrepare
 
         // Set config variables :) 
         variables.Add("Init", true);
-        variables.Add("IsSessionCreated", registerResult);
         variables.Add("CurrentOcrFailedCount", 0);
         variables.Add("CurrentNfcFailedCount", 0);
         variables.Add("CurrentFaceFailedCount", 0);
         variables.Add("CallType", constCallType);
-        variables.Add("Name",registerResult.Name);
-        variables.Add("Surname",registerResult.Surname);
+        // variables.Add("Name", registerResult.Name);
+        // variables.Add("Surname", registerResult.Surname);
+        variables.Add("ApplicantFullName", ApplicantFullName);
         variables.Add("IsSelfServiceAvaible", isSelfServiceAvaible);
         variables.Add("Instance", instance);
 
@@ -81,7 +93,9 @@ public static class EkycPrepare
         var nfcMaxCount = Convert.ToInt32(configuration["EkycNfcFailMaxTryCountDefault"]);
         var faceMaxCount = Convert.ToInt32(configuration["EkycFaceFailMaxTryCountDefault"]);
 
-        if (constCallType == EkycCallTypeConstants.Mevduat_ON || constCallType == EkycCallTypeConstants.Mevduat_BRGN)
+        if (constCallType == EkycCallTypeConstants.Mevduat_ON || 
+        constCallType == EkycCallTypeConstants.Mevduat_BRGN || 
+        callType == EkycCallTypeConstants.Mevduat_HEPSIBURADA)
         {
             ocrMinCount = Convert.ToInt32(configuration["EkycOcrFailMinTryCountMevduat"]);
             nfcMinCount = Convert.ToInt32(configuration["EkycNfcFailMinTryCountMevduat"]);
@@ -107,15 +121,16 @@ public static class EkycPrepare
 
         dataChanged.additionalData = new ExpandoObject();
         dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
-        dataChanged.additionalData.callType = registerResult.CallType;
-        dataChanged.additionalData.customerName = registerResult.Name; // bu kısımları doldur.
-        dataChanged.additionalData.customerSurname = registerResult.Surname;
+        dataChanged.additionalData.callType = constCallType;
+        // dataChanged.additionalData.customerName = registerResult.Name; // bu kısımları doldur.
+        // dataChanged.additionalData.customerSurname = registerResult.Surname;
         dataChanged.additionalData.instanceId = instance;
+        dataChanged.additionalData.applicantFullName = ApplicantFullName;
         dataChanged.additionalData.pages = new List<EkycPageModel>{
-            new EkycPageModel 
-            { 
-                type="waiting", 
-                image="wait", 
+            new EkycPageModel
+            {
+                type="waiting",
+                image="wait",
                 title="Kimlik Okuma Adımları Yükleniyor",
                 navText = "Müşterimiz Ol",
                 popUp= new EkycPopUpModel{
@@ -138,9 +153,11 @@ public static class EkycPrepare
                         }
                     }
                 },
-                buttons = new List<EkycButtonModel>()  
+                buttons = new List<EkycButtonModel>()
             }
         };
+
+        dataChanged.additionalData.exitTransition = "amorphie-ekyc-exit";
 
 
 

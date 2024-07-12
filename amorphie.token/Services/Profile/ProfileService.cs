@@ -53,15 +53,16 @@ namespace amorphie.token.Services.Profile
         {
             if (_simpleProfileResponse != null)
                 return _simpleProfileResponse;
-
             var result = new ServiceResponse<SimpleProfileResponse>();
             try
             {
                 var apiResponse = await _simpleProfile.GetProfile(reference, Configuration["SimpleProfilePassword"]!);
                 apiResponse.data.profile.uppercase_name = apiResponse.data.profile.name;
                 apiResponse.data.profile.uppercase_surname = apiResponse.data.profile.surname;
-                apiResponse.data.profile.name = apiResponse?.data?.profile?.name?.ConvertTitleCase();
-                apiResponse.data.profile.surname = apiResponse.data.profile.surname?.ConvertTitleCase();
+                apiResponse.data.profile.currentMail = apiResponse?.data?.emails?.FirstOrDefault(m => m.type.Equals("personal"))?.address ?? "";
+                apiResponse.data.profile.currentPhone = apiResponse?.data?.phones?.FirstOrDefault(p => p.type.Equals("mobile"))?.ToString() ?? "";
+                apiResponse.data.profile.name = apiResponse?.data?.profile?.name?.Trim().ConvertTitleCase();
+                apiResponse.data.profile.surname = apiResponse.data.profile.surname?.Trim().ConvertTitleCase();
 
                 result.Response = apiResponse;
                 result.StatusCode = 200;
