@@ -4,7 +4,7 @@ namespace amorphie.token.Services.Cardion;
 
 public interface ICardionService
 {
-    [Get("/card/list/{customerId}")]
+    [Get("/card/minimallist/{customerId}")]
     Task<CardionResponse<List<CardionCardValidatePinResult>>> GetCardListAsync(string customerId);
 
     [Post("/configuration/{customerId}/validatepin")]
@@ -21,6 +21,9 @@ public class CardionResponse<T> where T: class, new()
 public class CardionCardListResult
 {
     public string CardId { get; set; }
+    public string EmbossName { get; set; }
+    public string CardType { get; set; }
+    public string StatCode { get; set; }
 }
 
 public class CardionCardValidatePinResult

@@ -4,6 +4,7 @@ using amorphie.token.core.Models.Profile;
 using amorphie.token.data;
 using amorphie.token.Services.Cardion;
 using amorphie.token.Services.InternetBanking;
+using amorphie.token.Services.Login;
 using amorphie.token.Services.Profile;
 using Microsoft.EntityFrameworkCore;
 
@@ -131,10 +132,19 @@ public static class IvrLoginEndpoints
         [FromServices] IProfileService profileService,
         [FromServices] IUserService userService,
         [FromServices] ICardionService cardionService,
+        [FromServices] ILoginService loginService,
         IConfiguration configuration
     )
     {
         var response = new Response<LoginTypeOutput>();
+        var migrateResult = await loginService.MigrateDodgeUserToAmorphie(input.CitizenshipNo);
+        if (migrateResult.StatusCode != 200)
+        {
+            response.Code = migrateResult.StatusCode;
+            response.Message = migrateResult.Detail;
+            return Results.Json(response, statusCode: response.Code);
+        }
+        
         var userInfoResult = await profileService.GetCustomerSimpleProfile(input.CitizenshipNo);
         if (userInfoResult.StatusCode != 200)
         {
@@ -254,13 +264,14 @@ public static class IvrLoginEndpoints
         [FromServices] IAuthorizationService authorizationService,
         [FromServices] IProfileService profileService,
         [FromServices] IUserService userService,
+        [FromServices ]ILoginService loginService,
         IConfiguration configuration
     )
     {
         var response = new Response<AuthorizationOutput>();
         response.Data = new AuthorizationOutput();
-        var userInfoResult = await profileService.GetCustomerSimpleProfile(input.UserName);
         var userResponse = await userService.GetUserByReference(input.UserName);
+        var userInfoResult = await profileService.GetCustomerSimpleProfile(input.UserName);
         var authorize = await authorizationService.Authorize(new AuthorizationServiceRequest
         {
             ClientId = input.ClientId,
@@ -276,6 +287,10 @@ public static class IvrLoginEndpoints
             response.Code = 200;
             response.Message = "Success";
             response.Data.Code = authorize!.Response!.Code;
+
+            await authorizationService.AssignUserToAuthorizationCode(userResponse.Response, authorize.Response.Code,
+                userInfoResult.Response);
+            
             return Results.Ok(response);
         }
 
