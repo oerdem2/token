@@ -306,7 +306,7 @@ public class TokenController : Controller
     public async Task<IActionResult> Token([FromQuery(Name = "code")] string code)
     {
         var tokenReq = new TokenRequest();
-        tokenReq.ClientId = "4fa85f64-5711-4562-b3fc-2c963f66afa6";
+        tokenReq.ClientId = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
         tokenReq.ClientSecret = "sercan";
         tokenReq.CodeVerifier = "123";
         tokenReq.Code = code;
@@ -613,24 +613,22 @@ public class TokenController : Controller
                     httpCode = 404,
                     httpMessage = "Not Found",
                     errorCode = "TR.OHVPS.Resource.NotFound",
-                    path = requestUri,
+                    path = requestUri.Value.FirstOrDefault(),
                     timestamp = requestTime,
                     id = responseId,
                     moreInformation = "Resource Not Found",
                     moreInformationTr = "Kaynak bulunamadı."
                 });
 
-                return Json(new {
+                return StatusCode(404,new {
                     httpCode = 404,
                     httpMessage = "Not Found",
                     errorCode = "TR.OHVPS.Resource.NotFound",
-                    path = requestUri,
+                    path = requestUri.Value.FirstOrDefault(),
                     timestamp = requestTime,
                     id = responseId,
                     moreInformation = "Resource Not Found",
                     moreInformationTr = "Kaynak bulunamadı."
-                },new JsonSerializerOptions{
-                    PropertyNamingPolicy = null
                 });
                 
             }
@@ -640,13 +638,21 @@ public class TokenController : Controller
                     httpCode = 500,
                     httpMessage = "Internal Server Error",
                     errorCode = "TR.OHVPS.Server.InternalError",
+                    path = requestUri.Value.FirstOrDefault(),
+                    timestamp = requestTime,
+                    id = responseId,
+                    moreInformation = "Internal Server Error",
+                    moreInformationTr = "Beklenmeyen bir hata oluştu."
                 });
-                return Json(new {
+                return StatusCode(500,new {
                     httpCode = 500,
                     httpMessage = "Internal Server Error",
-                    errorCode = "TR.OHVPS.Server.InternalError"
-                },new JsonSerializerOptions{
-                    PropertyNamingPolicy = null
+                    errorCode = "TR.OHVPS.Server.InternalError",
+                    path = requestUri.Value.FirstOrDefault(),
+                    timestamp = requestTime,
+                    id = responseId,
+                    moreInformation = "Internal Server Error",
+                    moreInformationTr = "Beklenmeyen bir hata oluştu."
                 });
             }
 
