@@ -1199,7 +1199,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 Detail = "Invalid Authorization Code"
             };
         }
-        Logger.LogError("Auth Code Info :" + JsonSerializer.Serialize(authorizationCodeInfo));
+        
         _user = authorizationCodeInfo.Subject;
         _profile = authorizationCodeInfo.Profile;
         _collectionUser = authorizationCodeInfo.CollectionUser;

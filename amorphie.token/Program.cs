@@ -275,6 +275,7 @@ internal partial class Program
 
         app.MapLoginWorkflowEndpoints();
         app.MapOtpProcessWorkflowEndpoints();
+        app.MapTokenFlowEndpoints();
 
         // Configure the HTTP request pipeline.
         if (!app.Environment.IsDevelopment())
