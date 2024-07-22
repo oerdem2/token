@@ -51,6 +51,14 @@ public class AuthorizeController : Controller
         _loginService = loginService;
     }
 
+    [HttpGet("/public/getAuthorize")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> GetAuthorize()
+    {
+        await Task.CompletedTask;
+        return Redirect("http://localhost:4900/public/Authorize?response_type=code&client_id=IbAndroidApp&state=test&scope=profile&redirect_uri=tt");
+    }
+
     [HttpPost("/public/get-user-info")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> GetUserInfo([FromForm] string access_token)
@@ -157,11 +165,9 @@ public class AuthorizeController : Controller
             });
             var authCode = authResponse.Response!.Code;
             return StatusCode(201,new{
-                yetkilendirmeKodu = new{
                     yetKod = authCode,
                     rizaNo = consentId,
                     rizaDrm =  "Y"
-                }
             });
         }
         return Forbid();
@@ -239,7 +245,7 @@ public class AuthorizeController : Controller
         HttpContext.Session.SetString("LoggedUser", JsonSerializer.Serialize(user.Response));
         // var session = Request.Cookies[".amorphie.token"];
         // HttpContext.Response.Cookies.Append(".amorphie.token",session!);
-        return Redirect(targetClient!.loginurl!);
+        return Ok(new{redirectUri = targetClient!.loginurl!});
     }
 
     [HttpPost("public/DodgeCreatePreLogin")]
