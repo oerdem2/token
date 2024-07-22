@@ -165,6 +165,7 @@ public class AuthorizeController : Controller
             });
             var authCode = authResponse.Response!.Code;
             return StatusCode(201,new{
+                    yetkilendirmeKodu = Guid.NewGuid().ToString(),
                     yetKod = authCode,
                     rizaNo = consentId,
                     rizaDrm =  "Y"
