@@ -165,11 +165,9 @@ public class AuthorizeController : Controller
             });
             var authCode = authResponse.Response!.Code;
             return StatusCode(201,new{
-                yetkilendirmeKodu = new{
                     yetKod = authCode,
                     rizaNo = consentId,
                     rizaDrm =  "Y"
-                }
             });
         }
         return Forbid();
