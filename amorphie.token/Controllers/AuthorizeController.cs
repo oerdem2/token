@@ -56,7 +56,7 @@ public class AuthorizeController : Controller
     public async Task<IActionResult> GetAuthorize()
     {
         await Task.CompletedTask;
-        return Redirect("http://localhost:4900/public/Authorize?response_type=code&client_id=IbAndroidApp&state=test&scope=profile&redirect_uri=https://fxtest.burgan.com.tr");
+        return Redirect("http://localhost:4900/public/Authorize?response_type=code&client_id=IbAndroidApp&state=test&scope=profile&redirect_uri=tt");
     }
 
     [HttpPost("/public/get-user-info")]
