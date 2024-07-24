@@ -198,6 +198,17 @@ namespace amorphie.token.Modules.Login
                 .Produces(StatusCodes.Status200OK);
             #endregion
 
+            app.MapPost("/amorphie-mobile-remember-password-switch-method", RememberPassword.SwitchMethod)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+            app.MapPost("/amorphie-mobile-remember-password-validate-card", ValidateCardAnswer.validateCardAnswer)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+
+            app.MapPost("/amorphie-mobile-remember-password-validate-question", ValidateSecretQuestionAnswer.validateSecretQuestionAnswer)
+                .ExcludeFromDescription()
+                .Produces(StatusCodes.Status200OK);
+
         }
 
 
