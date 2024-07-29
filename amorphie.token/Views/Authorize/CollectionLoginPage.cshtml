@@ -110,8 +110,13 @@
       </div>
     </div>
   </div>
-  <script src="/ebanking/login/assets/js/site.js"></script>
-  <script src="/ebanking/login/assets/js/signal.js"></script>
+<script>
+  var submitButton = document.getElementById("submit-login");
+  var loginForm = document.getElementById('login-form');
+  submitButton.addEventListener('click',async function(e){
+    loginForm.submit();
+  });
+</script> 
 </body>
 
 </html>
