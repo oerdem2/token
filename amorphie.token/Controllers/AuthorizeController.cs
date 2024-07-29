@@ -243,10 +243,29 @@ public class AuthorizeController : Controller
 
         var user = await _userService.GetUserByReference(createPreLoginRequest.scopeUser);
 
-        HttpContext.Session.SetString("LoggedUser", JsonSerializer.Serialize(user.Response));
-        // var session = Request.Cookies[".amorphie.token"];
-        // HttpContext.Response.Cookies.Append(".amorphie.token",session!);
-        return Ok(new{redirectUri = targetClient!.loginurl!});
+        var preLoginId = "Prelogin_"+Guid.NewGuid().ToString();
+        var preLoginInfo = new
+        {
+            user,
+            client = targetClient
+        };
+
+        await _daprClient.SaveStateAsync(_configuration["DAPR_STATE_STORE_NAME"], preLoginId, preLoginInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", "20" } });
+        
+        return Ok(_configuration["PreLoginConsumeEndPoint"]+preLoginId);
+    }
+
+    [HttpPost("public/ConsumePreLogin/{id}")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> ConsumePreLogin([FromRoute] string id)
+    {
+        var preLoginInfo = await _daprClient.GetStateAsync<PreLoginInfo>(_configuration["DAPR_STATE_STORE_NAME"], "Prelogin_"+id);
+        if(preLoginInfo is not {})
+            return StatusCode(403);
+        
+        HttpContext.Session.SetString("LoggedUser", JsonSerializer.Serialize(preLoginInfo.User));
+
+        return Redirect(preLoginInfo.Client.loginurl!);
     }
 
     [HttpPost("public/DodgeCreatePreLogin")]
