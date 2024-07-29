@@ -1,9 +1,7 @@
-using System.Text;
-using System.Text.Json;
+
 using amorphie.core.Extension;
 using amorphie.token;
 using amorphie.token.core;
-using amorphie.token.core.Models.Profile;
 using amorphie.token.data;
 using amorphie.token.Middlewares;
 using amorphie.token.Modules.Login;
@@ -21,12 +19,10 @@ using amorphie.token.Services.Login;
 using amorphie.token.Services.MessagingGateway;
 using amorphie.token.Services.Migration;
 using amorphie.token.Services.Profile;
-using amorphie.token.Services.Razor;
 using amorphie.token.Services.Role;
 using amorphie.token.Services.TransactionHandler;
 using Elastic.Apm.NetCoreAll;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json.Linq;
 using Refit;
 using Serilog;
 using Serilog.Formatting.Compact;
