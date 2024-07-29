@@ -8,6 +8,8 @@ using amorphie.token.data;
 using amorphie.token.Middlewares;
 using amorphie.token.Modules.Login;
 using amorphie.token.Modules.OtpProcess;
+using amorphie.token.Modules.ThirdFactor;
+using amorphie.token.Modules.TokenFlow;
 using amorphie.token.Services.Card;
 using amorphie.token.Services.ClaimHandler;
 using amorphie.token.Services.Consent;
@@ -18,6 +20,7 @@ using amorphie.token.Services.Login;
 using amorphie.token.Services.MessagingGateway;
 using amorphie.token.Services.Migration;
 using amorphie.token.Services.Profile;
+using amorphie.token.Services.Razor;
 using amorphie.token.Services.Role;
 using amorphie.token.Services.TransactionHandler;
 using Elastic.Apm.NetCoreAll;
@@ -223,9 +226,6 @@ internal partial class Program
         builder.Services.AddScoped<ILegacySSOService, LegacySSOService>();
 
 
-
-
-
         builder.Services.AddRefitClient<IProfile>()
         .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["ProfileBaseAddress"]!))
         .ConfigurePrimaryHttpMessageHandler(() => { return new HttpClientHandler() { ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; } }; });
@@ -259,6 +259,11 @@ internal partial class Program
         .Bind(builder.Configuration.GetSection("CardValidation"));
 
         var app = builder.Build();
+        app.Use((context, next) =>
+        {
+            context.Request.EnableBuffering();
+            return next();
+        });
         app.UseAllElasticApm(app.Configuration);
 
         app.UseTransactionMiddleware();
@@ -275,6 +280,7 @@ internal partial class Program
 
         app.MapLoginWorkflowEndpoints();
         app.MapOtpProcessWorkflowEndpoints();
+        app.MapThirdFactorWorkflowEndpoints();
         app.MapTokenFlowEndpoints();
 
         // Configure the HTTP request pipeline.

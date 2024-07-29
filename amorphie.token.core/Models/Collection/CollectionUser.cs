@@ -13,5 +13,6 @@ namespace amorphie.token.core.Models.Collection
         public string CitizenshipNo{get;set;}
         public string LoginUser{get;set;}
         public Role Role{get;set;}
+        public string DepartmentCode{get;set;}
     }
 }

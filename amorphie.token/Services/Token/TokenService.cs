@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using amorphie.token.core.Models.Consent;
+using amorphie.token.core.Models.InternetBanking;
 using amorphie.token.core.Models.Profile;
 using amorphie.token.core.Models.Role;
 using amorphie.token.data;
@@ -187,8 +188,6 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             }
             var populatedClaims = await _claimService.PopulateClaims(accessInfo.claims, _user, _profile, _consent, collectionUser : _collectionUser);
             tokenClaims.AddRange(populatedClaims);
-            if (_tokenRequest.Scopes.Contains("temporary"))
-                tokenClaims.Add(new Claim("isTemporary", "1"));
 
             tokenClaims.Add(new Claim("client_id", _client.code ?? _client.id));
         
@@ -251,7 +250,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             expires: expires, signingCredentials: signinCredentials);
 
         var scopes = _tokenRequest.Scopes!.ToArray().Except(excludedScopes).ToList();
-
+        //List<string> scopes = [];
 
         _tokenInfoDetail.TokenList.Add(JwtHelper.CreateTokenInfo(TokenType.AccessToken, _tokenInfoDetail.AccessTokenId, _client.id!, DateTime.UtcNow.AddSeconds(accessDuration), true, _user?.Reference ?? ""
         , scopes, _user?.Id ?? null, null, _consent?.id, _deviceId));
@@ -337,7 +336,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         //openId Section
         if (!_tokenRequest.GrantType.Equals("client_credentials"))
         {
-            if (_tokenRequest!.Scopes!.Contains("openId") || _tokenRequest!.Scopes!.Contains("profile"))
+            if ((_tokenRequest!.Scopes?.Contains("openId") ?? false) || (_tokenRequest!.Scopes?.Contains("profile") ?? false))
             {
                 tokenResponse.IdToken = await CreateIdToken();
             }
@@ -476,32 +475,31 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             var dodgeUserResponse = await _internetBankingUserService.GetUser(refreshTokenInfo.Reference!);
             if (dodgeUserResponse.StatusCode != 200)
             {
-                return new ServiceResponse<TokenResponse>()
-                {
-                    StatusCode = 404,
-                    Detail = "User Not Found"
-                };
+                _transactionService.RoleKey = 20;
             }
-            var dodgeUser = dodgeUserResponse.Response;
-
-            var role = await _ibContext.Role.Where(r => r.UserId.Equals(dodgeUser!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
-            if(role is {} && (role.ExpireDate ?? DateTime.MaxValue) > DateTime.Now)
+            else
             {
-                var roleDefinition = await _ibContext.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive);
-                if(roleDefinition is {})
+                var dodgeUser = dodgeUserResponse.Response;
+
+                var role = await _ibContext.Role.Where(r => r.UserId.Equals(dodgeUser!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
+                if(role is {} && (role.ExpireDate ?? DateTime.MaxValue) > DateTime.Now)
                 {
-                    if(roleDefinition.Key == 0)
-                    {  
-                        return new ServiceResponse<TokenResponse>()
-                        {
-                            StatusCode = 471,
-                            Detail = ErrorHelper.GetErrorMessage(LoginErrors.NotAuthorized, "en-EN")
-                        };
-                        
-                    }
-                    else
+                    var roleDefinition = await _ibContext.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive);
+                    if(roleDefinition is {})
                     {
-                        _transactionService.RoleKey = roleDefinition.Key;
+                        if(roleDefinition.Key == 0)
+                        {  
+                            return new ServiceResponse<TokenResponse>()
+                            {
+                                StatusCode = 471,
+                                Detail = ErrorHelper.GetErrorMessage(LoginErrors.NotAuthorized, "en-EN")
+                            };
+                            
+                        }
+                        else
+                        {
+                            _transactionService.RoleKey = roleDefinition.Key;
+                        }
                     }
                 }
             }
@@ -1368,5 +1366,40 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
     {
         var claimInfoPathList = claimInfoPath.Split(".");
         return claimInfoPathList[0];
+    }
+
+    public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithRefreshTokenFromWorkflowAsync(TokenInfo refreshTokenInfo, ClientResponse client, LoginResponse user, SimpleProfileResponse? profile, IBUser? dodgeUser, int? dodgeRoleKey, ConsentResponse? consent)
+    {
+        _client = client;
+        _user = user;
+        _profile = profile;
+        _consent = consent;
+        _transactionService.RoleKey = dodgeRoleKey.HasValue ? dodgeRoleKey.Value : 0;
+        _transactionService.Client = client;
+        _refreshTokenInfo = refreshTokenInfo;
+
+        _tokenRequest = new GenerateTokenRequest{
+             GrantType = "refresh_token"
+        };
+
+        var tokenResponse = await GenerateTokenResponse();
+
+        if (tokenResponse.AccessToken == string.Empty || tokenResponse.RefreshToken == string.Empty)
+        {
+            return new ServiceResponse<TokenResponse>()
+            {
+                StatusCode = 500,
+                Detail = "Access Token Or Refresh Token Couldn't Be Generated"
+            };
+        }
+
+        await PersistTokenInfo();
+
+        return new ServiceResponse<TokenResponse>()
+        {
+            StatusCode = 200,
+            Response = tokenResponse
+        };
+
     }
 }

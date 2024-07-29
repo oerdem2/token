@@ -331,4 +331,21 @@ public class UserServiceLocal : IUserService
             throw new ServiceException(500, "User Endpoint Did Not Response Successfully");
         }
     }
+
+    public async Task<ServiceResponse<ActiveDeviceDto>> CheckDevice(string reference, string clientId)
+    {
+        var httpClient = _httpClientFactory.CreateClient("User");
+        var httpResponseMessage = await httpClient.GetAsync($"public/device/{clientId}/{reference}");
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            var raw = await httpResponseMessage.Content.ReadAsStringAsync();
+            var device = JsonSerializer.Deserialize<ActiveDeviceDto>(raw,new JsonSerializerOptions{PropertyNameCaseInsensitive = true});
+            return new ServiceResponse<ActiveDeviceDto>() { StatusCode = 200, Response = device };
+        }
+        else
+        {
+            return new ServiceResponse<ActiveDeviceDto>() { StatusCode = 404, Detail = "Device Not Found" };
+        }
+    }
 }
