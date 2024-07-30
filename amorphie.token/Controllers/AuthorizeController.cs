@@ -11,10 +11,6 @@ using amorphie.token.Services.Login;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Mvc.Razor;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using amorphie.token.Services.Razor;
-using amorphie.token.core.Extensions;
 
 
 namespace amorphie.token.core.Controllers;
