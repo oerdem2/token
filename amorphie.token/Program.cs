@@ -9,6 +9,7 @@ using amorphie.token.Modules.OtpProcess;
 using amorphie.token.Modules.ThirdFactor;
 using amorphie.token.Modules.TokenFlow;
 using amorphie.token.Services.Card;
+using amorphie.token.Services.Cardion;
 using amorphie.token.Services.ClaimHandler;
 using amorphie.token.Services.Consent;
 using amorphie.token.Services.FlowHandler;
@@ -238,6 +239,13 @@ internal partial class Program
 
         builder.Services.AddRefitClient<IPasswordRememberCard>()
         .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["cardValidationUri"]!));
+        
+        builder.Services.AddRefitClient<ICardionService>()
+            .ConfigureHttpClient(c =>
+            {
+                c.BaseAddress = new Uri(builder.Configuration["Cardion:BaseAddress"]!);
+                c.DefaultRequestHeaders.Add("Authorization", builder.Configuration["Cardion:ApiKey"]!);
+            });
 
         builder.Services.AddHttpClient("Enqura", httpClient =>
         {
@@ -269,9 +277,11 @@ internal partial class Program
         var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
         db.Database.Migrate();
       
-        var migrateService = scope.ServiceProvider.GetRequiredService<IMigrationService>();
-        await migrateService.MigrateStaticData();
-
+        if (app.Environment.IsDevelopment())
+        {
+            var migrateService = scope.ServiceProvider.GetRequiredService<IMigrationService>();
+            await migrateService.MigrateStaticData();
+        }
         app.MapHealthChecks("/health");
 
         app.MapLoginWorkflowEndpoints();
