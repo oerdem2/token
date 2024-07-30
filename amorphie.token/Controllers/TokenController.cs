@@ -22,6 +22,10 @@ using System.Net.Mime;
 using amorphie.token.Modules.Login;
 using Amazon.Internal;
 using System.Configuration;
+using System.Dynamic;
+using System.Net;
+using amorphie.core.Enums;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 
 namespace amorphie.token.core.Controllers;
@@ -56,7 +60,6 @@ public class TokenController : Controller
         _daprClient = daprClient;
         _consentService = consentService;
         _profileService = profileService;
-
 
     }
 
@@ -306,8 +309,8 @@ public class TokenController : Controller
     public async Task<IActionResult> Token([FromQuery(Name = "code")] string code)
     {
         var tokenReq = new TokenRequest();
-        tokenReq.ClientId = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
-        tokenReq.ClientSecret = "sercan";
+        tokenReq.ClientId = "collection";
+        tokenReq.ClientSecret = "";
         tokenReq.CodeVerifier = "123";
         tokenReq.Code = code;
         tokenReq.GrantType = "authorization_code";
@@ -401,6 +404,14 @@ public class TokenController : Controller
             {
                 return Problem(detail: token.Detail, statusCode: token.StatusCode);
             }
+
+            dynamic data = new ExpandoObject();
+            data.messageName = "amorphie-refresh-token-flow";
+            data.variables = new ExpandoObject();
+            data.variables = tokenRequest;
+            await _daprClient.InvokeBindingAsync("zeebe-local","publish-message",data);
+            
+            return Ok();
         }
 
         if (tokenRequest.GrantType == "client_credentials")
@@ -486,8 +497,29 @@ public class TokenController : Controller
             }
             else
             {
-                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode,extensions:new Dictionary<string,object?>{{"errorCode",token.StatusCode}});
+                return Results.Problem(detail: token.Detail, statusCode: token.StatusCode);
             }
+
+            var flowInstanceId = Guid.NewGuid().ToString();
+            dynamic data = new ExpandoObject();
+            data.messageName = "amorphie-refresh-token-flow";
+            data.variables = new ExpandoObject();
+            data.variables.refresh_token = tokenRequest.RefreshToken;
+            data.variables.FlowInstanceId = flowInstanceId;
+            await _daprClient.InvokeBindingAsync("zeebe-local","publish-message",data);
+            CancellationTokenSource cts = new CancellationTokenSource(10000);
+            await _flowHandler.Init(flowInstanceId);
+            var response = await _flowHandler.Wait(cts.Token);
+            
+            if(response.StatusCode == 200)
+            {
+                return Results.Ok(response.Result);
+            }
+            else
+            {
+                return Results.Problem(detail: response.ErrorMessage, statusCode: response.StatusCode);
+            }
+
         }
 
         if (tokenRequest.GrantType == "client_credentials")
@@ -567,7 +599,6 @@ public class TokenController : Controller
 
         return Json(tokens);
     }
-
 
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("public/OpenBankingToken")]
@@ -670,7 +701,7 @@ public class TokenController : Controller
 
             SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, openBankingTokenResponse);
 
-            return Ok(openBankingTokenResponse);
+            return Content(JsonSerializer.Serialize(openBankingTokenResponse),"application/json");
         }
         if (openBankingTokenRequest.AuthType.Equals("yenileme_belirteci"))
         {
@@ -692,7 +723,7 @@ public class TokenController : Controller
             };
             
             SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, openBankingTokenResponse);
-            return Ok(openBankingTokenResponse);
+            return Content(JsonSerializer.Serialize(openBankingTokenResponse),"application/json");
         }
 
         return BadRequest();
