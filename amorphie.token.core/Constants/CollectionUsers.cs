@@ -16,7 +16,8 @@ namespace amorphie.token.core.Constants
                 Surname = "BAYRAM",
                 CitizenshipNo = "61363026298",
                 LoginUser = "U06385",
-                Role = Role.Agent
+                Role = Role.Agent,
+                DepartmentCode = "2200470"
             }},
             {new User{
                 Name = "ATILAY",
