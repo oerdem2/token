@@ -84,6 +84,22 @@ namespace amorphie.token.core.Constants
                 DepartmentCode = "2200440"
             }},
             {new User{
+                Name = "İLKAY DENİZ",
+                Surname = "KULA",
+                CitizenshipNo = "31159875874",
+                LoginUser = "U06460",
+                Role = Role.Agent,
+                DepartmentCode = "2200480"
+            }},
+            {new User{
+                Name = "LALE GÜL",
+                Surname = "DEMİR",
+                CitizenshipNo = "16895416864",
+                LoginUser = "U06461",
+                Role = Role.Agent,
+                DepartmentCode = "2200490"
+            }},
+            {new User{
                 Name = "MERT",
                 Surname = "DEMİRARSLAN",
                 CitizenshipNo = "14095028054",
@@ -157,6 +173,15 @@ namespace amorphie.token.core.Constants
                 LoginUser = "U05179",
                 Role = Role.Agent,
                 DepartmentCode = "2200480"
+            }
+            },
+            {new User{
+                Name = "YASEMİN",
+                Surname = "POLAT",
+                CitizenshipNo = "38752432138",
+                LoginUser = "U06467",
+                Role = Role.Agent,
+                DepartmentCode = "2200490"
             }
             },
             {new User{
