@@ -11,8 +11,10 @@ using amorphie.token.Services.Login;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
-using System.Runtime.CompilerServices;
-using System.Dynamic;
+using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using amorphie.token.Services.Razor;
+using amorphie.token.core.Extensions;
 
 
 namespace amorphie.token.core.Controllers;
@@ -49,6 +51,84 @@ public class AuthorizeController : Controller
         _consentService = consentService;
         _profileService = profileService;
         _loginService = loginService;
+    }
+    
+    [HttpPost("/post-transition/{recordId}/{transition}")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> PostTransition([FromRoute] string recordId, [FromRoute] string transition, [FromBody] dynamic body)
+    {
+        using var httpClient = new HttpClient();
+        var content1 = new StringContent(JsonSerializer.Serialize(new{
+            grant_type = "client_credentials",
+            client_id = "IbAndroidApp",
+            client_secret = "6b7b82a9-a072-4191-9f07-2d1cf45e58fe",
+            scopes = new string[] { "openId","retail-customer"}
+        }),Encoding.UTF8,"application/json");
+        var resp2 = await httpClient.PostAsync("https://test-pubagw6.burgan.com.tr/ebanking/token",content1);
+        var res1 = await resp2.Content.ReadAsStringAsync();
+        
+        var tokenResponse = JsonSerializer.Deserialize<TokenResponse>(res1);
+
+        var FlowUserInfo = JsonSerializer.Deserialize<FlowUserInfo>(HttpContext.Session.GetString("FlowUserInfo"));
+
+        var content = new StringContent(JsonSerializer.Serialize(body),Encoding.UTF8,"application/json");
+        httpClient.DefaultRequestHeaders.Add("Authorization","Bearer "+tokenResponse.AccessToken);
+        httpClient.DefaultRequestHeaders.Add("User",Guid.NewGuid().ToString());
+        httpClient.DefaultRequestHeaders.Add("Behalf-Of-User",Guid.NewGuid().ToString());
+        httpClient.DefaultRequestHeaders.Add("xdeviceid",FlowUserInfo.deviceId);
+        httpClient.DefaultRequestHeaders.Add("xtokenid",FlowUserInfo.tokenId);
+        httpClient.DefaultRequestHeaders.Add("xdeployment","ANDROID");
+        httpClient.DefaultRequestHeaders.Add("xdeviceinfo","SAMSUNG");
+        var resp = await httpClient.PostAsync($"https://test-amorphie-workflow.burgan.com.tr/workflow/instance/{recordId}/transition/{transition}",content);
+        var res = await resp.Content.ReadAsStringAsync();
+
+        return Ok();
+    }
+
+    [HttpPost("/get-page")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> GetPage([FromBody] dynamic body)
+    {
+        var page_id = body.GetProperty("page_id").ToString();
+        if(page_id == "AMORPHIE_LOGIN_PAGE")
+        {
+            return View("InnerLoginPage",new Login());
+        }
+        if(page_id == "OTP")
+        {
+            return View("Otp",new Otp());
+        }
+        return StatusCode(403);
+    }
+
+
+    [HttpGet("/public/flow/demo")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> FlowDemo()
+    {
+        ViewBag.deviceId = Guid.NewGuid().ToString();
+        ViewBag.tokenId = Guid.NewGuid().ToString();
+        ViewBag.requestId = Guid.NewGuid().ToString();
+
+        HttpContext.Session.SetString("FlowUserInfo",JsonSerializer.Serialize(new FlowUserInfo(){
+            deviceId = ViewBag.deviceId,
+            tokenId = ViewBag.tokenId
+        }));
+
+        using var httpClient = new HttpClient();
+        var content = new StringContent(JsonSerializer.Serialize(new{
+            grant_type = "client_credentials",
+            client_id = "IbAndroidApp",
+            client_secret = "6b7b82a9-a072-4191-9f07-2d1cf45e58fe",
+            scopes = new string[] { "openId","retail-customer"}
+        }),Encoding.UTF8,"application/json");
+        var resp = await httpClient.PostAsync("https://test-pubagw6.burgan.com.tr/ebanking/token",content);
+        var res = await resp.Content.ReadAsStringAsync();
+        
+        var tokenResponse = JsonSerializer.Deserialize<TokenResponse>(res);
+        ViewBag.accessToken = tokenResponse!.AccessToken;
+
+        return View("LoginFlowPage");
     }
 
     [HttpGet("/public/getAuthorize")]
@@ -95,7 +175,7 @@ public class AuthorizeController : Controller
 
     [HttpGet("/public/GenerateAuthCode")]
     [ApiExplorerSettings(IgnoreApi = true)]
-    public async Task<IActionResult> GenerateAuthCodeForTestingPurpose([FromQuery(Name = "Reference")] string reference)
+    public async Task<IActionResult> GenerateAuthCodeForTestingPurpose([FromQuery(Name = "Reference")] string reference, [FromQuery(Name = "Client")] string client)
     {
         if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")!.Equals("Test") || 
         Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")!.Equals("Development") ||
@@ -109,7 +189,7 @@ public class AuthorizeController : Controller
             using var sha256 = SHA256.Create();
             var hashedCodeVerifier = Base64UrlEncoder.Encode(sha256.ComputeHash(codeVerifierAsByte));
             var authCodeResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest{
-                ClientId = "IbAndroidApp",
+                ClientId = client,
                 CodeChallange = hashedCodeVerifier,
                 CodeChallangeMethod = "SHA256",
                 Nonce = "test",
@@ -460,6 +540,30 @@ public class AuthorizeController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> Authorize(AuthorizationRequest authorizationRequest)
     {
+        // ViewBag.deviceId = Guid.NewGuid().ToString();
+        // ViewBag.tokenId = Guid.NewGuid().ToString();
+        // ViewBag.requestId = Guid.NewGuid().ToString();
+        // ViewBag.body = JsonSerializer.Serialize(authorizationRequest);
+        // HttpContext.Session.SetString("FlowUserInfo",JsonSerializer.Serialize(new FlowUserInfo(){
+        //     deviceId = ViewBag.deviceId,
+        //     tokenId = ViewBag.tokenId
+        // }));
+
+        // using var httpClient = new HttpClient();
+        // var content = new StringContent(JsonSerializer.Serialize(new{
+        //     grant_type = "client_credentials",
+        //     client_id = "IbAndroidApp",
+        //     client_secret = "6b7b82a9-a072-4191-9f07-2d1cf45e58fe",
+        //     scopes = new string[] { "openId","retail-customer"}
+        // }),Encoding.UTF8,"application/json");
+        // var resp = await httpClient.PostAsync("https://test-pubagw6.burgan.com.tr/ebanking/token",content);
+        // var res = await resp.Content.ReadAsStringAsync();
+        
+        // var tokenResponse = JsonSerializer.Deserialize<TokenResponse>(res);
+        // ViewBag.accessToken = tokenResponse!.AccessToken;
+
+        // return View("LoginFlowPage");
+
         var authorize = await _authorizationService.Authorize(new AuthorizationServiceRequest
         {
             ClientId = authorizationRequest.ClientId,
