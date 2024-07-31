@@ -1227,34 +1227,31 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         var dodgeUserResponse = await _internetBankingUserService.GetUser(_user.Reference!);
         if (dodgeUserResponse.StatusCode != 200)
         {
-            return new ServiceResponse<TokenResponse>()
-            {
-                StatusCode = 404,
-                Detail = "User Not Found"
-            };
+            _transactionService.RoleKey = 20;
         }
-        var dodgeUser = dodgeUserResponse.Response;
-
-        var role = await _ibContext.Role.Where(r => r.UserId.Equals(dodgeUser!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
-        if(role is {} && (role.ExpireDate ?? DateTime.MaxValue) > DateTime.Now)
+        else
         {
-            Console.WriteLine("Role : " + JsonSerializer.Serialize(role));
-            var roleDefinition = await _ibContext.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive);
-            Console.WriteLine("RoleDef : "+JsonSerializer.Serialize(roleDefinition));
-            if(roleDefinition is {})
+            var dodgeUser = dodgeUserResponse.Response;
+
+            var role = await _ibContext.Role.Where(r => r.UserId.Equals(dodgeUser!.Id) && r.Channel.Equals(10) && r.Status.Equals(10)).OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
+            if(role is {} && (role.ExpireDate ?? DateTime.MaxValue) > DateTime.Now)
             {
-                if(roleDefinition.Key == 0)
-                {  
-                    return new ServiceResponse<TokenResponse>()
-                    {
-                        StatusCode = 471,
-                        Detail = ErrorHelper.GetErrorMessage(LoginErrors.NotAuthorized, "en-EN")
-                    };
-                    
-                }
-                else
+                var roleDefinition = await _ibContext.RoleDefinition.FirstOrDefaultAsync(d => d.Id.Equals(role.DefinitionId) && d.IsActive);
+                if(roleDefinition is {})
                 {
-                    _transactionService.RoleKey = roleDefinition.Key;
+                    if(roleDefinition.Key == 0)
+                    {  
+                        return new ServiceResponse<TokenResponse>()
+                        {
+                            StatusCode = 471,
+                            Detail = ErrorHelper.GetErrorMessage(LoginErrors.NotAuthorized, "en-EN")
+                        };
+                        
+                    }
+                    else
+                    {
+                        _transactionService.RoleKey = roleDefinition.Key;
+                    }
                 }
             }
         }
