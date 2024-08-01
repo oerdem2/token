@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Mvc;
 using amorphie.token.core.Models.InternetBanking;
 using amorphie.token.core.Models.Profile;
@@ -7,6 +8,7 @@ using amorphie.token.Services.InternetBanking;
 using amorphie.token.Services.Login;
 using amorphie.token.Services.Profile;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace amorphie.token;
 
@@ -76,11 +78,13 @@ public class AuthorizationInput
     public string[]? Scope { get; set; }
     public string? State { get; set; }
     public string UserName { get; set; }
+    
 }
 
 public class AuthorizationOutput
 {
     public string Code { get; set; }
+    public string CodeVerifier { get; set; }
 }
 
 #endregion
@@ -272,6 +276,10 @@ public static class IvrLoginEndpoints
         response.Data = new AuthorizationOutput();
         var userResponse = await userService.GetUserByReference(input.UserName);
         var userInfoResult = await profileService.GetCustomerSimpleProfile(input.UserName);
+       var codeVerifier = Guid.NewGuid().ToString();
+       var codeVerifierAsByte = System.Text.Encoding.ASCII.GetBytes(codeVerifier);
+       using var sha256 = SHA256.Create();
+       var hashedCodeVerifier = Base64UrlEncoder.Encode(sha256.ComputeHash(codeVerifierAsByte));
         var authorize = await authorizationService.Authorize(new AuthorizationServiceRequest
         {
             ClientId = input.ClientId,
@@ -279,7 +287,9 @@ public static class IvrLoginEndpoints
             Scope = input.Scope,
             State = input.State,
             User = userResponse.Response,
-            Profile = userInfoResult.Response
+            Profile = userInfoResult.Response,
+            CodeChallange = hashedCodeVerifier,
+            CodeChallangeMethod = "SHA256",
         });
 
         if (authorize.StatusCode == 200)
@@ -287,7 +297,7 @@ public static class IvrLoginEndpoints
             response.Code = 200;
             response.Message = "Success";
             response.Data.Code = authorize!.Response!.Code;
-
+            response.Data.CodeVerifier = codeVerifier;
             await authorizationService.AssignUserToAuthorizationCode(userResponse.Response, authorize.Response.Code,
                 userInfoResult.Response);
             

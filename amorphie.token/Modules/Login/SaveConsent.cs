@@ -1,15 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Dynamic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
-using amorphie.core.Base;
-using amorphie.token.core.Extensions;
-using amorphie.token.core.Models.InternetBanking;
-using amorphie.token.core.Models.Profile;
-using amorphie.token.data;
 using amorphie.token.Services.Consent;
 using Microsoft.AspNetCore.Mvc;
 
