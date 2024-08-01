@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using amorphie.token.core.Models.Collection;
@@ -193,6 +194,6 @@ namespace amorphie.token.core.Constants
                 DepartmentCode = "2200490"
             }
             }
-        };
+        }.ToImmutableList();
     }
 }
