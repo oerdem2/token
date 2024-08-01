@@ -337,7 +337,7 @@ public class AuthorizeController : Controller
         return Ok(new{redirectUri = _configuration["PreLoginConsumeEndPoint"]+preLoginId});
     }
 
-    [HttpPost("public/ConsumePreLogin/{id}")]
+    [HttpGet("public/ConsumePreLogin/{id}")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> ConsumePreLogin([FromRoute] string id)
     {
