@@ -325,7 +325,8 @@ public class AuthorizeController : Controller
 
         var user = await _userService.GetUserByReference(createPreLoginRequest.scopeUser);
 
-        var preLoginId = "Prelogin_"+Guid.NewGuid().ToString();
+        var preLoginGuid = Guid.NewGuid().ToString();
+        var preLoginId = "Prelogin_"+preLoginGuid;
         var preLoginInfo = new
         {
             user,
@@ -334,10 +335,10 @@ public class AuthorizeController : Controller
 
         await _daprClient.SaveStateAsync(_configuration["DAPR_STATE_STORE_NAME"], preLoginId, preLoginInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", "20" } });
         
-        return Ok(new{redirectUri = _configuration["PreLoginConsumeEndPoint"]+preLoginId});
+        return Ok(new{redirectUri = _configuration["PreLoginConsumeEndPoint"]+preLoginGuid});
     }
 
-    [HttpPost("public/ConsumePreLogin/{id}")]
+    [HttpGet("public/ConsumePreLogin/{id}")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> ConsumePreLogin([FromRoute] string id)
     {
