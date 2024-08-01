@@ -61,28 +61,25 @@ public static class EkcyFaceCheck
             var faceCurrentFailedCount = Convert.ToInt32(body.GetProperty("CurrentFaceFailedCount").ToString());
             if (!faceStatus)
             {
-
-
-                //Max-Min try count 
-                if (faceCurrentFailedCount >= EkycConstants.FaceFailedTryCount || faceCurrentFailedCount==0)
+                  //Max-Min try count 
+                if (faceCurrentFailedCount <= EkycConstants.FaceFailedTryCount )
                 {
-                    dataChanged.additionalData.pages = new List<EkycPageModel>
-                    {
-                        EkycAdditionalDataContstants.StandartItem,
-                        EkycAdditionalDataContstants.FaceFailedBiggerThanMinForRetry
-                    };
-
-                }
-                if (faceCurrentFailedCount >= EkycConstants.FaceFailedMaxTryCount)
-                {
-                    //Min try additional data
                     dataChanged.additionalData.pages = new List<EkycPageModel>
                     {
                         EkycAdditionalDataContstants.StandartItem,
                         EkycAdditionalDataContstants.FaceFailedMinForRetry
                     };
+ 
                 }
-
+                if (faceCurrentFailedCount >= EkycConstants.FaceFailedTryCount)
+                {
+                    //Min try additional data
+                    dataChanged.additionalData.pages = new List<EkycPageModel>
+                    {
+                        EkycAdditionalDataContstants.StandartItem,
+                        EkycAdditionalDataContstants.FaceFailedBiggerThanMinForRetry
+                    };
+                }
 
                 faceCurrentFailedCount++;
             }
