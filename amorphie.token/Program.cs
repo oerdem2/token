@@ -105,7 +105,7 @@ internal partial class Program
         {
             opt.Cookie.Name = ".amorphie.token";
             opt.Cookie.Domain = ".burgan.com.tr";
-            opt.Cookie.Expiration = TimeSpan.FromSeconds(300);
+            opt.Cookie.MaxAge = TimeSpan.FromSeconds(300);
         });
 
         builder.Services.AddEndpointsApiExplorer();
