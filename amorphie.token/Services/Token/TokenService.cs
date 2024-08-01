@@ -348,7 +348,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
     public async Task<ServiceResponse<TokenResponse>> GenerateTokenWithRefreshToken(GenerateTokenRequest tokenRequest)
     {
         _tokenRequest = tokenRequest;
-
+        
         var refreshTokenJti = JwtHelper.GetClaim(tokenRequest.RefreshToken!, "jti");
         if (refreshTokenJti == null)
         {
@@ -359,7 +359,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 Response = null
             };
         }
-        var refreshTokenInfo = _databaseContext.Tokens.FirstOrDefault(t =>
+        var refreshTokenInfo = await _databaseContext.Tokens.FirstOrDefaultAsync(t =>
         t.Id == Guid.Parse(refreshTokenJti!) && t.TokenType == TokenType.RefreshToken);
         if (refreshTokenInfo == null)
         {
@@ -383,7 +383,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
 
         _refreshTokenInfo = refreshTokenInfo;
 
-        var relatedToken = _databaseContext.Tokens.FirstOrDefault(t =>
+        var relatedToken = await _databaseContext.Tokens.FirstOrDefaultAsync(t =>
         t.Id == refreshTokenInfo.RelatedTokenId && t.TokenType == TokenType.AccessToken);
         if (relatedToken == null)
         {
@@ -394,12 +394,19 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 Response = null
             };
         }
-        
+
+        var idToken = await _databaseContext.Tokens.FirstOrDefaultAsync(t => t.RelatedTokenId == relatedToken.Id && t.TokenType == TokenType.IdToken);
+
         //OpenBanking Set Consent
         if(relatedToken.ConsentId is Guid)
         {
             var consent = await _consentService.GetConsent(relatedToken.ConsentId.Value);
             _consent = consent.Response;
+        }
+
+        if(idToken is {})
+        {
+            relatedToken.Scopes.Add("profile");
         }
 
         tokenRequest.Scopes = relatedToken.Scopes;
@@ -451,6 +458,8 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
             }
 
             _user = userResponse.Response;
+
+            _collectionUser = CollectionUsers.Users.FirstOrDefault(u => u.CitizenshipNo == _user!.Reference);
 
             var profile = await _profileService!.GetCustomerSimpleProfile(refreshTokenInfo.Reference!);
             if (profile.StatusCode != 200)
