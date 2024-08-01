@@ -213,6 +213,12 @@ public class AuthorizeController : Controller
         {
             var consent = consentResponse!.Response!;
             var consentData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent!.additionalData!);
+
+            if(consent!.state!.Equals("Y"))
+            {
+                return BadRequest();
+            }
+
             string kmlkNo = string.Empty;
             if (consent.consentType!.Equals("OB_Account"))
             {
@@ -328,7 +334,7 @@ public class AuthorizeController : Controller
 
         await _daprClient.SaveStateAsync(_configuration["DAPR_STATE_STORE_NAME"], preLoginId, preLoginInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", "20" } });
         
-        return Ok(_configuration["PreLoginConsumeEndPoint"]+preLoginId);
+        return Ok(new{redirectUri = _configuration["PreLoginConsumeEndPoint"]+preLoginId});
     }
 
     [HttpPost("public/ConsumePreLogin/{id}")]
