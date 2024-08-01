@@ -22,6 +22,7 @@ using amorphie.token.Services.Profile;
 using amorphie.token.Services.Role;
 using amorphie.token.Services.TransactionHandler;
 using Elastic.Apm.NetCoreAll;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Refit;
 using Serilog;
@@ -84,7 +85,11 @@ internal partial class Program
         builder.Services.AddControllersWithViews();
         builder.Services.AddDaprClient();
         builder.Services.AddHttpContextAccessor();
-        builder.Services.AddDistributedMemoryCache();
+        
+        builder.Services.AddStackExchangeRedisCache(options => {
+            options.Configuration = builder.Configuration["RedisConnection"];
+            options.InstanceName = "TokenRedisInstance";
+        });
 
         builder.Services.AddSession(opt =>
         {
