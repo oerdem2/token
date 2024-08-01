@@ -48,9 +48,11 @@ internal partial class Program
             }
         }
 
-
         await builder.Configuration.AddVaultSecrets(builder.Configuration["DAPR_SECRET_STORE_NAME"], new string[] { "ServiceConnections" });
 
+        // builder.Configuration.AddDaprSecretStore(builder.Configuration["DAPR_SECRET_STORE_NAME"],client, TimeSpan.FromSeconds(15));
+        // builder.Configuration.AddJsonStream(new MemoryStream(System.Text.Encoding.ASCII.GetBytes(builder.Configuration["Fcm"])));
+        
         builder.Services.AddAntiforgery(x =>
         {
             x.SuppressXFrameOptionsHeader = true;
@@ -83,9 +85,11 @@ internal partial class Program
         builder.Services.AddDaprClient();
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddDistributedMemoryCache();
+
         builder.Services.AddSession(opt =>
         {
             opt.Cookie.Name = ".amorphie.token";
+            opt.Cookie.Domain = ".burgan.com.tr";
         });
 
         builder.Services.AddEndpointsApiExplorer();
