@@ -76,23 +76,22 @@ public static class EkycNfcCheck
             if (!nfcStatus)
             {
 
-                //Max-Min try count 
-                if (nfcCurrentFailedCount >= EkycConstants.NfcFailedTryCount ||nfcCurrentFailedCount==0)
+                if (nfcCurrentFailedCount <= EkycConstants.NfcFailedTryCount)
                 {
                     dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
                     EkycAdditionalDataContstants.StandartItem,
-                    EkycAdditionalDataContstants.NfcFailedBiggerThanMinForRetry
+                    EkycAdditionalDataContstants.NfcFailedMinForRetry
                 };
-
+ 
                 }
-                if (nfcCurrentFailedCount >= EkycConstants.NfcFailedMaxTryCount)
+                if (nfcCurrentFailedCount >= EkycConstants.NfcFailedTryCount)
                 {
                     //Min try additional data
                     dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
                     EkycAdditionalDataContstants.StandartItem,
-                    EkycAdditionalDataContstants.NfcFailedMinForRetry
+                    EkycAdditionalDataContstants.NfcFailedBiggerThanMinForRetry
                 };
                 }
 
