@@ -23,6 +23,8 @@ using amorphie.token.Services.Role;
 using amorphie.token.Services.TransactionHandler;
 using Elastic.Apm.NetCoreAll;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption;
+using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel;
 using Microsoft.EntityFrameworkCore;
 using Refit;
 using Serilog;
@@ -85,7 +87,15 @@ internal partial class Program
         builder.Services.AddControllersWithViews();
         builder.Services.AddDaprClient();
         builder.Services.AddHttpContextAccessor();
-        
+        builder.Services.AddDataProtection()
+        .SetApplicationName("AmorphieToken")
+        .UseCryptographicAlgorithms(
+        new AuthenticatedEncryptorConfiguration
+        {
+            EncryptionAlgorithm = EncryptionAlgorithm.AES_256_CBC,
+            ValidationAlgorithm = ValidationAlgorithm.HMACSHA256
+        })
+        .PersistKeysToDbContext<DatabaseContext>();
         builder.Services.AddStackExchangeRedisCache(options => {
             options.Configuration = builder.Configuration["RedisConnection"];
             options.InstanceName = "TokenRedisInstance";
@@ -95,6 +105,7 @@ internal partial class Program
         {
             opt.Cookie.Name = ".amorphie.token";
             opt.Cookie.Domain = ".burgan.com.tr";
+            opt.Cookie.Expiration = TimeSpan.FromSeconds(300);
         });
 
         builder.Services.AddEndpointsApiExplorer();

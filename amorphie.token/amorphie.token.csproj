@@ -17,6 +17,7 @@
     <PackageReference Include="Dapr.Client" Version="1.13.0" />
     <PackageReference Include="Dapr.Extensions.Configuration" Version="1.13.0" />
     <PackageReference Include="jose-jwt" Version="4.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="8.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="$(EfCoreVersion)">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
