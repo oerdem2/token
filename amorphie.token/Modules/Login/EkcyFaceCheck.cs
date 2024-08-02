@@ -65,7 +65,7 @@ public static class EkcyFaceCheck
             if (!faceStatus)
             {
                 //Max-Min try count 
-                if (faceCurrentFailedCount <= faceFailedTryCount)
+                if (faceCurrentFailedCount < faceFailedTryCount)
                 {
                     dataChanged.additionalData.pages = new List<EkycPageModel>
                     {
