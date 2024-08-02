@@ -15,6 +15,7 @@ public static class EkycNfcCheck
     {
 
         var transitionName = body.GetProperty("LastTransition").ToString();
+        var nfcFailedTryCount = body.GetProperty("NfcFailedTryCount").ToString();
         // var transactionId = body.GetProperty("InstanceId").ToString();
         var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
 
@@ -76,7 +77,7 @@ public static class EkycNfcCheck
             if (!nfcStatus)
             {
 
-                if (nfcCurrentFailedCount <= EkycConstants.NfcFailedTryCount)
+                if (nfcCurrentFailedCount <= nfcFailedTryCount)
                 {
                     dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
@@ -86,7 +87,7 @@ public static class EkycNfcCheck
                 };
  
                 }
-                if (nfcCurrentFailedCount >= EkycConstants.NfcFailedTryCount)
+                if (nfcCurrentFailedCount >= nfcFailedTryCount)
                 {
                     //Min try additional data
                     dataChanged.additionalData.pages = new List<EkycPageModel>
