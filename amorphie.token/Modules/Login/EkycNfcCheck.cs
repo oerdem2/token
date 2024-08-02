@@ -78,7 +78,7 @@ public static class EkycNfcCheck
             if (!nfcStatus)
             {
 
-                if (nfcCurrentFailedCount <= nfcFailedTryCount)
+                if (nfcCurrentFailedCount < nfcFailedTryCount)
                 {
                     dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
