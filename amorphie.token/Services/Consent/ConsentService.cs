@@ -275,6 +275,39 @@ namespace amorphie.token.Services.Consent
                 };
             }
         }
+
+        public async Task<ServiceResponse> CancelConsent(Guid consentId, string cancelDetailCode)
+        {
+            try
+            {
+                await _daprClient.InvokeMethodAsync(HttpMethod.Delete, Configuration["ConsentServiceAppName"], $"/OpenBankingConsentHHS/Cancel",new{
+                    consentId = consentId,
+                    cancelDetailCode = cancelDetailCode
+                });
+
+                return new ServiceResponse()
+                {
+                    StatusCode = 200,
+                    Detail = ""
+                };
+            }
+            catch (InvocationException ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = (int)ex.Response.StatusCode,
+                    Detail = await ex.Response.Content.ReadAsStringAsync()
+                };
+            }
+            catch (System.Exception ex)
+            {
+                return new ServiceResponse()
+                {
+                    StatusCode = 500,
+                    Detail = ex.ToString()
+                };
+            }
+        }
     }
 }
 
