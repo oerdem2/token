@@ -61,15 +61,15 @@ public static class EkcyFaceCheck
             var faceCurrentFailedCount = Convert.ToInt32(body.GetProperty("CurrentFaceFailedCount").ToString());
             if (!faceStatus)
             {
-                  //Max-Min try count 
-                if (faceCurrentFailedCount <= EkycConstants.FaceFailedTryCount )
+                //Max-Min try count 
+                if (faceCurrentFailedCount <= EkycConstants.FaceFailedTryCount)
                 {
                     dataChanged.additionalData.pages = new List<EkycPageModel>
                     {
                         EkycAdditionalDataContstants.StandartItem,
                         EkycAdditionalDataContstants.FaceFailedMinForRetry
                     };
- 
+
                 }
                 if (faceCurrentFailedCount >= EkycConstants.FaceFailedTryCount)
                 {
@@ -99,6 +99,14 @@ public static class EkcyFaceCheck
 
             // variables.Add("IsSelfServiceAvaliable", true); // bu client dan alınacak sanırım
             variables.Add("CurrentFaceFailedCount", faceCurrentFailedCount);
+        }
+        else
+        {
+            dataChanged.additionalData.pages = new List<EkycPageModel>
+                {
+                    EkycAdditionalDataContstants.StandartItem,
+                    EkycAdditionalDataContstants.FaceSuccessConfirm
+                };
         }
         dataChanged.additionalData.exitTransition = "amorphie-ekyc-exit";
         variables.Add("FaceReadStatus", faceStatus);
