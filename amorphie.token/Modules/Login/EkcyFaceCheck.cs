@@ -15,6 +15,7 @@ public static class EkcyFaceCheck
     {
 
         var transitionName = body.GetProperty("LastTransition").ToString();
+        var faceFailedTryCount = body.GetProperty("FaceFailedTryCount").ToString();
         // var transactionId = body.GetProperty("InstanceId").ToString();
         var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
 
@@ -62,7 +63,7 @@ public static class EkcyFaceCheck
             if (!faceStatus)
             {
                 //Max-Min try count 
-                if (faceCurrentFailedCount <= EkycConstants.FaceFailedTryCount)
+                if (faceCurrentFailedCount <= faceFailedTryCount)
                 {
                     dataChanged.additionalData.pages = new List<EkycPageModel>
                     {
@@ -71,7 +72,7 @@ public static class EkcyFaceCheck
                     };
 
                 }
-                if (faceCurrentFailedCount >= EkycConstants.FaceFailedTryCount)
+                if (faceCurrentFailedCount >= faceFailedTryCount)
                 {
                     //Min try additional data
                     dataChanged.additionalData.pages = new List<EkycPageModel>
@@ -105,7 +106,7 @@ public static class EkcyFaceCheck
             dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
                     EkycAdditionalDataContstants.StandartItem,
-                    EkycAdditionalDataContstants.FaceSuccessConfirm
+                    EkycAdditionalDataContstants.SkipFaceForVideoCall
                 };
         }
         dataChanged.additionalData.exitTransition = "amorphie-ekyc-exit";
