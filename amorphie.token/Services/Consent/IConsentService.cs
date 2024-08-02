@@ -9,6 +9,7 @@ namespace amorphie.token.Services.Consent
     public interface IConsentService
     {
         public Task<ServiceResponse<ConsentResponse>> GetConsent(Guid consentId);
+        public Task<ServiceResponse> CancelConsent(Guid consentId, string cancelDetailCode);
         public Task<ServiceResponse> UpdateConsentForUsage(Guid consentId);
         public Task<ServiceResponse> UpdateConsentInOtp(Guid consentId,string citizenshipNo);
         public Task<ServiceResponse> CheckAuthorizeForInstutitionConsent(Guid consentId,string citizenshipNo);

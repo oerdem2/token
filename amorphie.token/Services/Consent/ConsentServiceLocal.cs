@@ -172,5 +172,35 @@ namespace amorphie.token.Services.Consent
                 return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode,Detail = await httpResponseMessage.Content.ReadAsStringAsync()};
             }
         }
+
+        public async Task<ServiceResponse> CancelConsent(Guid consentId, string cancelDetailCode)
+        {
+            var httpClient = _httpClientFactory.CreateClient("Consent");
+            StringContent content = new StringContent(            
+            JsonSerializer.Serialize(new
+            {
+                consentId = consentId,
+                cancelDetailCode = cancelDetailCode
+            }), System.Text.Encoding.UTF8, "application/json");
+
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Delete,
+                RequestUri = new Uri("OpenBankingConsentHHS/Cancel"),
+                Content = content
+            };
+
+            var httpResponseMessage = await httpClient.SendAsync(
+                request);
+                
+            if (httpResponseMessage.IsSuccessStatusCode)
+            {
+                return new ServiceResponse() { StatusCode = 200 };
+            }
+            else
+            {
+                return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode,Detail = await httpResponseMessage.Content.ReadAsStringAsync()};
+            }
+        }
     }
 }
