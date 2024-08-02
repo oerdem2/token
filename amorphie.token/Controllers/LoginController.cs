@@ -266,6 +266,18 @@ public class LoginController : Controller
                 return StatusCode(500);
             }
             var consent = consentResponse.Response;
+            if(string.IsNullOrEmpty(consent!.userTCKN))
+            {
+                if(!consent!.userTCKN!.Equals(openBankingLoginRequest.username))
+                {
+                    await _consentService.CancelConsent(openBankingLoginRequest.consentId, "08");
+                    return RedirectToAction("OpenBankingAuthorize","Authorize",new
+                    {
+                        riza_no=openBankingLoginRequest.consentId,
+                        error_message = Convert.ToBase64String(Encoding.UTF8.GetBytes("Giriş yapmak isteyen kullanıcı ile rıza sahibi kullanıcı aynı olmalıdır."))
+                    });
+                }
+            }
             var consentData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent!.additionalData!);
             var ohkTur = string.Empty;
             if (consent.consentType.Equals("OB_Account"))

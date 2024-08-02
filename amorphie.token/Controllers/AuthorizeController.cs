@@ -219,15 +219,7 @@ public class AuthorizeController : Controller
                 return BadRequest();
             }
 
-            string kmlkNo = string.Empty;
-            if (consent.consentType!.Equals("OB_Account"))
-            {
-                kmlkNo = consentData!.kmlk.kmlkVrs.ToString();
-            }
-            if (consent.consentType!.Equals("OB_Payment"))
-            {
-                kmlkNo = consentData!.odmBsltm.kmlk.kmlkVrs.ToString();
-            }
+            string kmlkNo = consent.userTCKN!;
             var userResponse = await _userService.GetUserByReference(kmlkNo);
             if(userResponse.StatusCode != 200)
             {
@@ -235,7 +227,6 @@ public class AuthorizeController : Controller
                 //Error Handle
             }
             var user = userResponse.Response;
-            var redirectUri = consentData!.gkd.yonAdr;
 
             var authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest()
             {
@@ -327,10 +318,10 @@ public class AuthorizeController : Controller
 
         var preLoginGuid = Guid.NewGuid().ToString();
         var preLoginId = "Prelogin_"+preLoginGuid;
-        var preLoginInfo = new
+        var preLoginInfo = new PreLoginInfo
         {
-            user,
-            client = targetClient
+            User = user.Response,
+            Client = targetClient
         };
 
         await _daprClient.SaveStateAsync(_configuration["DAPR_STATE_STORE_NAME"], preLoginId, preLoginInfo, metadata: new Dictionary<string, string> { { "ttlInSeconds", "20" } });
@@ -478,23 +469,7 @@ public class AuthorizeController : Controller
         var consent = consentResult.Response;
 
         var consentData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent!.additionalData!);
-        string kmlkNo = string.Empty;
-        if (consent.consentType.Equals("OB_Account"))
-        {
-            kmlkNo = consentData!.kmlk.kmlkVrs.ToString();
-        }
-        if (consent.consentType.Equals("OB_Payment"))
-        {
-            try
-            {
-                kmlkNo = consentData!.odmBsltm.kmlk.kmlkVrs.ToString();
-            }
-            catch (Exception ex)
-            {
-                kmlkNo = "";
-            }
-            
-        }
+        string kmlkNo = consent.userTCKN!;
 
         if(!string.IsNullOrWhiteSpace(kmlkNo))
         {
