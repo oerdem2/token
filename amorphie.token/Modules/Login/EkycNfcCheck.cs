@@ -81,7 +81,8 @@ public static class EkycNfcCheck
                     dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
                     EkycAdditionalDataContstants.StandartItem,
-                    EkycAdditionalDataContstants.NfcFailedMinForRetry
+                    EkycAdditionalDataContstants.NfcFailedMinForRetry,
+                    EkycAdditionalDataContstants.OcrSuccessForNfcItem
                 };
  
                 }
@@ -91,7 +92,8 @@ public static class EkycNfcCheck
                     dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
                     EkycAdditionalDataContstants.StandartItem,
-                    EkycAdditionalDataContstants.NfcFailedBiggerThanMinForRetry
+                    EkycAdditionalDataContstants.NfcFailedBiggerThanMinForRetry,
+                    EkycAdditionalDataContstants.OcrSuccessForNfcItem
                 };
                 }
 
