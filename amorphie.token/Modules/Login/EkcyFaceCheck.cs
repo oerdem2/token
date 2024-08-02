@@ -15,7 +15,9 @@ public static class EkcyFaceCheck
     {
 
         var transitionName = body.GetProperty("LastTransition").ToString();
-        var faceFailedTryCount = body.GetProperty("FaceFailedTryCount").ToString();
+        int faceFailedTryCount = EkycConstants.FaceFailedTryCount;
+        Int32.TryParse(body.GetProperty("FaceFailedTryCount")?.ToString(), out faceFailedTryCount);
+
         // var transactionId = body.GetProperty("InstanceId").ToString();
         var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
 
