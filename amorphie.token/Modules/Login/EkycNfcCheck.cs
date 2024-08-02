@@ -15,7 +15,8 @@ public static class EkycNfcCheck
     {
 
         var transitionName = body.GetProperty("LastTransition").ToString();
-        var nfcFailedTryCount = body.GetProperty("NfcFailedTryCount").ToString();
+        int nfcFailedTryCount = EkycConstants.NfcFailedTryCount;
+        Int32.TryParse(body.GetProperty("NfcFailedTryCount")?.ToString(), out nfcFailedTryCount);
         // var transactionId = body.GetProperty("InstanceId").ToString();
         var dataBody = body.GetProperty($"TRX-{transitionName}").GetProperty("Data");
 
