@@ -157,7 +157,7 @@ namespace amorphie.token.Services.Consent
             }
         }
 
-        public async Task<ServiceResponse> CheckAuthorizeForInstutitionConsent(Guid consentId, string citizenshipNo)
+        public async Task<ServiceResponse> CheckAuthorizeForInstitutionConsent(Guid consentId, string citizenshipNo)
         {
             var httpClient = _httpClientFactory.CreateClient("Consent");
             StringContent req = new StringContent("", System.Text.Encoding.UTF8, "application/json");
