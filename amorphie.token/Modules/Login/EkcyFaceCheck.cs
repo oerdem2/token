@@ -64,6 +64,7 @@ public static class EkcyFaceCheck
             var faceCurrentFailedCount = Convert.ToInt32(body.GetProperty("CurrentFaceFailedCount").ToString());
             if (!faceStatus)
             {
+                faceCurrentFailedCount++;
                 //Max-Min try count 
                 if (faceCurrentFailedCount < faceFailedTryCount)
                 {
@@ -84,7 +85,6 @@ public static class EkcyFaceCheck
                     };
                 }
 
-                faceCurrentFailedCount++;
             }
 
             if (faceStatus && faceIsSuccess)

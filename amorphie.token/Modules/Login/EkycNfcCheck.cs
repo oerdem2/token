@@ -77,6 +77,7 @@ public static class EkycNfcCheck
 
             if (!nfcStatus)
             {
+                nfcCurrentFailedCount++;
 
                 if (nfcCurrentFailedCount < nfcFailedTryCount)
                 {
@@ -102,7 +103,6 @@ public static class EkycNfcCheck
 
 
                 variables.Add("FailedStepName", "nfc");
-                nfcCurrentFailedCount++;
             }
 
             if (nfcIsSuccess && nfcStatus)
