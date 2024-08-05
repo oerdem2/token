@@ -460,6 +460,11 @@ public class AuthorizeController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> OpenBankingAuthorize(OpenBankingAuthorizationRequest authorizationRequest)
     {
+        var loginModel = new OpenBankingLogin
+        {
+            consentId = authorizationRequest.riza_no
+        };
+
         var consentResult = await _consentService.GetConsent(authorizationRequest.riza_no);
         if (consentResult.StatusCode != 200)
         {
@@ -467,6 +472,21 @@ public class AuthorizeController : Controller
             return View("Error");
         }
         var consent = consentResult.Response;
+
+        if(consent!.state!.Equals("I"))
+        {
+            ViewBag.hasError = true;
+            ViewBag.errorMessage = "Geçersiz Rıza";
+            return View("NewLogin", loginModel);
+        }
+
+        if(!consent!.state!.Equals("B"))
+        {
+            await _consentService.CancelConsent(authorizationRequest.riza_no,"07");
+            ViewBag.hasError = true;
+            ViewBag.errorMessage = "Geçersiz Rıza";
+            return View("NewLogin", loginModel);
+        }
 
         var consentData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(consent!.additionalData!);
         string kmlkNo = consent.userTCKN!;
@@ -496,11 +516,6 @@ public class AuthorizeController : Controller
         {
             ViewBag.hasError = false;
         }
-
-        var loginModel = new OpenBankingLogin
-        {
-            consentId = authorizationRequest.riza_no
-        };
         
         // if (customerInfo!.data!.profile!.businessLine == "X")
         // {
