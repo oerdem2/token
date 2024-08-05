@@ -243,7 +243,7 @@ namespace amorphie.token.Services.Consent
             }
         }
 
-        public async Task<ServiceResponse> CheckAuthorizeForInstutitionConsent(Guid consentId, string citizenshipNo)
+        public async Task<ServiceResponse> CheckAuthorizeForInstitutionConsent(Guid consentId, string citizenshipNo)
         {
             try
             {
