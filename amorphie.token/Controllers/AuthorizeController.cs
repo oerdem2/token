@@ -48,6 +48,27 @@ public class AuthorizeController : Controller
         _profileService = profileService;
         _loginService = loginService;
     }
+
+    [HttpGet("/test/test")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> GetTest()
+    {
+        await using (var fileLock = await _daprClient.Lock("token-lockstore", "resource", Guid.NewGuid().ToString(), 30))
+            {
+                if (fileLock.Success)
+                {
+                    Console.WriteLine("Success");
+                    await Task.Delay(25000);
+                    var response = await _daprClient.Unlock("token-lockstore", "resource", "random_id_abc123");
+                    Console.WriteLine(response.status);
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to lock .");
+                }
+            }
+        return Ok();
+    }
     
     [HttpPost("/post-transition/{recordId}/{transition}")]
     [ApiExplorerSettings(IgnoreApi = true)]
@@ -473,7 +494,7 @@ public class AuthorizeController : Controller
         }
         var consent = consentResult.Response;
 
-        if(consent!.state!.Equals("I"))
+        if(consent!.state!.Equals("I") || consent!.state!.Equals("K") || consent!.state!.Equals("S"))
         {
             ViewBag.hasError = true;
             ViewBag.errorMessage = "Geçersiz Rıza";
