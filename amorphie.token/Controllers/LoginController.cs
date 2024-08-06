@@ -270,7 +270,7 @@ public class LoginController : Controller
                 });
             }
             var consent = consentResponse.Response;
-            if(string.IsNullOrEmpty(consent!.userTCKN))
+            if(!string.IsNullOrWhiteSpace(consent!.userTCKN))
             {
                 if(!consent!.userTCKN!.Equals(openBankingLoginRequest.username))
                 {
