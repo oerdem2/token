@@ -83,16 +83,23 @@ namespace amorphie.token.Services.Consent
 
             if (httpResponseMessage.IsSuccessStatusCode)
             {
-                var consentResponse = await httpResponseMessage.Content.ReadFromJsonAsync<ConsentResponse>();
-                if (consentResponse == null)
+                try
                 {
-                    throw new ServiceException((int)Errors.InvalidUser, "Consent not found with provided info");
+                    var consentResponse = await httpResponseMessage.Content.ReadFromJsonAsync<ConsentResponse>();
+                    if (consentResponse == null)
+                    {
+                        return new ServiceResponse<ConsentResponse>(){ StatusCode = (int)httpResponseMessage.StatusCode ,Detail = "Consent Not Found"};
+                    }
+                    return new ServiceResponse<ConsentResponse>() { StatusCode = 200, Response = consentResponse };
                 }
-                return new ServiceResponse<ConsentResponse>() { StatusCode = 200, Response = consentResponse };
+                catch (Exception ex)
+                {
+                    return new ServiceResponse<ConsentResponse>(){ StatusCode = 500 ,Detail = "Consent Deserialize Error"};
+                }
             }
             else
             {
-                throw new ServiceException((int)Errors.InvalidUser, "Consent Endpoint Did Not Response Successfully");
+                return new ServiceResponse<ConsentResponse>(){ StatusCode = (int)httpResponseMessage.StatusCode ,Detail = "Consent Endpoint Did Not Response Successfully"};
             }
         }
 

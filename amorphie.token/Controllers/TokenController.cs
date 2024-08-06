@@ -681,6 +681,19 @@ public class TokenController : Controller
             return StatusCode(400, errObj);
         }
 
+        if(consent.Response!.state!.Equals("B"))
+        {
+            errObj.httpCode = 400;
+            errObj.httpMessage = "Bad Request";
+            errObj.errorCode = "TR.OHVPS.Resource.ConsentMismatch";
+            errObj.moreInformation = "Consent State is Not Valid";
+            errObj.moreInformationTr = "Rıza durumu geçersiz.";
+
+            SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
+
+            return StatusCode(400, errObj);
+        }
+
         var clientResult = await _clientService.CheckClient(_configuration["OpenBankingClientId"]!);
         if (clientResult.StatusCode != 200)
         {
@@ -751,7 +764,7 @@ public class TokenController : Controller
             generateTokenRequest.GrantType = "refresh_token";
             generateTokenRequest.RefreshToken = openBankingTokenRequest.RefreshToken;
 
-            if(consent.Response!.state!.Equals("B") || consent.Response!.state!.Equals("Y"))
+            if(!consent.Response!.state!.Equals("K"))
             {
                 errObj.httpCode = 400;
                 errObj.httpMessage = "Bad Request";
