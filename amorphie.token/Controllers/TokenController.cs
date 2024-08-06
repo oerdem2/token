@@ -605,8 +605,14 @@ public class TokenController : Controller
     public async Task<IActionResult> OpenBankingToken([FromBody] OpenBankingTokenRequest openBankingTokenRequest)
     {
         var requestUri = Request.Headers.FirstOrDefault(h => h.Key.Equals("request_uri"));
+        var requestPath = "/ohvps/gkd/s1.1/erisim-belirteci";
         var requestTime = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:sszzz");
         var responseId = Guid.NewGuid();
+
+        dynamic errObj = new ExpandoObject();
+        errObj.path = requestPath;
+        errObj.timestamp = requestTime;
+        errObj.id = responseId;
 
         var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-request-id"));
         var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-group-id"));
@@ -621,17 +627,13 @@ public class TokenController : Controller
 
         if(String.IsNullOrWhiteSpace(jws.Value))
         {
-            var errObj = new {
-                httpCode = 403,
-                httpMessage = "Forbidden",
-                errorCode = "TR.OHVPS.Resource.MissingSignature",
-                path = requestUri.Value.FirstOrDefault(),
-                timestamp = requestTime,
-                id = responseId,
-                moreInformation = "Unauthorized",
-                moreInformationTr = "Yetkisiz işlem."
-            };
-
+            
+            errObj.httpCode = 403;
+            errObj.httpMessage = "Forbidden";
+            errObj.errorCode = "TR.OHVPS.Resource.MissingSignature";
+            errObj.moreInformation = "Unauthorized";
+            errObj.moreInformationTr = "Yetkisiz işlem.";
+            
             SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
             
             return StatusCode(403, errObj);
@@ -640,16 +642,11 @@ public class TokenController : Controller
         var validationResult = openBankingTokenRequest.ValidateOpenBankingRequest();
         if(!validationResult.Item1)
         {
-            var errObj = new {
-                httpCode = validationResult.Item2.HttpCode,
-                httpMessage = validationResult.Item2.HttpMessage,
-                errorCode = validationResult.Item2.ErrorCode,
-                path = requestUri.Value.FirstOrDefault(),
-                timestamp = requestTime,
-                id = responseId,
-                moreInformation = validationResult.Item2.MoreInformation,
-                moreInformationTr = validationResult.Item2.MoreInformationTr
-            };
+            errObj.httpCode = validationResult.Item2.HttpCode;
+            errObj.httpMessage = validationResult.Item2.HttpMessage;
+            errObj.errorCode = validationResult.Item2.ErrorCode;
+            errObj.moreInformation = validationResult.Item2.MoreInformation;
+            errObj.moreInformationTr = validationResult.Item2.MoreInformationTr;
 
             SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
             
@@ -660,52 +657,24 @@ public class TokenController : Controller
         var consent = await _consentService.GetConsent(Guid.Parse(openBankingTokenRequest.ConsentNo!));
         if(consent.StatusCode != 200)
         {
-            var errObj = new {
-                httpCode = 400,
-                httpMessage = "Bad Request",
-                errorCode = "TR.OHVPS.Business.InvalidContent",
-                path = requestUri.Value.FirstOrDefault(),
-                timestamp = requestTime,
-                id = responseId,
-                moreInformation = "Consent Not Found",
-                moreInformationTr = "Rıza bulunamadı."
-            };
+            errObj.httpCode = 400;
+            errObj.httpMessage = "Bad Request";
+            errObj.errorCode = "TR.OHVPS.Business.InvalidContent";
+            errObj.moreInformation = "Consent Not Found";
+            errObj.moreInformationTr = "Rıza bulunamadı.";
 
             SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
 
             return StatusCode(400, errObj);
         }
 
-        if(consent.Response!.state!.Equals("I") || consent.Response!.state!.Equals("B"))
+        if(consent.Response!.state!.Equals("I") || consent.Response!.state!.Equals("S"))
         {
-            var errObj = new {
-                httpCode = 400,
-                httpMessage = "Bad Request",
-                errorCode = "TR.OHVPS.Resource.ConsentRevoked",
-                path = requestUri.Value.FirstOrDefault(),
-                timestamp = requestTime,
-                id = responseId,
-                moreInformation = "Consent State is Not Valid",
-                moreInformationTr = "Rıza durumu geçersiz."
-            };
-
-            SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
-
-            return StatusCode(400, errObj);
-        }
-
-        if(consent.Response!.state!.Equals("B") || consent.Response!.state!.Equals("Y"))
-        {
-            var errObj = new {
-                httpCode = 400,
-                httpMessage = "Bad Request",
-                errorCode = "TR.OHVPS.Resource.ConsentMismatch",
-                path = requestUri.Value.FirstOrDefault(),
-                timestamp = requestTime,
-                id = responseId,
-                moreInformation = "Consent State is Not Valid",
-                moreInformationTr = "Rıza durumu geçersiz."
-            };
+            errObj.httpCode = 400;
+            errObj.httpMessage = "Bad Request";
+            errObj.errorCode = "TR.OHVPS.Resource.ConsentRevoked";
+            errObj.moreInformation = "Consent State is Not Valid";
+            errObj.moreInformationTr = "Rıza durumu geçersiz.";
 
             SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
 
@@ -715,7 +684,12 @@ public class TokenController : Controller
         var clientResult = await _clientService.CheckClient(_configuration["OpenBankingClientId"]!);
         if (clientResult.StatusCode != 200)
         {
-            return BadRequest();
+            errObj.httpCode = 500;
+            errObj.httpMessage = "Internal Server Error";
+            errObj.errorCode = "TR.OHVPS.Server.InternalError";
+            errObj.moreInformation = "Internal Server Error";
+            errObj.moreInformationTr = "Beklenmeyen bir hata oluştu.";
+            return StatusCode(500, errObj);
         }
         var client = clientResult.Response;
 
@@ -732,16 +706,12 @@ public class TokenController : Controller
             var token = await _tokenService.GenerateOpenBankingToken(generateTokenRequest, consent.Response!);
             if(token.StatusCode == 470)
             {
-                var errObj = new {
-                    httpCode = 404,
-                    httpMessage = "Not Found",
-                    errorCode = "TR.OHVPS.Resource.NotFound",
-                    path = requestUri.Value.FirstOrDefault(),
-                    timestamp = requestTime,
-                    id = responseId,
-                    moreInformation = "Resource Not Found",
-                    moreInformationTr = "Kaynak bulunamadı."
-                };
+                errObj.httpCode = 404;
+                errObj.httpMessage = "Not Found";
+                errObj.errorCode = "TR.OHVPS.Resource.NotFound";
+                errObj.moreInformation = "Resource Not Found";
+                errObj.moreInformationTr = "Kaynak bulunamadı.";
+               
                 SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
 
                 return StatusCode(404,errObj);
@@ -750,16 +720,11 @@ public class TokenController : Controller
 
             if (token.StatusCode != 200)
             {
-                var errObj = new {
-                    httpCode = 500,
-                    httpMessage = "Internal Server Error",
-                    errorCode = "TR.OHVPS.Server.InternalError",
-                    path = requestUri.Value.FirstOrDefault(),
-                    timestamp = requestTime,
-                    id = responseId,
-                    moreInformation = "Internal Server Error",
-                    moreInformationTr = "Beklenmeyen bir hata oluştu."
-                };
+                errObj.httpCode = 500;
+                errObj.httpMessage = "Internal Server Error";
+                errObj.errorCode = "TR.OHVPS.Server.InternalError";
+                errObj.moreInformation = "Internal Server Error";
+                errObj.moreInformationTr = "Beklenmeyen bir hata oluştu.";
 
                 SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
                 return StatusCode(500, errObj);
@@ -786,19 +751,27 @@ public class TokenController : Controller
             generateTokenRequest.GrantType = "refresh_token";
             generateTokenRequest.RefreshToken = openBankingTokenRequest.RefreshToken;
 
+            if(consent.Response!.state!.Equals("B") || consent.Response!.state!.Equals("Y"))
+            {
+                errObj.httpCode = 400;
+                errObj.httpMessage = "Bad Request";
+                errObj.errorCode = "TR.OHVPS.Resource.ConsentMismatch";
+                errObj.moreInformation = "Consent State is Not Valid";
+                errObj.moreInformationTr = "Rıza durumu geçersiz.";
+
+                SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
+
+                return StatusCode(400, errObj);
+            }
+
             var token = await _tokenService.GenerateTokenWithRefreshToken(generateTokenRequest);
             if (token.StatusCode == 403)
             {
-                var errObj = new {
-                    httpCode = 401,
-                    httpMessage = "Unauthorized",
-                    errorCode = "TR.OHVPS.Connection.InvalidToken",
-                    path = requestUri.Value.FirstOrDefault(),
-                    timestamp = requestTime,
-                    id = responseId,
-                    moreInformation = "Invalid Token",
-                    moreInformationTr = "Geçersiz yenileme belirteci"
-                };
+                errObj.httpCode = 401;
+                errObj.httpMessage = "Unauthorized";
+                errObj.errorCode = "TR.OHVPS.Connection.InvalidToken";
+                errObj.moreInformation = "Invalid Token";
+                errObj.moreInformationTr = "Geçersiz yenileme belirteci.";
 
                 SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
                 return StatusCode(401, errObj);

@@ -17,7 +17,7 @@ namespace amorphie.token.core.Models.Role
         public Guid RoleId{get;set;}
         [JsonPropertyName("userTCKN")]
         public long UserReference{get;set;}
-        [JsonPropertyName("scopeTCKN")]
+        [JsonPropertyName("scope")]
         public long ScopeReference{get;set;}
     }
 }

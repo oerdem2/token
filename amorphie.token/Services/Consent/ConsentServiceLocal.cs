@@ -22,7 +22,7 @@ namespace amorphie.token.Services.Consent
             StringContent req = new StringContent("", System.Text.Encoding.UTF8, "application/json");
 
             var httpResponseMessage = await httpClient.PostAsync(
-                $"Authorization/CheckAuthorizationForLogin/clientCode={clientId}&roleId={roleId}&userTCKN={citizenshipNo}?scopeTCKN={citizenshipNo}", req);
+                $"Authorization/CheckAuthorizationForLogin/clientCode={clientId}&roleId={roleId}&userTCKN={citizenshipNo}?scope={citizenshipNo}", req);
 
             if (httpResponseMessage.IsSuccessStatusCode)
             {
@@ -39,7 +39,7 @@ namespace amorphie.token.Services.Consent
             var httpClient = _httpClientFactory.CreateClient("Consent");
 
             var httpResponseMessage = await httpClient.GetAsync(
-                $"Authorization/CheckAuthorizationForLogin/clientCode={clientId}&roleId={roleId}&userTCKN={citizenshipNo}&scopeTCKN={citizenshipNo}");
+                $"Authorization/CheckAuthorizationForLogin/clientCode={clientId}&roleId={roleId}&userTCKN={citizenshipNo}&scope={citizenshipNo}");
 
             if (httpResponseMessage.IsSuccessStatusCode)
             {
@@ -59,7 +59,7 @@ namespace amorphie.token.Services.Consent
                 roleId = roleId,
                 clientCode = clientId,
                 userTCKN = citizenshipNo,
-                scopeTCKN = citizenshipNo
+                scope = citizenshipNo
             }), System.Text.Encoding.UTF8, "application/json");
 
             var httpResponseMessage = await httpClient.PostAsync(
@@ -123,7 +123,7 @@ namespace amorphie.token.Services.Consent
             var httpClient = _httpClientFactory.CreateClient("Consent");
 
             var httpResponseMessage = await httpClient.GetAsync(
-                $"Authorization/CheckConsent/clientCode={clientId}&userTCKN={currentUser}&scopeTCKN={scopeUser}");
+                $"Authorization/CheckConsent/clientCode={clientId}&userTCKN={currentUser}&scope={scopeUser}");
 
             if (httpResponseMessage.IsSuccessStatusCode)
             {
