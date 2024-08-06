@@ -186,7 +186,7 @@ namespace amorphie.token.Services.Consent
             var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Delete,
-                RequestUri = new Uri("OpenBankingConsentHHS/Cancel"),
+                RequestUri = new Uri(Configuration["ConsentBaseAddress"]+"OpenBankingConsentHHS/Cancel"),
                 Content = content
             };
 
