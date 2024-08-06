@@ -13,6 +13,6 @@ namespace amorphie.token.core.Models.Consent
         public string? consentType { get; set; }
         public string? additionalData { get; set; }
         public string? userTCKN{get;set;}
-        public string? scopeTCKN{get;set;}
+        public string? scope{get;set;}
     }
 }

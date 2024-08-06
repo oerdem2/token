@@ -18,7 +18,7 @@ namespace amorphie.token.Services.Consent
         {
             try
             {
-                var documents = await _daprClient.InvokeMethodAsync<DocumentResponse>(HttpMethod.Post, Configuration["ConsentServiceAppName"], $"Authorization/CheckAuthorizationForLogin/clientCode={clientId}&roleId={roleId}&userTCKN={citizenshipNo}?scopeTCKN={citizenshipNo}");
+                var documents = await _daprClient.InvokeMethodAsync<DocumentResponse>(HttpMethod.Post, Configuration["ConsentServiceAppName"], $"Authorization/CheckAuthorizationForLogin/clientCode={clientId}&roleId={roleId}&userTCKN={citizenshipNo}?scope={citizenshipNo}");
 
                 return new ServiceResponse<DocumentResponse>()
                 {
@@ -49,7 +49,7 @@ namespace amorphie.token.Services.Consent
         {
             try
             {
-                await _daprClient.InvokeMethodAsync(HttpMethod.Get, Configuration["ConsentServiceAppName"], $"Authorization/CheckAuthorizationForLogin/clientCode={clientId}&roleId={roleId}&userTCKN={citizenshipNo}?scopeTCKN={citizenshipNo}");
+                await _daprClient.InvokeMethodAsync(HttpMethod.Get, Configuration["ConsentServiceAppName"], $"Authorization/CheckAuthorizationForLogin/clientCode={clientId}&roleId={roleId}&userTCKN={citizenshipNo}?scope={citizenshipNo}");
 
                 return new ServiceResponse()
                 {
@@ -84,7 +84,7 @@ namespace amorphie.token.Services.Consent
                     roleId = roleId,
                     clientCode = clientId,
                     userTCKN = citizenshipNo,
-                    scopeTCKN = citizenshipNo
+                    scope = citizenshipNo
                 };
 
                 await _daprClient.InvokeMethodAsync(HttpMethod.Post, Configuration["ConsentServiceAppName"], $"Authorization/AuthorizeForLogin", request);
@@ -183,7 +183,7 @@ namespace amorphie.token.Services.Consent
         {
             try
             {
-                var consent = await _daprClient.InvokeMethodAsync<ConsentResponse>(HttpMethod.Get, Configuration["ConsentServiceAppName"], $"/Authorization/CheckConsent/clientCode={clientId}&userTCKN={currentUser}&scopeTCKN={scopeUser}");
+                var consent = await _daprClient.InvokeMethodAsync<ConsentResponse>(HttpMethod.Get, Configuration["ConsentServiceAppName"], $"/Authorization/CheckConsent/clientCode={clientId}&userTCKN={currentUser}&scope={scopeUser}");
 
                 return new ServiceResponse()
                 {
