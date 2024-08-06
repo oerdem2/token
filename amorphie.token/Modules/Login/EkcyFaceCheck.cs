@@ -28,25 +28,21 @@ public static class EkcyFaceCheck
         var faceIsSuccess = dataChanged.entityData.IsSuccess;
         dynamic variables = new Dictionary<string, dynamic>();
         dataChanged.additionalData = new ExpandoObject();
+        var callType = body.GetProperty("CallType").ToString();
+        var instance = body.GetProperty("Instance").ToString();
+        dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
+        dataChanged.additionalData.callType = callType;
+        var ApplicantFullName = body.GetProperty("ApplicantFullName").ToString();
+        dataChanged.additionalData.applicantFullName = ApplicantFullName;
+
+        dataChanged.additionalData.instanceId = instance;
+
+
         var isSkip = dataChanged.entityData.IsSkip;
         variables.Add("IsSkip", isSkip);
         bool faceStatus = false;
         if (!isSkip)
         {
-
-            var callType = body.GetProperty("CallType").ToString();
-            var instance = body.GetProperty("Instance").ToString();
-            // var name = body.GetProperty("Name").ToString();
-            // var surname = body.GetProperty("Surname").ToString();
-            dataChanged.additionalData.isEkyc = true;// gitmek istediği data 
-            dataChanged.additionalData.callType = callType;
-            var ApplicantFullName = body.GetProperty("ApplicantFullName").ToString();
-            dataChanged.additionalData.applicantFullName = ApplicantFullName;
-            // dataChanged.additionalData.customerName = name; // bu kısımları doldur.
-            // dataChanged.additionalData.customerSurname = surname;
-            dataChanged.additionalData.instanceId = instance;
-
-
             var sessionId = body.GetProperty("SessionId").ToString();
             if (faceIsSuccess && !String.IsNullOrEmpty(sessionId))
             {
