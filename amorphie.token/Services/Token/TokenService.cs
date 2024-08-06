@@ -283,7 +283,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 if(_consent.consentType!.Equals("OB_Account"))
                 {
                     DateTime lastAccessDate = DateTime.Parse(consentData!.hspBlg.iznBlg.erisimIzniSonTrh.ToString());
-                    var DateDiffAsDay = Convert.ToInt32((lastAccessDate - DateTime.Now).TotalDays);
+                    var DateDiffAsDay = Convert.ToInt32((lastAccessDate.AddDays(-1) - DateTime.Now).TotalDays);
                     refreshDuration = DateDiffAsDay * 24 * 60 * 60; 
                 }
         
