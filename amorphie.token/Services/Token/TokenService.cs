@@ -164,8 +164,8 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 if(_consent.consentType!.Equals("OB_Account"))
                 {
                     DateTime lastAccessDate = DateTime.Parse(consentData!.hspBlg.iznBlg.erisimIzniSonTrh.ToString());
-                    var DateDiffAsDay = Convert.ToInt32((lastAccessDate.AddDays(-1) - DateTime.Now).TotalDays);
-                    accessDuration = DateDiffAsDay > 30 ? (30 * 24 * 60 * 60) : (DateDiffAsDay * 24 * 60 * 60); 
+                    var DateDiffAsHours = Convert.ToInt32((lastAccessDate.AddDays(-1) - DateTime.Now).TotalHours);
+                    accessDuration = DateDiffAsHours > 30 * 24 ? (30 * 24 * 60 * 60) : (DateDiffAsHours * 60 * 60); 
                 }
                 if(_consent.consentType.Equals("OB_Payment"))
                 {
@@ -283,8 +283,8 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 if(_consent.consentType!.Equals("OB_Account"))
                 {
                     DateTime lastAccessDate = DateTime.Parse(consentData!.hspBlg.iznBlg.erisimIzniSonTrh.ToString());
-                    var DateDiffAsDay = Convert.ToInt32((lastAccessDate.AddDays(-1) - DateTime.Now).TotalDays);
-                    refreshDuration = DateDiffAsDay * 24 * 60 * 60; 
+                    var DateDiffAsHours = Convert.ToInt32((lastAccessDate.AddDays(-1) - DateTime.Now).TotalHours);
+                    refreshDuration = DateDiffAsHours * 60 * 60; 
                 }
         
                 if(_consent.consentType.Equals("OB_Payment"))
