@@ -492,6 +492,7 @@ public class LoginController : Controller
 
             return View("newOtp", new Otp
             {
+                OtpValue = (env != null && !env.Equals("Prod")) ? "123456" : "",
                 Phone = "0" + amorphieUser.MobilePhone.Prefix.ToString().Substring(0, 2) + "******" + amorphieUser.MobilePhone.Number.ToString().Substring(amorphieUser.MobilePhone.Number.Length - 2, 2),
                 transactionId = transactionId,
                 consentId = openBankingLoginRequest.consentId,
