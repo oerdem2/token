@@ -631,8 +631,41 @@ public class TokenController : Controller
             errObj.httpCode = 403;
             errObj.httpMessage = "Forbidden";
             errObj.errorCode = "TR.OHVPS.Resource.MissingSignature";
-            errObj.moreInformation = "Unauthorized";
-            errObj.moreInformationTr = "Yetkisiz işlem.";
+            errObj.moreInformation = "X-Jws-Signature is mandataroy";
+            errObj.moreInformationTr = "X-Jws-Signature alanı boş olamaz.";
+            
+            SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
+            
+            return StatusCode(403, errObj);
+        }
+
+        var yosInfo = await _consentService.GetYosInfo(tppCode.Value!);
+        if(yosInfo.StatusCode != 200)
+        {
+            errObj.httpCode = 500;
+            errObj.httpMessage = "Internal Server Error";
+            errObj.errorCode = "TR.OHVPS.Server.InternalError";
+            errObj.moreInformation = "Internal Server Error";
+            errObj.moreInformationTr = "Beklenmeyen bir hata oluştu.";
+
+            SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
+
+            return StatusCode(500, errObj);
+        }
+
+        var idempotency = await _daprClient.GetStateAsync<string?>(_configuration["DAPR_STATE_STORE_NAME"],SignatureHelper.GetChecksumForXRequestIdSHA256(openBankingTokenRequest, requestId.Value!));
+        if(!string.IsNullOrWhiteSpace(idempotency))
+        {
+            return Content(System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(idempotency)),"application/json");
+        }
+
+        if(!SignatureHelper.ValidateSignature(jws.Value!, JsonSerializer.Serialize(openBankingTokenRequest), yosInfo.Response!.PublicKey))
+        {
+            errObj.httpCode = 403;
+            errObj.httpMessage = "Forbidden";
+            errObj.errorCode = "TR.OHVPS.Resource.InvalidSignature";
+            errObj.moreInformation = "X-Jws-Signature is invalid";
+            errObj.moreInformationTr = "X-Jws-Signature değeri geçerli değil.";
             
             SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
             
@@ -757,6 +790,8 @@ public class TokenController : Controller
 
             SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, openBankingTokenResponse);
 
+            await _daprClient.SaveStateAsync(_configuration["DAPR_STATE_STORE_NAME"],SignatureHelper.GetChecksumForXRequestIdSHA256(openBankingTokenRequest, requestId.Value!),Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(openBankingTokenResponse))),metadata: new Dictionary<string, string> { { "ttlInSeconds", "20" } });
+
             return Content(JsonSerializer.Serialize(openBankingTokenResponse),"application/json");
         }
         if (openBankingTokenRequest.AuthType.Equals("yenileme_belirteci"))
@@ -799,6 +834,9 @@ public class TokenController : Controller
             };
             
             SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, openBankingTokenResponse);
+
+            await _daprClient.SaveStateAsync(_configuration["DAPR_STATE_STORE_NAME"],SignatureHelper.GetChecksumForXRequestIdSHA256(openBankingTokenRequest, requestId.Value!),Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(openBankingTokenResponse))),metadata: new Dictionary<string, string> { { "ttlInSeconds", "20" } });
+
             return Content(JsonSerializer.Serialize(openBankingTokenResponse),"application/json");
         }
 

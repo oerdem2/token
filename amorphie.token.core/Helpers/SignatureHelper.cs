@@ -1,13 +1,13 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+
+using System.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Jose;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 
 namespace amorphie.token.core.Helpers
 {
@@ -91,5 +91,59 @@ namespace amorphie.token.core.Helpers
                 return Convert.ToHexString(bytes);
             }
         }
+
+        public static bool ValidateSignature(string jws, object body, string signingKey)
+        {
+            RSA rsa = RSA.Create();
+ 
+            // Convert the public key string to byte array
+            byte[] publicKeyBytes = Convert.FromBase64String(signingKey);
+    
+            // Import the public key bytes to the RSA object
+            rsa.ImportSubjectPublicKeyInfo(publicKeyBytes, out _);
+
+            var validationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+            {
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new RsaSecurityKey(rsa),
+                ValidateLifetime = true
+            };
+
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var principal = tokenHandler.ValidateToken(jws, validationParameters, out Microsoft.IdentityModel.Tokens.SecurityToken securityToken);
+                var bodyClaim = principal.Claims.FirstOrDefault(c => c.Type.Equals("body"))?.Value;
+                var hashedBody = GetChecksumSHA256(body);
+                if(!bodyClaim.Equals(hashedBody,StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Microsoft.IdentityModel.Tokens.SecurityTokenValidationException ex)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Generates sha256 hash of body and xrequestId
+        /// </summary>
+        /// <returns>xRequestId|body sha256 hash</returns>
+        public static string GetChecksumForXRequestIdSHA256(object body, string xRequestId)
+        {
+            string concatenatedData = $"{xRequestId}|{JsonSerializer.Serialize(body)}";
+            // Initialize a SHA256 hash object.
+            using SHA256 sha256Hash = SHA256.Create();
+            byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(concatenatedData));
+            // Convert the hash bytes to a hexadecimal string.
+            return Convert.ToHexString(bytes);
+        }
+
+        
     }
 }
