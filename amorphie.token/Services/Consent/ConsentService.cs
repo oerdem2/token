@@ -308,6 +308,37 @@ namespace amorphie.token.Services.Consent
                 };
             }
         }
+
+        public async Task<ServiceResponse<YosInfo>> GetYosInfo(string code)
+        {
+            try
+            {
+                var yosInfo = await _daprClient.InvokeMethodAsync<YosInfo>(HttpMethod.Get, Configuration["ConsentServiceAppName"], "OpenBankingYosInfo/code/"+code);
+
+                return new ServiceResponse<YosInfo>()
+                {
+                    StatusCode = 200,
+                    Response = yosInfo,
+                    Detail = ""
+                };
+            }
+            catch (InvocationException ex)
+            {
+                return new ServiceResponse<YosInfo>()
+                {
+                    StatusCode = (int)ex.Response.StatusCode,
+                    Detail = await ex.Response.Content.ReadAsStringAsync()
+                };
+            }
+            catch (System.Exception ex)
+            {
+                return new ServiceResponse<YosInfo>()
+                {
+                    StatusCode = 500,
+                    Detail = ex.ToString()
+                };
+            }
+        }
     }
 }
 
