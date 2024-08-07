@@ -209,5 +209,23 @@ namespace amorphie.token.Services.Consent
                 return new ServiceResponse() { StatusCode = (int)httpResponseMessage.StatusCode,Detail = await httpResponseMessage.Content.ReadAsStringAsync()};
             }
         }
+
+        public async Task<ServiceResponse<YosInfo>> GetYosInfo(string code)
+        {
+            var httpClient = _httpClientFactory.CreateClient("Consent");
+
+            var httpResponseMessage = await httpClient.GetAsync(
+                $"/OpenBankingYosInfo/code/{code}");
+
+            if (httpResponseMessage.IsSuccessStatusCode)
+            {
+                var yosInfo = await httpResponseMessage.Content.ReadFromJsonAsync<YosInfo>();
+                return new ServiceResponse<YosInfo>() { StatusCode = 200 , Response = yosInfo };
+            }
+            else
+            {
+                return new ServiceResponse<YosInfo>() { StatusCode = (int)httpResponseMessage.StatusCode };
+            }
+        }
     }
 }
