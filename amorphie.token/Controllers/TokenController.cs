@@ -26,6 +26,7 @@ using System.Dynamic;
 using System.Net;
 using amorphie.core.Enums;
 using Microsoft.AspNetCore.Http.HttpResults;
+using System.Text.Json.Serialization;
 
 
 namespace amorphie.token.core.Controllers;
@@ -602,8 +603,11 @@ public class TokenController : Controller
 
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("public/OpenBankingToken")]
-    public async Task<IActionResult> OpenBankingToken([FromBody] OpenBankingTokenRequest openBankingTokenRequest)
+    public async Task<IActionResult> OpenBankingToken()
     {
+        var requestBody = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+        var openBankingTokenRequest = JsonSerializer.Deserialize<OpenBankingTokenRequest>(requestBody);
+
         var requestUri = Request.Headers.FirstOrDefault(h => h.Key.Equals("request_uri"));
         var requestPath = "/ohvps/gkd/s1.1/erisim-belirteci";
         var requestTime = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:sszzz");
@@ -653,13 +657,13 @@ public class TokenController : Controller
             return StatusCode(500, errObj);
         }
 
-        var idempotency = await _daprClient.GetStateAsync<string?>(_configuration["DAPR_STATE_STORE_NAME"],SignatureHelper.GetChecksumForXRequestIdSHA256(openBankingTokenRequest, requestId.Value!));
+        var idempotency = await _daprClient.GetStateAsync<string?>(_configuration["DAPR_STATE_STORE_NAME"],SignatureHelper.GetChecksumForXRequestIdSHA256(requestBody, requestId.Value!));
         if(!string.IsNullOrWhiteSpace(idempotency))
         {
             return Content(System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(idempotency)),"application/json");
         }
 
-        if(!SignatureHelper.ValidateSignature(jws.Value!, JsonSerializer.Serialize(openBankingTokenRequest), yosInfo.Response!.PublicKey))
+        if(!SignatureHelper.ValidateSignature(jws.Value!, requestBody, yosInfo.Response!.PublicKey))
         {
             errObj.httpCode = 403;
             errObj.httpMessage = "Forbidden";
@@ -675,7 +679,7 @@ public class TokenController : Controller
         var validationResult = openBankingTokenRequest.ValidateOpenBankingRequest();
         if(!validationResult.Item1)
         {
-            errObj.httpCode = validationResult.Item2.HttpCode;
+            errObj.httpCode = validationResult.Item2!.HttpCode;
             errObj.httpMessage = validationResult.Item2.HttpMessage;
             errObj.errorCode = validationResult.Item2.ErrorCode;
             errObj.moreInformation = validationResult.Item2.MoreInformation;
@@ -790,7 +794,7 @@ public class TokenController : Controller
 
             SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, openBankingTokenResponse);
 
-            await _daprClient.SaveStateAsync(_configuration["DAPR_STATE_STORE_NAME"],SignatureHelper.GetChecksumForXRequestIdSHA256(openBankingTokenRequest, requestId.Value!),Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(openBankingTokenResponse))),metadata: new Dictionary<string, string> { { "ttlInSeconds", "20" } });
+            await _daprClient.SaveStateAsync(_configuration["DAPR_STATE_STORE_NAME"],SignatureHelper.GetChecksumForXRequestIdSHA256(requestBody, requestId.Value!),Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(openBankingTokenResponse))),metadata: new Dictionary<string, string> { { "ttlInSeconds", "20" } });
 
             return Content(JsonSerializer.Serialize(openBankingTokenResponse),"application/json");
         }
@@ -835,7 +839,7 @@ public class TokenController : Controller
             
             SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, openBankingTokenResponse);
 
-            await _daprClient.SaveStateAsync(_configuration["DAPR_STATE_STORE_NAME"],SignatureHelper.GetChecksumForXRequestIdSHA256(openBankingTokenRequest, requestId.Value!),Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(openBankingTokenResponse))),metadata: new Dictionary<string, string> { { "ttlInSeconds", "20" } });
+            await _daprClient.SaveStateAsync(_configuration["DAPR_STATE_STORE_NAME"],SignatureHelper.GetChecksumForXRequestIdSHA256(requestBody, requestId.Value!),Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(openBankingTokenResponse))),metadata: new Dictionary<string, string> { { "ttlInSeconds", "20" } });
 
             return Content(JsonSerializer.Serialize(openBankingTokenResponse),"application/json");
         }
