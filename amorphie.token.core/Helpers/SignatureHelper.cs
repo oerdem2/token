@@ -132,7 +132,7 @@ namespace amorphie.token.core.Helpers
                 ValidateAudience = false,
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new RsaSecurityKey(rsa),
-                ValidateLifetime = false
+                ValidateLifetime = true
             };
 
             try
@@ -152,6 +152,11 @@ namespace amorphie.token.core.Helpers
             {
                 return false;
             }
+            catch(SecurityTokenMalformedException ex)
+            {
+                return false;
+            }
+            
         }
 
         /// <summary>
