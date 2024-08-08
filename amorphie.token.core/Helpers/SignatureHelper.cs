@@ -3,7 +3,10 @@ using System.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Unicode;
 using Jose;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -82,17 +85,38 @@ namespace amorphie.token.core.Helpers
         /// </summary>
         /// <param name="body"></param>
         /// <returns></returns>
+        private static string GetChecksumSHA256(string body)
+        {
+            // Initialize a SHA256 hash object.
+            using (SHA256 sha256Hash = SHA256.Create())
+            {
+                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(body));
+                return Convert.ToHexString(bytes);
+            }
+        }
+
+        /// <summary>
+        /// Generates sha256 hash of body
+        /// </summary>
+        /// <param name="body"></param>
+        /// <returns></returns>
         private static string GetChecksumSHA256(object body)
         {
             // Initialize a SHA256 hash object.
             using (SHA256 sha256Hash = SHA256.Create())
             {
-                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(body)));
+                var jsonString = JsonSerializer.Serialize(
+                    body,
+                    options: new JsonSerializerOptions{
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                    }
+                );
+                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(jsonString));
                 return Convert.ToHexString(bytes);
             }
         }
 
-        public static bool ValidateSignature(string jws, object body, string signingKey)
+        public static bool ValidateSignature(string jws, string body, string signingKey)
         {
             RSA rsa = RSA.Create();
  
@@ -108,7 +132,7 @@ namespace amorphie.token.core.Helpers
                 ValidateAudience = false,
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new RsaSecurityKey(rsa),
-                ValidateLifetime = true
+                ValidateLifetime = false
             };
 
             try
@@ -117,7 +141,7 @@ namespace amorphie.token.core.Helpers
                 var principal = tokenHandler.ValidateToken(jws, validationParameters, out Microsoft.IdentityModel.Tokens.SecurityToken securityToken);
                 var bodyClaim = principal.Claims.FirstOrDefault(c => c.Type.Equals("body"))?.Value;
                 var hashedBody = GetChecksumSHA256(body);
-                if(!bodyClaim.Equals(hashedBody,StringComparison.OrdinalIgnoreCase))
+                if(!bodyClaim!.Equals(hashedBody,StringComparison.OrdinalIgnoreCase))
                 {
                     return false;
                 }
@@ -134,7 +158,7 @@ namespace amorphie.token.core.Helpers
         /// Generates sha256 hash of body and xrequestId
         /// </summary>
         /// <returns>xRequestId|body sha256 hash</returns>
-        public static string GetChecksumForXRequestIdSHA256(object body, string xRequestId)
+        public static string GetChecksumForXRequestIdSHA256(string body, string xRequestId)
         {
             string concatenatedData = $"{xRequestId}|{JsonSerializer.Serialize(body)}";
             // Initialize a SHA256 hash object.
