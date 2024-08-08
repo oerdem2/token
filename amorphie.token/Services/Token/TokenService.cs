@@ -46,7 +46,8 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
     private LoginResponse? _user;
     private SimpleProfileResponse? _profile;
     private ConsentDto? _selectedConsent;
-    private RoleDefinitionDto? _role;
+    private RoleDto? _role;
+    private RoleDefinitionDto? _roleDefinition;
     private core.Models.Collection.User? _collectionUser;
     private TokenInfo? _refreshTokenInfo;
     private string? _deviceId;
@@ -182,7 +183,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
 
         if (accessInfo.claims != null && accessInfo.claims.Count() > 0)
         {
-            if(_tokenRequest.GrantType.Equals("client_credentials"))
+            if(_tokenRequest!.GrantType!.Equals("client_credentials"))
             {
                 accessInfo.claims = accessInfo.claims.Where(c => !IsUserBasedClaim(c)).ToList();
             }
@@ -202,21 +203,23 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         {
             try
             {
-                if(_transactionService.RoleKey == 10 || _transactionService.RoleKey == 20)
+                if(_roleDefinition is {})
                 {
-                    if(_transactionService.RoleKey == 10)
-                        tokenClaims.Add(new Claim("role", "FullAuthorized"));
-                    else
-                        tokenClaims.Add(new Claim("role", "Viewer"));
+                    tokenClaims.Add(new Claim("role", _roleDefinition.Description));
                 }
                 else
                 {
-                    var roleName = _role.Tags.First();
-                    //TODO - Throw Exception For Else Case
-                    if(!string.IsNullOrWhiteSpace(roleName))
-                        tokenClaims.Add(new Claim("role", roleName));
+                    if(_transactionService.RoleKey == 10 || _transactionService.RoleKey == 20)
+                    {
+                        if(_transactionService.RoleKey == 10)
+                            tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                        else
+                            tokenClaims.Add(new Claim("role", "Viewer"));
+                    }
                     else
-                        tokenClaims.Add(new Claim("role", "FullAuthorized"));
+                    {
+                            tokenClaims.Add(new Claim("role", "Viewer"));
+                    }
                 }
             }
             catch (Exception)
@@ -564,6 +567,29 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         _user = user;
         _profile = profile;
         _deviceId = deviceId;
+
+        var consentListResponse = await _roleService!.GetConsents(_client!.code!, _user.Reference);
+        if(consentListResponse.StatusCode == 200)
+        {
+            var consentList = consentListResponse.Response;
+
+            var consent = consentList!.FirstOrDefault();
+            _selectedConsent = consent;
+
+            var roleResponse = await _roleService.GetRole(consent!.RoleId);
+            if(roleResponse.StatusCode == 200)
+            {
+                var amorphieRole = roleResponse.Response;
+                _role = amorphieRole;
+                var roleDefinition = await _roleService.GetRoleDefinition(_role!.DefinitionId);
+                if(roleDefinition.StatusCode == 200)
+                {
+                    _roleDefinition = roleDefinition.Response;
+                }
+            }
+            
+        }
+        
 
         var tokenResponse = await GenerateTokenResponse();
 
@@ -952,42 +978,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
                 Detail = "User is disabled"
             };
         }
-
-        /*var consentListResponse = await _roleService.GetConsents(_client.code, _user.Reference);
-        if(consentListResponse.StatusCode != 200)
-        {
-            return new ServiceResponse<TokenResponse>()
-            {
-                StatusCode = consentListResponse.StatusCode,
-                Detail = consentListResponse.Detail
-            };
-        }
-        var consentList = consentListResponse.Response;
-
-        if(consentList.Count() != 1)
-        {
-            return new ServiceResponse<TokenResponse>()
-            {
-                StatusCode = 480,
-                Detail = "Password Grant Type Doesn't Support Multiple Consents"
-            };
-        }
-
-        var consent = consentList.First();
-        _selectedConsent = consent;
-
-        var roleResponse = await _roleService.GetRoleDefinition(consent.RoleId);
-        if(roleResponse.StatusCode != 200)
-        {
-            return new ServiceResponse<TokenResponse>()
-            {
-                StatusCode = roleResponse.StatusCode,
-                Detail = roleResponse.Detail
-            };
-        }
-        var amorphieRole = roleResponse.Response;
-        _role = amorphieRole;
-        */
+        
         var tokenResponse = await GenerateTokenResponse();
 
         if (tokenResponse.IdToken == string.Empty && tokenResponse.AccessToken == string.Empty)
