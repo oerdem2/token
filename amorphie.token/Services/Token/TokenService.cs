@@ -568,7 +568,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
         _profile = profile;
         _deviceId = deviceId;
 
-        var consentListResponse = await _roleService!.GetConsents(_client!.code!, _user.Reference);
+        var consentListResponse = await _roleService!.GetConsents(_client!.id!, _user.Reference);
         if(consentListResponse.StatusCode == 200)
         {
             var consentList = consentListResponse.Response;
