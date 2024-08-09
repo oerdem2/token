@@ -660,7 +660,9 @@ public class TokenController : Controller
         var idempotency = await _daprClient.GetStateAsync<string?>(_configuration["DAPR_STATE_STORE_NAME"],SignatureHelper.GetChecksumForXRequestIdSHA256(requestBody, requestId.Value!));
         if(!string.IsNullOrWhiteSpace(idempotency))
         {
-            return Content(System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(idempotency)),"application/json");
+            var oldResponse = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(idempotency));
+            SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, JsonSerializer.Deserialize<TokenResponse>(oldResponse));
+            return Content(oldResponse, "application/json");
         }
 
         if(!SignatureHelper.ValidateSignature(jws.Value!, requestBody, yosInfo.Response!.PublicKey))
