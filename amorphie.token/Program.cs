@@ -1,7 +1,11 @@
 
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Unicode;
 using amorphie.core.Extension;
 using amorphie.token;
 using amorphie.token.core;
+using amorphie.token.core.Constants;
 using amorphie.token.data;
 using amorphie.token.Middlewares;
 using amorphie.token.Modules.Login;
@@ -26,6 +30,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption;
 using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Refit;
 using Serilog;
 using Serilog.Formatting.Compact;
@@ -241,6 +246,8 @@ internal partial class Program
         builder.Services.AddScoped<IMigrationService, MigrationService>();
         builder.Services.AddScoped<ILoginService, LoginService>();
         builder.Services.AddScoped<ILegacySSOService, LegacySSOService>();
+
+        builder.Services.AddSingleton<CollectionUsers>();
 
 
         builder.Services.AddRefitClient<IProfile>()

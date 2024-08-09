@@ -33,9 +33,10 @@ public class LoginController : Controller
     private readonly IProfileService _profileService;
     private readonly IbDatabaseContext _ibContext;
     private readonly IInternetBankingUserService _internetBankingUserService;
+    private readonly CollectionUsers _collectionUsers;
     public LoginController(ILogger<TokenController> logger, IAuthorizationService authorizationService, IUserService userService, DatabaseContext databaseContext
     , IConfiguration configuration,IInternetBankingUserService internetBankingUserService, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService, ITransactionService transactionService,
-    IFlowHandler flowHandler, IConsentService consentService, IProfileService profileService, IbDatabaseContext ibContext)
+    IFlowHandler flowHandler, CollectionUsers collectionUsers, IConsentService consentService, IProfileService profileService, IbDatabaseContext ibContext)
     {
         _logger = logger;
         _authorizationService = authorizationService;
@@ -51,6 +52,7 @@ public class LoginController : Controller
         _profileService = profileService;
         _ibContext = ibContext;
         _internetBankingUserService = internetBankingUserService;
+        _collectionUsers = collectionUsers;
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
@@ -154,10 +156,11 @@ public class LoginController : Controller
     {
         try
         {
+            ViewBag.HasError = false;
             if (string.IsNullOrWhiteSpace(loginRequest.UserName) || string.IsNullOrWhiteSpace(loginRequest.Password))
             {
                 ViewBag.HasError = true;
-                ViewBag.ErrorDetail = "Reference and Password Can Not Be Empty";
+                ViewBag.ErrorDetail = "Kimlik numarası ve şifre boş olamaz";
                 var loginModel = new Login()
                 {
                     Code = loginRequest.Code,
@@ -167,55 +170,27 @@ public class LoginController : Controller
                 return View("CollectionLoginPage", loginModel);
             }
 
-            var user = CollectionUsers.Users.FirstOrDefault(u => u.CitizenshipNo.Equals(loginRequest.UserName));
-            if(user is not {})
+            var amorphieUserResult = await _userService.Login(new LoginRequest() { Reference = loginRequest.UserName!, Password = loginRequest.Password! });
+                
+            if(amorphieUserResult.StatusCode != 200)
             {
                 ViewBag.HasError = true;
-                ViewBag.ErrorDetail = "User Not Found";
+                ViewBag.ErrorDetail = "Hatalı şifre";
                 var loginModel = new Login()
                 {
                     Code = loginRequest.Code,
                     RedirectUri = loginRequest.RedirectUri,
                     RequestedScopes = loginRequest.RequestedScopes
                 };
-                return View("CollectionLoginPage", loginModel);
+                
+                return View("/Views/Authorize/CollectionLoginPage.cshtml",loginModel);
             }
             else
             {
-                if(!loginRequest.Password.Equals("123456"))
-                {
-                    ViewBag.HasError = true;
-                    ViewBag.ErrorDetail = "Şifre Hatalı";
-                    var loginModel = new Login()
-                    {
-                        Code = loginRequest.Code,
-                        RedirectUri = loginRequest.RedirectUri,
-                        RequestedScopes = loginRequest.RequestedScopes
-                    };
-                    return View("CollectionLoginPage", loginModel);
-                }
-
-                var userRequest = new UserInfo
-                {
-                    firstName = user.Name,
-                    lastName = user.Surname,
-                    phone = null,
-                    state = "Active",
-                    salt = "Collection",
-                    password = "123456",
-                    explanation = "Migrated From Collection",
-                    reason = "Amorphie Collection Login",
-                    isArgonHash = true,
-                    eMail = string.Empty,
-                    reference = user.CitizenshipNo
-                };
-
-                var migrateResult = await _userService.SaveUser(userRequest);
-                var amorphieUserResult = await _userService.Login(new LoginRequest() { Reference = loginRequest.UserName!, Password = loginRequest.Password! });
                 var amorphieUser = amorphieUserResult.Response;
-                HttpContext.Session.SetString("LoggedUser", JsonSerializer.Serialize(user));
-
-                var authCodeInfo = await _authorizationService.AssignCollectionUserToAuthorizationCode(amorphieUser!, loginRequest.Code!,user);
+                HttpContext.Session.SetString("LoggedUser", JsonSerializer.Serialize(amorphieUser));
+                var collectionUser = _collectionUsers.Users.FirstOrDefault(u => u.CitizenshipNo.Equals(loginRequest.UserName));
+                var authCodeInfo = await _authorizationService.AssignCollectionUserToAuthorizationCode(amorphieUser!, loginRequest.Code!,collectionUser);
                 
                 return Redirect($"{authCodeInfo.RedirectUri}?code={loginRequest.Code}&response_type=code&state={authCodeInfo.State}");
            

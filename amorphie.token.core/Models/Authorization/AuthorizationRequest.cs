@@ -21,6 +21,7 @@ public class AuthorizationRequest
     public string? CodeChallange { get; set; }
     [FromQuery(Name = "code_challenge_method")]
     public string? CodeChallangeMethod { get; set; }
+    public string? error_message{get;set;}
 }
 
 public class AuthorizationRequestBody
