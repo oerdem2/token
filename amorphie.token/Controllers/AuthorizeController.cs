@@ -717,6 +717,7 @@ public class AuthorizeController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> AuthorizeCollection(AuthorizationRequest authorizationRequest)
     {
+        ViewBag.HasError = false;
         var authorize = await _authorizationService.Authorize(new AuthorizationServiceRequest
         {
             ClientId = authorizationRequest.ClientId,
