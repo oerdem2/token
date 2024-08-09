@@ -118,6 +118,10 @@ namespace amorphie.token.Services.Consent
             try
             {
                 var consent = await _daprClient.InvokeMethodAsync<ConsentResponse>(HttpMethod.Get, Configuration["ConsentServiceAppName"], "/OpenBankingConsentHHS/" + consentId.ToString());
+                if(consent.obAccountConsentDetails is not null)
+                {
+                    consent.userType = consent.obAccountConsentDetails.FirstOrDefault()?.UserType;
+                }
 
                 return new ServiceResponse<ConsentResponse>()
                 {
