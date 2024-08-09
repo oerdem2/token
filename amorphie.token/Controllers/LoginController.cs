@@ -326,6 +326,17 @@ public class LoginController : Controller
                 return StatusCode(500);
             }
 
+            var userStatus = await _ibContext.Status.Where(s => s.UserId == userResponse.Response!.Id && (!s.State.HasValue || s.State.Value == 10)).OrderByDescending(s => s.CreatedAt).FirstOrDefaultAsync();
+            if (userStatus?.Type != 20)
+            {
+                await _consentService.CancelConsent(openBankingLoginRequest.consentId,"12");
+                return RedirectToAction("OpenBankingAuthorize","Authorize",new
+                {
+                    riza_no=openBankingLoginRequest.consentId,
+                    error_message = Convert.ToBase64String(Encoding.UTF8.GetBytes("Giriş yapmak için yetkiniz yoktur."))
+                });
+            }
+
             var userInfo = userInfoResult.Response;
             
             if (userInfo!.data!.profile!.Equals("customer") || !userInfo!.data!.profile!.status!.Equals("active"))
