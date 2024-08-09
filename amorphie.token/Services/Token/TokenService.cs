@@ -22,7 +22,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace amorphie.token.Services.Token;
 
 public class TokenService(ILogger<AuthorizationService> logger, IConfiguration configuration, IClientService clientService, IClaimHandlerService claimService,
-ITransactionService transactionService, IRoleService roleService, IbDatabaseContextMordor ibContextMordor, IConsentService consentService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext, IbSecurityDatabaseContext securityContext
+ITransactionService transactionService, CollectionUsers collectionUsers, IRoleService roleService, IbDatabaseContextMordor ibContextMordor, IConsentService consentService, IUserService userService, DaprClient daprClient, DatabaseContext databaseContext, IbSecurityDatabaseContext securityContext
     , IInternetBankingUserService internetBankingUserService, IProfileService profileService, IbDatabaseContext ibContext) : ServiceBase(logger, configuration), ITokenService
 {
     private readonly IClientService _clientService = clientService;
@@ -38,6 +38,8 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
     private IbSecurityDatabaseContext _ibSecurityContext = securityContext;
     private IProfileService? _profileService = profileService;
     private IRoleService? _roleService = roleService;
+    private CollectionUsers _collectionUsers = collectionUsers;
+
 
     private TokenInfoDetail _tokenInfoDetail = new();
     private GenerateTokenRequest? _tokenRequest;
@@ -462,7 +464,7 @@ ITransactionService transactionService, IRoleService roleService, IbDatabaseCont
 
             _user = userResponse.Response;
 
-            _collectionUser = CollectionUsers.Users.FirstOrDefault(u => u.CitizenshipNo == _user!.Reference);
+            _collectionUser = _collectionUsers.Users.FirstOrDefault(u => u.CitizenshipNo == _user!.Reference);
 
             var profile = await _profileService!.GetCustomerSimpleProfile(refreshTokenInfo.Reference!);
             if (profile.StatusCode != 200)

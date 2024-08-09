@@ -11,6 +11,8 @@ using amorphie.token.Services.Login;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
+using amorphie.token.Services.Role;
+using System.Collections.ObjectModel;
 
 
 namespace amorphie.token.core.Controllers;
@@ -30,9 +32,12 @@ public class AuthorizeController : Controller
     private readonly IConsentService _consentService;
     private readonly IProfileService _profileService;
     private readonly ILoginService _loginService;
+    private readonly IRoleService _roleService;
+    private readonly CollectionUsers _collectionUsers;
+    
     public AuthorizeController(ILogger<AuthorizeController> logger, IAuthorizationService authorizationService, IUserService userService, DatabaseContext databaseContext
     , IConfiguration configuration, DaprClient daprClient, IClientService clientService, IInternetBankingUserService ibUserService, ITransactionService transactionService,
-    IFlowHandler flowHandler, IConsentService consentService, IProfileService profileService, ILoginService loginService)
+    IFlowHandler flowHandler, CollectionUsers collectionUsers, IRoleService roleService, IConsentService consentService, IProfileService profileService, ILoginService loginService)
     {
         _logger = logger;
         _authorizationService = authorizationService;
@@ -47,6 +52,117 @@ public class AuthorizeController : Controller
         _consentService = consentService;
         _profileService = profileService;
         _loginService = loginService;
+        _roleService = roleService;
+        _collectionUsers = collectionUsers;
+    }
+
+    [HttpGet("/private/MigrateCollectionUsers")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> MigrateCollection()
+    {
+        try
+        {
+            var result = new Dictionary<string,string>();
+            var users = _collectionUsers.Users;
+            string password = _configuration["CollectionDefaultPassword"];
+            string salt = _configuration["CollectionPasswordSalt"];
+
+            foreach(var user in users)
+            {
+                if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT").Equals("Prod"))
+                {
+                    password = RandomHelper.RandomPassword();
+                }
+
+                var userRequest = new UserInfo
+                {
+                    firstName = user.Name,
+                    lastName = user.Surname,
+                    phone = new UserPhone{
+                        countryCode = user.Phone.CountryCode,
+                        prefix = user.Phone.Prefix,
+                        number = user.Phone.Number
+                    },
+                    state = "Active",
+                    salt = salt,
+                    password = password,
+                    explanation = "Migrated From Collection",
+                    reason = "Amorphie Collection Login",
+                    isArgonHash = true,
+                    eMail = user.Mail,
+                    reference = user.CitizenshipNo
+                };
+
+                var migrateResult = await _userService.SaveUser(userRequest);
+                if(migrateResult.StatusCode == 200)
+                {
+                    result.Add(user.CitizenshipNo, "Success");
+
+                    var otpRequest = new
+                    {
+                        Sender = "Burgan",
+                        SmsType = "Fast",
+                        Phone = new
+                        {
+                            CountryCode = user.Phone.CountryCode,
+                            Prefix = user.Phone.Prefix,
+                            Number = user.Phone.Number
+                        },
+                        Content = $"Collection uygulamasına giriş yapmak için şifreniz {password}",
+                        Process = new
+                        {
+                            Name = "CollectionMigration",
+                            Identity = "AmorphieToken"
+                        }
+                    };
+
+                    StringContent request = new(JsonSerializer.Serialize(otpRequest), Encoding.UTF8, "application/json");
+
+                    using var httpClient = new HttpClient();
+                    var httpResponse = await httpClient.PostAsync(_configuration["MessagingGatewayUri"], request);
+
+                }
+                else
+                {
+                    result.Add(user.CitizenshipNo, "False");
+                }
+            }
+
+            return Ok(result);
+        }
+        catch (System.Exception ex)
+        {
+            return BadRequest("Migration Failed | " + ex.ToString());
+        }
+        
+        
+    }
+    
+    [HttpGet("/private/Logout")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> Logout([FromQuery] string token)
+    {
+        var consentListResponse = await _roleService!.GetConsents("82dcac6d-80b4-4bc9-9715-1744a7d791c9","24643419968");
+        if(consentListResponse.StatusCode == 200)
+        {
+            var consentList = consentListResponse.Response;
+
+            var consent = consentList!.FirstOrDefault();
+
+            var roleResponse = await _roleService.GetRole(consent!.RoleId);
+            if(roleResponse.StatusCode == 200)
+            {
+                var amorphieRole = roleResponse.Response;
+                var roleDefinition = await _roleService.GetRoleDefinition(amorphieRole.DefinitionId);
+                if(roleDefinition.StatusCode == 200)
+                {
+                }
+            }
+            
+        }
+
+        return Ok();
+
     }
 
     [HttpGet("/test/test")]
@@ -434,24 +550,9 @@ public class AuthorizeController : Controller
         {
             var integrationUserProperty = userInfoModel!.GetProperty("integration_user_name");
             username = integrationUserProperty.ToString();
-            var user = core.Constants.CollectionUsers.Users.FirstOrDefault(u => u.LoginUser.Equals(username.Split("\\")[1]));
-            var userRequest = new UserInfo
-            {
-                firstName = user.Name,
-                lastName = user.Surname,
-                phone = null,
-                state = "Active",
-                salt = "Collection",
-                password = "123456",
-                explanation = "Migrated From Collection",
-                reason = "Amorphie Collection Login",
-                isArgonHash = true,
-                eMail = string.Empty,
-                reference = user.CitizenshipNo
-            };
-
-            var migrateResult = await _userService.SaveUser(userRequest);
-            var amorphieUserResult = await _userService.Login(new LoginRequest() { Reference = userRequest.reference!, Password = userRequest.password! });
+            
+            var collectionUser = _collectionUsers.Users.FirstOrDefault(u => u.LoginUser.Equals(username.Split("\\")[1]));
+            var amorphieUserResult = await _userService.GetUserByReference(collectionUser.CitizenshipNo);
             var amorphieUser = amorphieUserResult.Response;
             authResponse = await _authorizationService.Authorize(new AuthorizationServiceRequest
             {
@@ -470,7 +571,7 @@ public class AuthorizeController : Controller
                 return Results.Problem(detail:authResponse.Detail,statusCode:authResponse.StatusCode);
             }
 
-            var authCodeInfo = await _authorizationService.AssignCollectionUserToAuthorizationCode(amorphieUser!, authResponse.Response!.Code!,user);
+            var authCodeInfo = await _authorizationService.AssignCollectionUserToAuthorizationCode(amorphieUser!, authResponse.Response!.Code!,collectionUser);
 
         }
 
@@ -609,7 +710,7 @@ public class AuthorizeController : Controller
     {
         await Task.CompletedTask;
         
-        return Ok(core.Constants.CollectionUsers.Users);
+        return Ok(_collectionUsers.Users);
     }
 
     [HttpGet("public/AuthorizeCollection")]
