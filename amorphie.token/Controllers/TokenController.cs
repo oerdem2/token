@@ -27,6 +27,7 @@ using System.Net;
 using amorphie.core.Enums;
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Text.Json.Serialization;
+using System.Globalization;
 
 
 namespace amorphie.token.core.Controllers;
@@ -608,7 +609,7 @@ public class TokenController : Controller
         var requestBody = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
         var openBankingTokenRequest = JsonSerializer.Deserialize<OpenBankingTokenRequest>(requestBody);
 
-        var requestUri = Request.Headers.FirstOrDefault(h => h.Key.Equals("request_uri"));
+        var requestUri = Request.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant().Equals("request_uri"));
         var requestPath = "/ohvps/gkd/s1.1/erisim-belirteci";
         var requestTime = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:sszzz");
         var responseId = Guid.NewGuid();
@@ -618,12 +619,13 @@ public class TokenController : Controller
         errObj.timestamp = requestTime;
         errObj.id = responseId;
 
-        var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-request-id"));
-        var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-group-id"));
-        var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-aspsp-code"));
-        var tppCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-tpp-code"));
-        var jws = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-jws-signature"));
-        var psu_fraud_check = Request.Headers.FirstOrDefault(h => h.Key.Equals("psu-fraud-check"));
+        var requestId = Request.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant().Equals("x-request-id"));
+        var groupId = Request.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant().Equals("x-group-id"));
+        var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant().Equals("x-aspsp-code"));
+        var tppCode = Request.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant().Equals("x-tpp-code"));
+        var jws = Request.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant().Equals("x-jws-signature"));
+        var psu_initiated = Request.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant().Equals("psu-initiated"));
+        var psu_fraud_check = Request.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant().Equals("psu-fraud-check"));
 
 
         HttpContext.Response.Headers.Append("X-Request-ID", string.IsNullOrWhiteSpace(requestId.Value) ? Guid.NewGuid().ToString() : requestId.Value);
@@ -680,7 +682,7 @@ public class TokenController : Controller
             return StatusCode(403, errObj);
         }
 
-        if(psu_fraud_check.Value.Equals("E") && string.IsNullOrWhiteSpace(psu_fraud_check.Value))
+        if(psu_initiated.Value.Equals("E") && string.IsNullOrWhiteSpace(psu_fraud_check.Value))
         {
             await _consentService.CancelConsent(Guid.Parse(openBankingTokenRequest!.ConsentNo!), "14");
             
@@ -695,7 +697,7 @@ public class TokenController : Controller
             return StatusCode(403,errObj);
         }
 
-        if(psu_fraud_check.Value.Equals("E") && !string.IsNullOrWhiteSpace(psu_fraud_check.Value))
+        if(psu_initiated.Value.Equals("E") && !string.IsNullOrWhiteSpace(psu_fraud_check.Value))
         {
             await _consentService.CancelConsent(Guid.Parse(openBankingTokenRequest!.ConsentNo!), "14");
             var fraudResponse = SignatureHelper.ValidateFraudSignature(psu_fraud_check.Value!, yosInfo.Response!.PublicKey);
