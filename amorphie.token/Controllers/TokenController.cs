@@ -346,7 +346,7 @@ public class TokenController : Controller
         _transactionService.IpAddress = ipAddress!;
 
         var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
-        if(generateTokenRequest.Scopes?.Count() == 0)
+        if(generateTokenRequest.Scopes is not {} || generateTokenRequest.Scopes?.Count() == 0)
         {
             if(!string.IsNullOrEmpty(tokenRequest.scope))
             {
@@ -441,7 +441,7 @@ public class TokenController : Controller
         _transactionService.IpAddress = ipAddress!;
 
         var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
-        if(generateTokenRequest.Scopes?.Count() == 0)
+        if(generateTokenRequest.Scopes is not {} || generateTokenRequest.Scopes?.Count() == 0)
         {
             if(!string.IsNullOrEmpty(tokenRequest.scope))
             {
