@@ -699,10 +699,10 @@ public class TokenController : Controller
 
         if(psu_initiated.Value.Equals("E") && !string.IsNullOrWhiteSpace(psu_fraud_check.Value))
         {
-            await _consentService.CancelConsent(Guid.Parse(openBankingTokenRequest!.ConsentNo!), "14");
             var fraudResponse = SignatureHelper.ValidateFraudSignature(psu_fraud_check.Value!, yosInfo.Response!.PublicKey);
             if(!fraudResponse.Item1)
             {
+                await _consentService.CancelConsent(Guid.Parse(openBankingTokenRequest!.ConsentNo!), "14");
                 errObj.httpCode = fraudResponse.Item2!.HttpCode;
                 errObj.httpMessage = fraudResponse.Item2.HttpMessage;
                 errObj.errorCode = fraudResponse.Item2.ErrorCode;

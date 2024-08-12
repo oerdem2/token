@@ -149,7 +149,7 @@ namespace amorphie.token.core.Helpers
                 var AnomalyFlag = principal.Claims.FirstOrDefault(c => c.Type.Equals("AnomalyFlag"))?.Value;
                 var UnsafeAccountFlag = principal.Claims.FirstOrDefault(c => c.Type.Equals("UnsafeAccountFlag"))?.Value;
 
-                if(CheckFraudPropertyIsValid(FirstLoginFlag, typeof(ZmnAralik), true))
+                if(!CheckFraudPropertyIsValid(FirstLoginFlag, typeof(ZmnAralik), true))
                     return (false,new OpenBankingError(){
                         ErrorCode = "TR.OHVPS.Resource.InvalidSignature",
                         HttpCode = 403,
@@ -157,7 +157,7 @@ namespace amorphie.token.core.Helpers
                         MoreInformationTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi gecersiz.",
                         MoreInformation = "PSU-Fraud-Check header is invalid."
                     });
-                if(CheckFraudPropertyIsValid(DeviceFirstLoginFlag, typeof(ZmnAralik), true))
+                if(!CheckFraudPropertyIsValid(DeviceFirstLoginFlag, typeof(ZmnAralik), true))
                     return (false,new OpenBankingError(){
                         ErrorCode = "TR.OHVPS.Resource.InvalidSignature",
                         HttpCode = 403,
@@ -165,7 +165,7 @@ namespace amorphie.token.core.Helpers
                         MoreInformationTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi gecersiz.",
                         MoreInformation = "PSU-Fraud-Check header is invalid."
                     });
-                if(CheckFraudPropertyIsValid(LastPasswordChangeFlag, typeof(ZmnAralik), true))
+                if(!CheckFraudPropertyIsValid(LastPasswordChangeFlag, typeof(ZmnAralik), true))
                     return (false,new OpenBankingError(){
                         ErrorCode = "TR.OHVPS.Resource.InvalidSignature",
                         HttpCode = 403,
@@ -173,7 +173,7 @@ namespace amorphie.token.core.Helpers
                         MoreInformationTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi gecersiz.",
                         MoreInformation = "PSU-Fraud-Check header is invalid."
                     });
-                if(CheckFraudPropertyIsValid(BlacklistFlag, typeof(VarYok), false))
+                if(!CheckFraudPropertyIsValid(BlacklistFlag, typeof(VarYok), false))
                     return (false,new OpenBankingError(){
                         ErrorCode = "TR.OHVPS.Resource.InvalidSignature",
                         HttpCode = 403,
@@ -181,7 +181,7 @@ namespace amorphie.token.core.Helpers
                         MoreInformationTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi gecersiz.",
                         MoreInformation = "PSU-Fraud-Check header is invalid."
                     });
-                if(CheckFraudPropertyIsValid(MalwareFlag, typeof(ZmnAralik), false))
+                if(!CheckFraudPropertyIsValid(MalwareFlag, typeof(ZmnAralik), false))
                     return (false,new OpenBankingError(){
                         ErrorCode = "TR.OHVPS.Resource.InvalidSignature",
                         HttpCode = 403,
@@ -189,7 +189,7 @@ namespace amorphie.token.core.Helpers
                         MoreInformationTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi gecersiz.",
                         MoreInformation = "PSU-Fraud-Check header is invalid."
                     });
-                if(CheckFraudPropertyIsValid(AnomalyFlag, typeof(VarYok), false))
+                if(!CheckFraudPropertyIsValid(AnomalyFlag, typeof(VarYok), false))
                     return (false,new OpenBankingError(){
                         ErrorCode = "TR.OHVPS.Resource.InvalidSignature",
                         HttpCode = 403,
@@ -197,7 +197,7 @@ namespace amorphie.token.core.Helpers
                         MoreInformationTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi gecersiz.",
                         MoreInformation = "PSU-Fraud-Check header is invalid."
                     });
-                if(CheckFraudPropertyIsValid(UnsafeAccountFlag, typeof(ZmnAralik), false))
+                if(!CheckFraudPropertyIsValid(UnsafeAccountFlag, typeof(ZmnAralik), false))
                     return (false,new OpenBankingError(){
                         ErrorCode = "TR.OHVPS.Resource.InvalidSignature",
                         HttpCode = 403,
