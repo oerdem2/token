@@ -680,9 +680,37 @@ public class TokenController : Controller
             return StatusCode(403, errObj);
         }
 
+        if(psu_fraud_check.Value.Equals("E") && string.IsNullOrWhiteSpace(psu_fraud_check.Value))
+        {
+            await _consentService.CancelConsent(Guid.Parse(openBankingTokenRequest!.ConsentNo!), "14");
+            
+            errObj.errorCode = "TR.OHVPS.Resource.InvalidSignature";
+            errObj.httpCode = 403;
+            errObj.httpMessage = "Forbidden";
+            errObj.moreInformationTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi gecersiz.";
+            errObj.moreInformation = "PSU-Fraud-Check header is invalid.";
+
+            SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
+                
+            return StatusCode(403,errObj);
+        }
+
         if(psu_fraud_check.Value.Equals("E") && !string.IsNullOrWhiteSpace(psu_fraud_check.Value))
         {
+            await _consentService.CancelConsent(Guid.Parse(openBankingTokenRequest!.ConsentNo!), "14");
             var fraudResponse = SignatureHelper.ValidateFraudSignature(psu_fraud_check.Value!, yosInfo.Response!.PublicKey);
+            if(!fraudResponse.Item1)
+            {
+                errObj.httpCode = fraudResponse.Item2!.HttpCode;
+                errObj.httpMessage = fraudResponse.Item2.HttpMessage;
+                errObj.errorCode = fraudResponse.Item2.ErrorCode;
+                errObj.moreInformation = fraudResponse.Item2.MoreInformation;
+                errObj.moreInformationTr = fraudResponse.Item2.MoreInformationTr;
+
+                SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
+                
+                return StatusCode(fraudResponse.Item2.HttpCode,errObj);
+            }
         }
 
         var validationResult = openBankingTokenRequest.ValidateOpenBankingRequest();
