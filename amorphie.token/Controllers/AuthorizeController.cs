@@ -142,49 +142,12 @@ public class AuthorizeController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> Logout([FromQuery] string token)
     {
-        var consentListResponse = await _roleService!.GetConsents("82dcac6d-80b4-4bc9-9715-1744a7d791c9","24643419968");
-        if(consentListResponse.StatusCode == 200)
-        {
-            var consentList = consentListResponse.Response;
-
-            var consent = consentList!.FirstOrDefault();
-
-            var roleResponse = await _roleService.GetRole(consent!.RoleId);
-            if(roleResponse.StatusCode == 200)
-            {
-                var amorphieRole = roleResponse.Response;
-                var roleDefinition = await _roleService.GetRoleDefinition(amorphieRole.DefinitionId);
-                if(roleDefinition.StatusCode == 200)
-                {
-                }
-            }
-            
-        }
+        
 
         return Ok();
 
     }
 
-    [HttpGet("/test/test")]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    public async Task<IActionResult> GetTest()
-    {
-        await using (var fileLock = await _daprClient.Lock("token-lockstore", "resource", Guid.NewGuid().ToString(), 30))
-            {
-                if (fileLock.Success)
-                {
-                    Console.WriteLine("Success");
-                    await Task.Delay(25000);
-                    var response = await _daprClient.Unlock("token-lockstore", "resource", "random_id_abc123");
-                    Console.WriteLine(response.status);
-                }
-                else
-                {
-                    Console.WriteLine($"Failed to lock .");
-                }
-            }
-        return Ok();
-    }
     
     [HttpPost("/post-transition/{recordId}/{transition}")]
     [ApiExplorerSettings(IgnoreApi = true)]
@@ -194,7 +157,7 @@ public class AuthorizeController : Controller
         var content1 = new StringContent(JsonSerializer.Serialize(new{
             grant_type = "client_credentials",
             client_id = "IbAndroidApp",
-            client_secret = "6b7b82a9-a072-4191-9f07-2d1cf45e58fe",
+            client_secret = "",
             scopes = new string[] { "openId","retail-customer"}
         }),Encoding.UTF8,"application/json");
         var resp2 = await httpClient.PostAsync("https://test-pubagw6.burgan.com.tr/ebanking/token",content1);
@@ -252,7 +215,7 @@ public class AuthorizeController : Controller
         var content = new StringContent(JsonSerializer.Serialize(new{
             grant_type = "client_credentials",
             client_id = "IbAndroidApp",
-            client_secret = "6b7b82a9-a072-4191-9f07-2d1cf45e58fe",
+            client_secret = "",
             scopes = new string[] { "openId","retail-customer"}
         }),Encoding.UTF8,"application/json");
         var resp = await httpClient.PostAsync("https://test-pubagw6.burgan.com.tr/ebanking/token",content);
