@@ -35,6 +35,7 @@ public static class EkycNfcCheck
         var ApplicantFullName = body.GetProperty("ApplicantFullName").ToString();
         dataChanged.additionalData.applicantFullName = ApplicantFullName;
         dataChanged.additionalData.instanceId = instance;
+        dataChanged.additionalData.serviceNfcFailedTryCount = nfcFailedTryCount;
 
         var isSkip = dataChanged.entityData.IsSkip;
         variables.Add("IsSkip", isSkip);
