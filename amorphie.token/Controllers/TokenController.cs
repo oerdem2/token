@@ -623,6 +623,8 @@ public class TokenController : Controller
         var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-aspsp-code"));
         var tppCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-tpp-code"));
         var jws = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-jws-signature"));
+        var psu_fraud_check = Request.Headers.FirstOrDefault(h => h.Key.Equals("psu-fraud-check"));
+
 
         HttpContext.Response.Headers.Append("X-Request-ID", string.IsNullOrWhiteSpace(requestId.Value) ? Guid.NewGuid().ToString() : requestId.Value);
         HttpContext.Response.Headers.Append("X-Group-ID", string.IsNullOrWhiteSpace(groupId.Value) ? Guid.NewGuid().ToString() : groupId.Value);
@@ -676,6 +678,11 @@ public class TokenController : Controller
             SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
             
             return StatusCode(403, errObj);
+        }
+
+        if(psu_fraud_check.Value.Equals("E") && !string.IsNullOrWhiteSpace(psu_fraud_check.Value))
+        {
+            var fraudResponse = SignatureHelper.ValidateFraudSignature(psu_fraud_check.Value!, yosInfo.Response!.PublicKey);
         }
 
         var validationResult = openBankingTokenRequest.ValidateOpenBankingRequest();
