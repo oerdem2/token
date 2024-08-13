@@ -44,7 +44,7 @@ public static class CheckOtpFlow
         {
             int otpTryCount = Convert.ToInt32(body.GetProperty("OtpTryCount").ToString());
             variables.otpMatch = false;
-            variables.OtpTryCount = otpTryCount++;
+            variables.OtpTryCount = ++otpTryCount;
             variables.message = ErrorHelper.GetErrorMessage(LoginErrors.WrongOtp, langCode);
             return Results.Ok(variables);
         }
