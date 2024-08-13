@@ -1159,22 +1159,43 @@ ITransactionService transactionService, CollectionUsers collectionUsers, IRoleSe
         _tokenRequest = tokenRequest;
         ServiceResponse<ClientResponse> clientResponse;
 
-        if(Guid.TryParse(tokenRequest.ClientId, out Guid _))
+        if(!string.IsNullOrWhiteSpace(tokenRequest.ClientSecret))
         {
-            clientResponse = await _clientService.ValidateClient(tokenRequest.ClientId!, tokenRequest.ClientSecret!);
+            if(Guid.TryParse(tokenRequest.ClientId, out Guid _))
+            {
+                clientResponse = await _clientService.ValidateClient(tokenRequest.ClientId!, tokenRequest.ClientSecret!);
+            }
+            else
+            {
+                clientResponse = await _clientService.ValidateClientByCode(tokenRequest.ClientId!, tokenRequest.ClientSecret!);
+            }
+            if (clientResponse.StatusCode != 200)
+            {
+                return new ServiceResponse<TokenResponse>()
+                {
+                    StatusCode = clientResponse.StatusCode,
+                    Detail = clientResponse.Detail
+                };
+            }
         }
         else
         {
-            clientResponse = await _clientService.ValidateClientByCode(tokenRequest.ClientId!, tokenRequest.ClientSecret!);
-        }
-        
-        if (clientResponse.StatusCode != 200)
-        {
-            return new ServiceResponse<TokenResponse>()
+            if(Guid.TryParse(tokenRequest.ClientId, out Guid _))
             {
-                StatusCode = clientResponse.StatusCode,
-                Detail = clientResponse.Detail
-            };
+                clientResponse = await _clientService.CheckClient(tokenRequest.ClientId!);
+            }
+            else
+            {
+                clientResponse = await _clientService.CheckClientByCode(tokenRequest.ClientId!);
+            }
+            if (clientResponse.StatusCode != 200)
+            {
+                return new ServiceResponse<TokenResponse>()
+                {
+                    StatusCode = clientResponse.StatusCode,
+                    Detail = clientResponse.Detail
+                };
+            }
         }
 
         _client = clientResponse.Response;
