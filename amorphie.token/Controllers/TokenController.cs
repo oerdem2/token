@@ -27,6 +27,7 @@ using System.Net;
 using amorphie.core.Enums;
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Text.Json.Serialization;
+using System.Globalization;
 
 
 namespace amorphie.token.core.Controllers;
@@ -346,7 +347,7 @@ public class TokenController : Controller
         _transactionService.IpAddress = ipAddress!;
 
         var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
-        if(generateTokenRequest.Scopes?.Count() == 0)
+        if(generateTokenRequest.Scopes is not {} || generateTokenRequest.Scopes?.Count() == 0)
         {
             if(!string.IsNullOrEmpty(tokenRequest.scope))
             {
@@ -441,7 +442,7 @@ public class TokenController : Controller
         _transactionService.IpAddress = ipAddress!;
 
         var generateTokenRequest = tokenRequest.MapTo<GenerateTokenRequest>();
-        if(generateTokenRequest.Scopes?.Count() == 0)
+        if(generateTokenRequest.Scopes is not {} || generateTokenRequest.Scopes?.Count() == 0)
         {
             if(!string.IsNullOrEmpty(tokenRequest.scope))
             {
@@ -608,7 +609,7 @@ public class TokenController : Controller
         var requestBody = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
         var openBankingTokenRequest = JsonSerializer.Deserialize<OpenBankingTokenRequest>(requestBody);
 
-        var requestUri = Request.Headers.FirstOrDefault(h => h.Key.Equals("request_uri"));
+        var requestUri = Request.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant().Equals("request_uri"));
         var requestPath = "/ohvps/gkd/s1.1/erisim-belirteci";
         var requestTime = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:sszzz");
         var responseId = Guid.NewGuid();
@@ -618,11 +619,14 @@ public class TokenController : Controller
         errObj.timestamp = requestTime;
         errObj.id = responseId;
 
-        var requestId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-request-id"));
-        var groupId = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-group-id"));
-        var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-aspsp-code"));
-        var tppCode = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-tpp-code"));
-        var jws = Request.Headers.FirstOrDefault(h => h.Key.Equals("x-jws-signature"));
+        var requestId = Request.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant().Equals("x-request-id"));
+        var groupId = Request.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant().Equals("x-group-id"));
+        var aspspCode = Request.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant().Equals("x-aspsp-code"));
+        var tppCode = Request.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant().Equals("x-tpp-code"));
+        var jws = Request.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant().Equals("x-jws-signature"));
+        var psu_initiated = Request.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant().Equals("psu-initiated"));
+        var psu_fraud_check = Request.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant().Equals("psu-fraud-check"));
+
 
         HttpContext.Response.Headers.Append("X-Request-ID", string.IsNullOrWhiteSpace(requestId.Value) ? Guid.NewGuid().ToString() : requestId.Value);
         HttpContext.Response.Headers.Append("X-Group-ID", string.IsNullOrWhiteSpace(groupId.Value) ? Guid.NewGuid().ToString() : groupId.Value);
@@ -676,6 +680,39 @@ public class TokenController : Controller
             SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
             
             return StatusCode(403, errObj);
+        }
+
+        if(psu_initiated.Value.Equals("E") && string.IsNullOrWhiteSpace(psu_fraud_check.Value))
+        {
+            await _consentService.CancelConsent(Guid.Parse(openBankingTokenRequest!.ConsentNo!), "14");
+            
+            errObj.errorCode = "TR.OHVPS.Resource.InvalidSignature";
+            errObj.httpCode = 403;
+            errObj.httpMessage = "Forbidden";
+            errObj.moreInformationTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi gecersiz.";
+            errObj.moreInformation = "PSU-Fraud-Check header is invalid.";
+
+            SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
+                
+            return StatusCode(403,errObj);
+        }
+
+        if(psu_initiated.Value.Equals("E") && !string.IsNullOrWhiteSpace(psu_fraud_check.Value))
+        {
+            var fraudResponse = SignatureHelper.ValidateFraudSignature(psu_fraud_check.Value!, yosInfo.Response!.PublicKey);
+            if(!fraudResponse.Item1)
+            {
+                await _consentService.CancelConsent(Guid.Parse(openBankingTokenRequest!.ConsentNo!), "14");
+                errObj.httpCode = fraudResponse.Item2!.HttpCode;
+                errObj.httpMessage = fraudResponse.Item2.HttpMessage;
+                errObj.errorCode = fraudResponse.Item2.ErrorCode;
+                errObj.moreInformation = fraudResponse.Item2.MoreInformation;
+                errObj.moreInformationTr = fraudResponse.Item2.MoreInformationTr;
+
+                SignatureHelper.SetXJwsSignatureHeader(HttpContext, _configuration, errObj);
+                
+                return StatusCode(fraudResponse.Item2.HttpCode,errObj);
+            }
         }
 
         var validationResult = openBankingTokenRequest.ValidateOpenBankingRequest();

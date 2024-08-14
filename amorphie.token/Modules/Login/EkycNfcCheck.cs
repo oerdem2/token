@@ -73,24 +73,32 @@ public static class EkycNfcCheck
             {
                 nfcCurrentFailedCount++;
 
+
                 if (nfcCurrentFailedCount < nfcFailedTryCount)
+
                 {
                     dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
                     EkycAdditionalDataContstants.StandartItem,
+
                     EkycAdditionalDataContstants.NfcFailedMinForRetry,
                     EkycAdditionalDataContstants.OcrSuccessForNfcItem
-                };
 
+                };
+ 
                 }
+
                 if (nfcCurrentFailedCount >= nfcFailedTryCount)
+
                 {
                     //Min try additional data
                     dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
                     EkycAdditionalDataContstants.StandartItem,
+
                     EkycAdditionalDataContstants.NfcFailedBiggerThanMinForRetry,
                     EkycAdditionalDataContstants.OcrSuccessForNfcItem
+
                 };
                 }
 
