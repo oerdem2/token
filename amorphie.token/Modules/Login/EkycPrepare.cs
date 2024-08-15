@@ -37,11 +37,11 @@ public static class EkycPrepare
         bool hasWfId = false;
         // WFID -- or zeen
         if (constCallType == EkycCallTypeConstants.Mevduat_ON ||
-         callType == EkycCallTypeConstants.Mevduat_HEPSIBURADA || 
+         callType == EkycCallTypeConstants.Mevduat_HEPSIBURADA ||
         callType == EkycCallTypeConstants.Mevduat_BRGN)
         {
-           
-            if(!wfId.IsNullOrEmpty())
+
+            if (!wfId.IsNullOrEmpty())
             {
                 hasWfId = true;
             }
@@ -50,7 +50,7 @@ public static class EkycPrepare
             isSelfServiceAvaible = false;
 
         }
-       
+
 
         if (!hasWfId)
         {
@@ -93,8 +93,8 @@ public static class EkycPrepare
         var nfcMaxCount = Convert.ToInt32(configuration["EkycNfcFailMaxTryCountDefault"]);
         var faceMaxCount = Convert.ToInt32(configuration["EkycFaceFailMaxTryCountDefault"]);
 
-        if (constCallType == EkycCallTypeConstants.Mevduat_ON || 
-        constCallType == EkycCallTypeConstants.Mevduat_BRGN || 
+        if (constCallType == EkycCallTypeConstants.Mevduat_ON ||
+        constCallType == EkycCallTypeConstants.Mevduat_BRGN ||
         callType == EkycCallTypeConstants.Mevduat_HEPSIBURADA)
         {
             ocrMinCount = Convert.ToInt32(configuration["EkycOcrFailMinTryCountMevduat"]);
@@ -128,6 +128,16 @@ public static class EkycPrepare
         dataChanged.additionalData.applicantFullName = ApplicantFullName;
         dataChanged.additionalData.isMediaServerActive = false;
         dataChanged.additionalData.ekycEnvironment = "preprod";
+
+        if (constCallType == EkycCallTypeConstants.IBSifre_BRGN || callType == EkycCallTypeConstants.IBSifre_ON)
+        {
+            dataChanged.additionalData.isAutoClosable = true;
+        }
+        else
+        {
+            dataChanged.additionalData.isAutoClosable = false;
+        }
+
 
         dataChanged.additionalData.pages = new List<EkycPageModel>{
             new EkycPageModel
