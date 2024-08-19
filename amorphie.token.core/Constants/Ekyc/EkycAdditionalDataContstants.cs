@@ -8,27 +8,7 @@ public static class EkycAdditionalDataContstants
         image = "wait",
         title = "Kontrolleriniz Devam Ediyor",
         navText = "Müşterimiz Ol",
-        popUp = new EkycPopUpModel
-        {
-            image = "alert",
-            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
-            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
-            buttons = new List<EkycButtonModel>{
-                        new EkycButtonModel{
-                            type="primary",
-                            itemNo=1,
-                            text = "Onayla",
-                            action="Exit",
-                            transition = "amorphie-ekyc-exit"
-                        },
-                        new EkycButtonModel{
-                            type="secondary",
-                            itemNo=2,
-                            text="Görüntülü Görüşmeye Devam Et",
-                            action="Cancel"
-                        }
-                    }
-        },
+        popUp = EkycPopupConstants.CancelEkyc,
         buttons = new List<EkycButtonModel>()
     };
 
@@ -39,44 +19,9 @@ public static class EkycAdditionalDataContstants
         title = "Bağlantı Hatası",
         navText = "Müşterimiz Ol",
         subTexts = new List<string> { "Teknik sebeplerden dolayı sayfa yüklenemedi. Yeniden dene diyerek işleme kaldığınız yerden devam edebilirsiniz." },
-        popUp = new EkycPopUpModel
-        {
-            image = "alert",
-            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
-            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
-            buttons = new List<EkycButtonModel>{
-                        new EkycButtonModel{
-                            type="primary",
-                            itemNo=1,
-                            text = "Onayla",
-                            action="Exit",
-                            transition = "amorphie-ekyc-exit"
-                        },
-                        new EkycButtonModel{
-                            type="secondary",
-                            itemNo=2,
-                            text="Görüntülü Görüşmeye Devam Et",
-                            action="Cancel"
-                        }
-                    }
-        },
-        buttons = new List<EkycButtonModel>{
-                  new EkycButtonModel
-                  {
-                     type="primary",
-                     itemNo=1,
-                     text = "Yeniden Dene",
-                     action="Retry",
-                  },
-                  new EkycButtonModel
-                  {
-                     type="secondary",
-                     itemNo=2,
-                     text="Giriş Ekranına Dön",
-                     action="Exit",
-                     transition = "amorphie-ekyc-exit"
-                  }
-                }
+        popUp = EkycPopupConstants.CancelEkyc,
+        buttons = EkycButtonGroupConstants.RetryAndEkycExit
+
     };
 
     public static readonly EkycPageModel OcrFailedItemForRetry = new EkycPageModel
@@ -86,36 +31,9 @@ public static class EkycAdditionalDataContstants
         title = "Kimlik Doğrulama Yapılamadı",
         navText = "Müşterimiz Ol",
         subTexts = new List<string> { "Lütfen kimlik kartınızı hareket ettirmeden, yeterli ışık alan bir ortamda yeniden deneyin." },
-        popUp = new EkycPopUpModel
-        {
-            image = "alert",
-            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
-            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
-            buttons = new List<EkycButtonModel>{
-                        new EkycButtonModel{
-                            type="primary",
-                            itemNo=1,
-                            text = "Onayla",
-                            action="Exit",
-                            transition = "amorphie-ekyc-exit"
-                        },
-                        new EkycButtonModel{
-                            type="secondary",
-                            itemNo=2,
-                            text="Görüntülü Görüşmeye Devam Et",
-                            action="Cancel"
-                        }
-                    }
-        },
-        buttons = new List<EkycButtonModel>{
-                  new EkycButtonModel
-                  {
-                     type="primary",
-                     itemNo=1,
-                     text = "Yeniden Dene",
-                     action="Retry",
-                  }
-                }
+        popUp = EkycPopupConstants.CancelEkyc,
+        buttons = EkycButtonGroupConstants.Retry
+
     };
 
 
@@ -126,36 +44,9 @@ public static class EkycAdditionalDataContstants
         title = "Kimlik Doğrulama Yapılamadı",
         navText = "Müşterimiz Ol",
         subTexts = new List<string> { "Lütfen bilgilerini girdiğiniz kimliği okutun." },
-        popUp = new EkycPopUpModel
-        {
-            image = "alert",
-            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
-            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
-            buttons = new List<EkycButtonModel>{
-                        new EkycButtonModel{
-                            type="primary",
-                            itemNo=1,
-                            text = "Onayla",
-                            action="Exit",
-                            transition = "amorphie-ekyc-exit"
-                        },
-                        new EkycButtonModel{
-                            type="secondary",
-                            itemNo=2,
-                            text="Görüntülü Görüşmeye Devam Et",
-                            action="Cancel"
-                        }
-                    }
-        },
-        buttons = new List<EkycButtonModel>{
-                  new EkycButtonModel
-                  {
-                     type="primary",
-                     itemNo=1,
-                     text = "Yeniden Dene",
-                     action="Retry",
-                  }
-                }
+        popUp = EkycPopupConstants.CancelEkyc,
+        buttons = EkycButtonGroupConstants.Retry
+
     };
 
     public static readonly EkycPageModel OcrSuccessForNfcItem = new EkycPageModel
@@ -165,27 +56,7 @@ public static class EkycAdditionalDataContstants
         title = "NFC Kimlik Tarama",
         navText = "Müşterimiz Ol",
         subTexts = new List<string> { "Kimliğinizi NFC ile doğrulatmak için lütfen kimlik kartınızı cihazınızın NFC alanına doğru yaklaştırın." },
-        popUp = new EkycPopUpModel
-        {
-            image = "alert",
-            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
-            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
-            buttons = new List<EkycButtonModel>{
-                        new EkycButtonModel{
-                            type="primary",
-                            itemNo=1,
-                            text = "Onayla",
-                            action="Exit",
-                            transition = "amorphie-ekyc-exit"
-                        },
-                        new EkycButtonModel{
-                            type="secondary",
-                            itemNo=2,
-                            text="Görüntülü Görüşmeye Devam Et",
-                            action="Cancel"
-                        }
-                    }
-        },
+        popUp = EkycPopupConstants.CancelEkyc,
         buttons = new List<EkycButtonModel>()
     };
 
@@ -198,37 +69,8 @@ public static class EkycAdditionalDataContstants
         title = "Kimlik Doğrulama Yapılamadı",
         navText = "Müşterimiz Ol",
         subTexts = new List<string> { "NFC doğruluma yapmak için lütfen kimlik kartınızı cep telefonunuzun ön kamerasına yaklaştırın." },
-        popUp = new EkycPopUpModel
-        {
-            image = "alert",
-            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
-            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
-            buttons = new List<EkycButtonModel>{
-                        new EkycButtonModel{
-                            type="primary",
-                            itemNo=1,
-                            text = "Onayla",
-                            action="Exit",
-                            transition = "amorphie-ekyc-exit"
-                        },
-                        new EkycButtonModel{
-                            type="secondary",
-                            itemNo=2,
-                            text="Görüntülü Görüşmeye Devam Et",
-                            action="Cancel"
-                        }
-                    }
-        },
-        buttons = new List<EkycButtonModel>{
-                  new EkycButtonModel
-                  {
-                     type="primary",
-                     itemNo=1,
-                     text = "Yeniden Dene",
-                     action="Retry",
-                  }
-                }
-
+        popUp = EkycPopupConstants.CancelEkyc,
+        buttons = EkycButtonGroupConstants.Retry
     };
 
     public static readonly EkycPageModel NfcFailedBiggerThanMinForRetry = new EkycPageModel
@@ -239,44 +81,8 @@ public static class EkycAdditionalDataContstants
         title = "Kimlik Doğrulama Yapılamadı",
         navText = "Müşterimiz Ol",
         subTexts = new List<string> { "Doğrulama yapılamadı. NFC doğrulama işlemini tekrar deneyebilir veya müşteri temsilcisinden destek almak için Görüntülü Görüşme adımına ilerleyebilirsiniz." },
-        popUp = new EkycPopUpModel
-        {
-            image = "alert",
-            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
-            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
-            buttons = new List<EkycButtonModel>{
-                        new EkycButtonModel{
-                            type="primary",
-                            itemNo=1,
-                            text = "Onayla",
-                            action="Exit",
-                            transition = "amorphie-ekyc-exit"
-                        },
-                        new EkycButtonModel{
-                            type="secondary",
-                            itemNo=2,
-                            text="Görüntülü Görüşmeye Devam Et",
-                            action="Cancel"
-                        }
-                    }
-        },
-        buttons = new List<EkycButtonModel>{
-                  new EkycButtonModel
-                  {
-                     type="primary",
-                     itemNo=1,
-                     text = "Yeniden Dene",
-                     action="Retry",
-                  },
-                  new EkycButtonModel
-                  {
-                     type="secondary",
-                     itemNo=2,
-                     text="Görüntülü Görüşmeye Bağlan",
-                     action="Skip"
-
-                  }
-                }
+        popUp = EkycPopupConstants.CancelEkyc,
+        buttons = EkycButtonGroupConstants.RetryAndSkip
 
     };
 
@@ -319,24 +125,7 @@ public static class EkycAdditionalDataContstants
                 "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?",
                 "Yardıma ihtiyaç duymanız durumunda <b>0850 222 29 10</b> numaralı telefondan bizi 7/24 arayabilirsiniz."
             },
-            buttons = new List<EkycButtonModel>{
-                new EkycButtonModel
-                {
-                    type="primary",
-                    itemNo=1,
-                    text="Onayla",
-                    action="Exit",
-                    transition="amorphie-ekyc-finish"
-                },
-                 new EkycButtonModel
-                {
-                    type="secondary",
-                    itemNo=2,
-                    text="Görüşmeye Devam Et",
-                    action="Cancel"
-
-                },
-            }
+            buttons = EkycButtonGroupConstants.FinishAndCancel
         },
         buttons = new List<EkycButtonModel>
         {
@@ -398,24 +187,7 @@ public static class EkycAdditionalDataContstants
                 "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?",
                 "Yardıma ihtiyaç duymanız durumunda <b>0850 222 29 10</b> numaralı telefondan bizi 7/24 arayabilirsiniz."
             },
-            buttons = new List<EkycButtonModel>{
-                new EkycButtonModel
-                {
-                    type="primary",
-                    itemNo=1,
-                    text="Onayla",
-                    action="Exit",
-                    transition="amorphie-ekyc-finish"
-                },
-                 new EkycButtonModel
-                {
-                    type="secondary",
-                    itemNo=2,
-                    text="Görüşmeye Devam Et",
-                    action="Cancel"
-
-                },
-            }
+            buttons = EkycButtonGroupConstants.FinishAndCancel
         },
         buttons = new List<EkycButtonModel>
         {
@@ -446,36 +218,8 @@ public static class EkycAdditionalDataContstants
         title = "Kimlik Doğrulama Yapılamadı",
         navText = "Müşterimiz Ol",
         subTexts = new List<string> { "Lütfen yüz tanıma işlemini yeniden deneyin." },
-        popUp = new EkycPopUpModel
-        {
-            image = "alert",
-            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
-            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
-            buttons = new List<EkycButtonModel>{
-                        new EkycButtonModel{
-                            type="primary",
-                            itemNo=1,
-                            text = "Onayla",
-                            action="Exit",
-                            transition = "amorphie-ekyc-exit"
-                        },
-                        new EkycButtonModel{
-                            type="secondary",
-                            itemNo=2,
-                            text="Görüntülü Görüşmeye Devam Et",
-                            action="Cancel"
-                        }
-                    }
-        },
-        buttons = new List<EkycButtonModel>{
-                  new EkycButtonModel
-                  {
-                     type="primary",
-                     itemNo=1,
-                     text = "Yeniden Dene",
-                     action="Retry",
-                  }
-                }
+        popUp = EkycPopupConstants.CancelEkyc,
+        buttons = EkycButtonGroupConstants.Retry
 
     };
 
@@ -486,44 +230,8 @@ public static class EkycAdditionalDataContstants
         title = "Kimlik Doğrulama Yapılamadı",
         navText = "Müşterimiz Ol",
         subTexts = new List<string> { "Yüz tanıma işlemini tekrar deneyebilir veya müşteri temsilcisinden destek almak için Görüntülü Görüşme adımına ilerleyebilirsiniz" },
-        popUp = new EkycPopUpModel
-        {
-            image = "alert",
-            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
-            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
-            buttons = new List<EkycButtonModel>{
-                        new EkycButtonModel{
-                            type="primary",
-                            itemNo=1,
-                            text = "Onayla",
-                            action="Exit",
-                            transition = "amorphie-ekyc-exit"
-                        },
-                        new EkycButtonModel{
-                            type="secondary",
-                            itemNo=2,
-                            text="Görüntülü Görüşmeye Devam Et",
-                            action="Cancel"
-                        }
-                    }
-        },
-        buttons = new List<EkycButtonModel>{
-                  new EkycButtonModel
-                  {
-                     type="primary",
-                     itemNo=1,
-                     text = "Yeniden Dene",
-                     action="Retry",
-                  },
-                  new EkycButtonModel
-                  {
-                     type="secondary",
-                     itemNo=2,
-                     text="Görüntülü Görüşmeye Bağlan",
-                     action="Skip"
-
-                  }
-                }
+        popUp = EkycPopupConstants.CancelEkyc,
+        buttons = EkycButtonGroupConstants.RetryAndSkip
     };
 
     public static readonly EkycPageModel VideoCallReadySuccessWait = new EkycPageModel
@@ -562,24 +270,7 @@ public static class EkycAdditionalDataContstants
                 "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?",
                 "Yardıma ihtiyaç duymanız durumunda <b>0850 222 29 10</b> numaralı telefondan bizi 7/24 arayabilirsiniz."
             },
-            buttons = new List<EkycButtonModel>{
-                new EkycButtonModel
-                {
-                    type="primary",
-                    itemNo=1,
-                    text="Onayla",
-                    action="Exit",
-                    transition="amorphie-ekyc-finish"
-                },
-                 new EkycButtonModel
-                {
-                    type="secondary",
-                    itemNo=2,
-                    text="Görüşmeye Devam Et",
-                    action="Cancel"
-
-                },
-            }
+            buttons = EkycButtonGroupConstants.FinishAndCancel
         },
 
         buttons = new List<EkycButtonModel>
@@ -604,46 +295,8 @@ public static class EkycAdditionalDataContstants
         title = "Bağlantı Hatası",
         isInVideoCall = true,
         subTexts = new List<string> { "Teknik sebeplerden dolayı sayfa yüklenemedi. Yeniden dene diyerek işleme kaldığınız yerden devam edebilirsiniz." },
-        popUp = new EkycPopUpModel
-        {
-            image = "alert",
-            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
-            subTexts = new List<string> { "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?" },
-            buttons = new List<EkycButtonModel>{
-                  new EkycButtonModel{
-                            type="primary",
-                            itemNo=1,
-                            text = "Onayla",
-                            action="Exit",
-                            transition = "amorphie-ekyc-exit"
-                        },
-                        new EkycButtonModel{
-                            type="secondary",
-                            itemNo=2,
-                            text="Görüntülü Görüşmeye Devam Et",
-                            action="Cancel"
-                        }
-            },
-
-        },
-        buttons = new List<EkycButtonModel>{
-                  new EkycButtonModel
-                  {
-                     type="primary",
-                     itemNo=1,
-                     text = "Yeniden Dene",
-                     action="Retry",
-                  },
-                  new EkycButtonModel
-                  {
-                     type="secondary",
-                     itemNo=2,
-                     text="Giriş Ekranına Dön",
-                     action="Exit",
-                     transition ="amorphie-ekyc-exit"
-
-                  }
-                }
+        popUp = EkycPopupConstants.CancelEkyc,
+        buttons = EkycButtonGroupConstants.RetryAndEkycExit
     };
 
     public static readonly EkycPageModel VideoCallReadySuccessFaceRetryFail = new EkycPageModel
@@ -654,32 +307,7 @@ public static class EkycAdditionalDataContstants
         title = "Bağlantı Hatası",
         isInVideoCall = true,
         subTexts = new List<string> { "Lütfen yüz tanıma işlemini yeniden deneyin." },
-        popUpVideoCall = new EkycPopUpModel
-        {
-            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
-            subTexts = new List<string>{
-                "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?",
-                "Yardıma ihtiyaç duymanız durumunda <b>0850 222 29 10</b> numaralı telefondan bizi 7/24 arayabilirsiniz."
-            },
-            buttons = new List<EkycButtonModel>{
-                new EkycButtonModel
-                {
-                    type="primary",
-                    itemNo=1,
-                    text="Onayla",
-                    action="Exit",
-                    transition="amorphie-ekyc-exit"
-                },
-                 new EkycButtonModel
-                {
-                    type="secondary",
-                    itemNo=2,
-                    text="Görüşmeye Devam Et",
-                    action="Cancel"
-
-                }
-            }
-        },
+        popUpVideoCall = EkycPopupConstants.VideoCallWithExitTransitionAndNumber,
         buttons = new List<EkycButtonModel>{
             new EkycButtonModel{
                     type= "primary",
@@ -707,32 +335,7 @@ public static class EkycAdditionalDataContstants
         title = "Bağlantı Hatası",
         isInVideoCall = true,
         subTexts = new List<string> { "NFC doğruluma yapmak için lütfen kimlik kartınızı cep telefonunuzun ön kamerasına yaklaştırın." },
-        popUpVideoCall = new EkycPopUpModel
-        {
-            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
-            subTexts = new List<string>{
-                "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?",
-                "Yardıma ihtiyaç duymanız durumunda <b>0850 222 29 10</b> numaralı telefondan bizi 7/24 arayabilirsiniz."
-            },
-            buttons = new List<EkycButtonModel>{
-                new EkycButtonModel
-                {
-                    type="primary",
-                    itemNo=1,
-                    text="Onayla",
-                    action="Exit",
-                    transition="amorphie-ekyc-exit"
-                },
-                 new EkycButtonModel
-                {
-                    type="secondary",
-                    itemNo=2,
-                    text="Görüşmeye Devam Et",
-                    action="Cancel"
-
-                }
-            }
-        },
+        popUpVideoCall = EkycPopupConstants.VideoCallWithExitTransitionAndNumber,
         buttons = new List<EkycButtonModel>{
            new EkycButtonModel{
                     type= "primary",
@@ -759,32 +362,7 @@ public static class EkycAdditionalDataContstants
         title = "Bağlantı Hatası",
         isInVideoCall = true,
         subTexts = new List<string> { "Lütfen kimlik kartınızı hareket ettirmeden, yeterli ışık alan bir ortamda yeniden deneyin." },
-        popUpVideoCall = new EkycPopUpModel
-        {
-            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
-            subTexts = new List<string>{
-                "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?",
-                "Yardıma ihtiyaç duymanız durumunda <b>0850 222 29 10</b> numaralı telefondan bizi 7/24 arayabilirsiniz."
-            },
-            buttons = new List<EkycButtonModel>{
-                new EkycButtonModel
-                {
-                    type="primary",
-                    itemNo=1,
-                    text="Onayla",
-                    action="Exit",
-                    transition="amorphie-ekyc-exit"
-                },
-                 new EkycButtonModel
-                {
-                    type="secondary",
-                    itemNo=2,
-                    text="Görüşmeye Devam Et",
-                    action="Cancel"
-
-                }
-            }
-        },
+        popUpVideoCall = EkycPopupConstants.VideoCallWithExitTransitionAndNumber,
         buttons = new List<EkycButtonModel>{
             new EkycButtonModel{
                     type= "primary",
@@ -811,31 +389,7 @@ public static class EkycAdditionalDataContstants
         image = "error",
         title = "NFC Okuma Hatası",
         subTexts = new List<string> { "Nfc Aktif Pasif Otantikasyon Hatası (Güncellenecek)" },
-        popUpVideoCall = new EkycPopUpModel
-        {
-            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
-            subTexts = new List<string>{
-                "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?"
-            },
-            buttons = new List<EkycButtonModel>{
-                new EkycButtonModel
-                {
-                    type="primary",
-                    itemNo=1,
-                    text="Onayla",
-                    action="Exit",
-                    transition="amorphie-ekyc-exit"
-                },
-                 new EkycButtonModel
-                {
-                    type="secondary",
-                    itemNo=2,
-                    text="Görüşmeye Devam Et",
-                    action="Cancel"
-
-                }
-            }
-        },
+        popUpVideoCall = EkycPopupConstants.VideoCallWithExitTransition,
         buttons = new List<EkycButtonModel>{
             new EkycButtonModel{
                     type= "primary",
@@ -856,31 +410,7 @@ public static class EkycAdditionalDataContstants
         image = "error",
         title = "NFC Okuma Hatası",
         subTexts = new List<string> { "Nfc Aktif Pasif Otantikasyon Hatası (Güncellenecek)" },
-        popUpVideoCall = new EkycPopUpModel
-        {
-            title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
-            subTexts = new List<string>{
-                "Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?"
-            },
-            buttons = new List<EkycButtonModel>{
-                new EkycButtonModel
-                {
-                    type="primary",
-                    itemNo=1,
-                    text="Onayla",
-                    action="Exit",
-                    transition="amorphie-ekyc-exit"
-                },
-                 new EkycButtonModel
-                {
-                    type="secondary",
-                    itemNo=2,
-                    text="Görüşmeye Devam Et",
-                    action="Cancel"
-
-                }
-            }
-        },
+        popUpVideoCall = EkycPopupConstants.VideoCallWithExitTransition,
         buttons = new List<EkycButtonModel>{
             new EkycButtonModel{
                     type= "primary",
@@ -891,5 +421,15 @@ public static class EkycAdditionalDataContstants
             }
         }
 
+    };
+
+    public static readonly EkycPageModel EkycPrepare = new EkycPageModel
+    {
+        type = "waiting",
+        image = "wait",
+        title = "Kimlik Okuma Adımları Yükleniyor",
+        navText = "Müşterimiz Ol",
+        popUp = EkycPopupConstants.CancelEkyc,
+        buttons = new List<EkycButtonModel>()
     };
 }

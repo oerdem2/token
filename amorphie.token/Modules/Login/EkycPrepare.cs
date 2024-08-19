@@ -140,34 +140,7 @@ public static class EkycPrepare
 
 
         dataChanged.additionalData.pages = new List<EkycPageModel>{
-            new EkycPageModel
-            {
-                type="waiting",
-                image="wait",
-                title="Kimlik Okuma Adımları Yükleniyor",
-                navText = "Müşterimiz Ol",
-                popUp= new EkycPopUpModel{
-                    image="alert",
-                    title = "Görüntülü Görüşmeyi Sonlandırmak İstediğinize Emin Misiniz?",
-                    subTexts = new List<string>{"Görüntülü görüşme işleminiz sonlandırılacaktır, onaylıyor musunuz?"},
-                    buttons = new List<EkycButtonModel>{
-                        new EkycButtonModel{
-                            type="primary",
-                            itemNo=1,
-                            text = "Onayla",
-                            action="exit",
-                            transition = "amorphie-ekyc-exit"
-                        },
-                        new EkycButtonModel{
-                            type="secondary",
-                            itemNo=2,
-                            text="Görüntülü Görüşmeye Devam Et",
-                            action="cancel"
-                        }
-                    }
-                },
-                buttons = new List<EkycButtonModel>()
-            }
+            EkycAdditionalDataContstants.EkycPrepare
         };
 
         dataChanged.additionalData.exitTransition = "amorphie-ekyc-exit";
