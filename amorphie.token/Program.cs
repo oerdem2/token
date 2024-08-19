@@ -3,6 +3,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
 using amorphie.core.Extension;
+using amorphie.core.Middleware.Logging;
 using amorphie.token;
 using amorphie.token.core;
 using amorphie.token.core.Constants;
@@ -41,6 +42,8 @@ internal partial class Program
    
     private static async Task Main(string[] args)
     {
+        ThreadPool.SetMinThreads(50,50);
+
         var builder = WebApplication.CreateBuilder(args);
         builder.Configuration.AddEnvironmentVariables();
         var client = new DaprClientBuilder().Build();
@@ -56,7 +59,7 @@ internal partial class Program
                 return;
             }
         }
-
+        
         await builder.Configuration.AddVaultSecrets(builder.Configuration["DAPR_SECRET_STORE_NAME"], ["ServiceConnections","Keys"]);
         //builder.Configuration.AddDaprSecretStore(builder.Configuration["DAPR_SECRET_STORE_NAME"],client, TimeSpan.FromSeconds(15));
         // builder.Configuration.AddJsonStream(new MemoryStream(System.Text.Encoding.ASCII.GetBytes(builder.Configuration["Fcm"])));
@@ -85,7 +88,7 @@ internal partial class Program
                 .WriteTo.File(new CompactJsonFormatter(), "amorphie-token-log.json", rollingInterval: RollingInterval.Day)
                 .ReadFrom.Configuration(builder.Configuration)
                 .CreateLogger();
-        builder.Host.UseSerilog(Log.Logger, true);
+        builder.AddSeriLog<AmorphieLogEnricher>();
 
         builder.Services.AddHealthChecks();
         builder.Services.AddControllersWithViews();

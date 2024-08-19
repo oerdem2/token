@@ -129,6 +129,16 @@ public static class EkycPrepare
         dataChanged.additionalData.isMediaServerActive = false;
         dataChanged.additionalData.ekycEnvironment = "preprod";
 
+        if (constCallType == EkycCallTypeConstants.IBSifre_BRGN || callType == EkycCallTypeConstants.IBSifre_ON)
+        {
+            dataChanged.additionalData.isAutoClosable = true;
+        }
+        else
+        {
+            dataChanged.additionalData.isAutoClosable = false;
+        }
+
+
         dataChanged.additionalData.pages = new List<EkycPageModel>{
             EkycAdditionalDataContstants.EkycPrepare
         };
