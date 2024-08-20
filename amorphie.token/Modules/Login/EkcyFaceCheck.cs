@@ -85,9 +85,6 @@ public static class EkcyFaceCheck
                     };
                 }
 
-
-                faceCurrentFailedCount++;
-
             }
 
             if (faceStatus && faceIsSuccess)
