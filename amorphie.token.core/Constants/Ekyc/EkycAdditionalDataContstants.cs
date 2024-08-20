@@ -427,7 +427,7 @@ public static class EkycAdditionalDataContstants
     {
         type = "waiting",
         image = "wait",
-        title = "Kimlik Okuma Adımları Yükleniyor",
+        title = "Kontrolleriniz Devam Ediyor",
         navText = "Müşterimiz Ol",
         popUp = EkycPopupConstants.CancelEkyc,
         buttons = new List<EkycButtonModel>()
