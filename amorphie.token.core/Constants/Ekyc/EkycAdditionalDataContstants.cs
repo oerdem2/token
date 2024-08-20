@@ -142,8 +142,7 @@ public static class EkycAdditionalDataContstants
                     type="secondary",
                     itemNo=2,
                     text="Giriş Ekranına Dön",
-                    action="Exit",
-                    transition="amorphie-ekyc-exit"
+                    action="PopUpVideoCall"
                 },
         }
     };
@@ -204,8 +203,7 @@ public static class EkycAdditionalDataContstants
                     type="secondary",
                     itemNo=2,
                     text="Giriş Ekranına Dön",
-                    action="Exit",
-                    transition="amorphie-ekyc-exit"
+                    action="PopUpVideoCall"
                 },
         }
     };
@@ -280,8 +278,7 @@ public static class EkycAdditionalDataContstants
                 type="primary",
                 itemNo=1,
                 text="Giriş Ekranına Dön",
-                action="Exit",
-                transition="amorphie-ekyc-exit"
+                action="PopUpVideoCall"
              }
         }
     };
