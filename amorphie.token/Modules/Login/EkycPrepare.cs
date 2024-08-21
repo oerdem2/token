@@ -127,7 +127,7 @@ public static class EkycPrepare
         dataChanged.additionalData.instanceId = instance;
         dataChanged.additionalData.applicantFullName = ApplicantFullName;
         dataChanged.additionalData.isMediaServerActive = false;
-        dataChanged.additionalData.ekycEnvironment = "preprod";
+        dataChanged.additionalData.ekycEnvironment = "test";
 
         if (constCallType == EkycCallTypeConstants.IBSifre_BRGN || callType == EkycCallTypeConstants.IBSifre_ON)
         {
