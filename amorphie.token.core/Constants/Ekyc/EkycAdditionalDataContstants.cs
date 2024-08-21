@@ -6,7 +6,7 @@ public static class EkycAdditionalDataContstants
     {
         type = "waiting",
         image = "wait",
-        title = "Kontrolleriniz Devam Ediyor",
+        title = "İşleminiz Devam Ediyor",
         navText = "Müşterimiz Ol",
         popUp = EkycPopupConstants.CancelEkyc,
         buttons = new List<EkycButtonModel>()
@@ -424,7 +424,7 @@ public static class EkycAdditionalDataContstants
     {
         type = "waiting",
         image = "wait",
-        title = "Kontrolleriniz Devam Ediyor",
+        title = "İşleminiz Devam Ediyor",
         navText = "Müşterimiz Ol",
         popUp = EkycPopupConstants.CancelEkyc,
         buttons = new List<EkycButtonModel>()
