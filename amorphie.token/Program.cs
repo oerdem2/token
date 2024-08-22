@@ -270,9 +270,11 @@ internal partial class Program
                 c.DefaultRequestHeaders.Add("Authorization", builder.Configuration["Cardion:ApiKey"]!);
             });
 
+
+        var enquraStr = (builder.Configuration["EnquraBaseAddress"]).ToString().Replace("preprod", "test");
         builder.Services.AddHttpClient("Enqura", httpClient =>
         {
-            httpClient.BaseAddress = new Uri(builder.Configuration["EnquraBaseAddress"]!);
+            httpClient.BaseAddress = new Uri(enquraStr!);
         });
 
 
