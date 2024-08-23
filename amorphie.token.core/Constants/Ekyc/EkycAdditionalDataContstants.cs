@@ -47,6 +47,18 @@ public static class EkycAdditionalDataContstants
         popUp = EkycPopupConstants.CancelEkyc,
         buttons = EkycButtonGroupConstants.Retry
 
+    };    
+    
+    public static readonly EkycPageModel OcrFailedItemForDifferentIdentityMatch = new EkycPageModel
+    {
+        type = "error",
+        image = "error",
+        title = "Doğrulama Yapılamadı",
+        navText = "Müşterimiz Ol",
+        subTexts = new List<string> { "Lütfen kendi T.C. kimlik kartınız ile işleme devam edin.\r\n " },
+        popUp = EkycPopupConstants.CancelEkyc,
+        buttons = EkycButtonGroupConstants.Retry
+
     };
 
     public static readonly EkycPageModel OcrSuccessForNfcItem = new EkycPageModel
