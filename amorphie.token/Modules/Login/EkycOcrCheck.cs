@@ -108,10 +108,11 @@ public static class EkycOcrCheck
 
             if (!ocrStatus && ocrIsSuccess)
             {
+
                 dataChanged.additionalData.pages = new List<EkycPageModel>
                 {
                     EkycAdditionalDataContstants.StandartItem,
-                    EkycAdditionalDataContstants.OcrFailedItemForIdentityMatch
+                    identityNoCompatible ? EkycAdditionalDataContstants.OcrFailedItemForIdentityMatch : EkycAdditionalDataContstants.OcrFailedItemForDifferentIdentityMatch
                 };
             }
 
