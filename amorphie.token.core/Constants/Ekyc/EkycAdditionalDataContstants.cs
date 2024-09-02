@@ -80,7 +80,7 @@ public static class EkycAdditionalDataContstants
         image = "error",
         title = "Kimlik Doğrulama Yapılamadı",
         navText = "Müşterimiz Ol",
-        subTexts = new List<string> { "NFC doğruluma yapmak için lütfen kimlik kartınızı cep telefonunuzun ön kamerasına yaklaştırın." },
+        subTexts = new List<string> { "NFC doğrulama yapmak için lütfen kimlik kartınızı cep telefonunuzun ön kamerasına yaklaştırın." },
         popUp = EkycPopupConstants.CancelEkyc,
         buttons = EkycButtonGroupConstants.Retry
     };
@@ -343,7 +343,7 @@ public static class EkycAdditionalDataContstants
         image = "error",
         title = "Bağlantı Hatası",
         isInVideoCall = true,
-        subTexts = new List<string> { "NFC doğruluma yapmak için lütfen kimlik kartınızı cep telefonunuzun ön kamerasına yaklaştırın." },
+        subTexts = new List<string> { "NFC doğrulama yapmak için lütfen kimlik kartınızı cep telefonunuzun ön kamerasına yaklaştırın." },
         popUpVideoCall = EkycPopupConstants.VideoCallWithExitTransitionAndNumber,
         buttons = new List<EkycButtonModel>{
            new EkycButtonModel{
